@@ -59,7 +59,8 @@ body{overflow:hidden}
   .top,.controls{max-width:min(1000px,100%)}}
 
 /* Slider tiles */
-.tile{position:absolute;box-sizing:border-box;padding:1px;cursor:pointer;transition:left .13s ease,top .13s ease}
+.tile{position:absolute;box-sizing:border-box;padding:1px;cursor:pointer;touch-action:none;-webkit-user-select:none;transition:transform .13s ease}
+.tile.drag{transition:none;z-index:2}
 .tile>i{display:block;width:100%;height:100%;border-radius:5px;background-repeat:no-repeat;position:relative;box-shadow:inset 0 0 0 1px rgba(0,0,0,.25)}
 .tile b{position:absolute;left:5px;top:4px;min-width:18px;height:18px;padding:0 4px;box-sizing:border-box;border-radius:9px;background:rgba(10,14,20,.72);color:#fff;font-size:12px;line-height:18px;text-align:center;font-weight:700}
 .nonum .tile b{display:none}
@@ -299,11 +300,30 @@ function layout(){const n=S.n,s=100/n;S.cells.forEach((v,i)=>{if(!v)return;const
 function slideFrom(i){const n=S.n,z=S.cells.indexOf(0),zr=(z/n)|0,zc=z%n,r=(i/n)|0,c=i%n;
   if(i===z||(r!==zr&&c!==zc))return 0;const step=r===zr?(c<zc?-1:1):(r<zr?-n:n);let cur=z,k=0;
   while(cur!==i){const nx=cur+step;S.cells[cur]=S.cells[nx];S.cells[nx]=0;cur=nx;k++}return k}
-board.addEventListener("click",e=>{if(mode!=="slide"||busy||!S||!S.cells)return;const t=e.target.closest(".tile");if(!t)return;
-  clearSlideHint();const k=slideFrom(S.cells.indexOf(+t.dataset.v));if(!k)return;S.moves+=k;layout();Music.fx("tap");hud();
+/* Touch: drag a tile (or the whole row/column of tiles between it and the gap) toward the gap, or just tap it.
+   Pointer events rather than "click", because Safari on iPad doesn't reliably send clicks to plain divs.
+   Like the Car fix, on release tiles are re-anchored instantly and only a transform animates, so nothing bounces. */
+let sd=null;
+board.addEventListener("pointerdown",e=>{if(mode!=="slide"||busy||!S||!S.cells||sd)return;const t=e.target.closest(".tile");if(!t||t.classList.contains("last"))return;
+  e.preventDefault();clearSlideHint();const n=S.n,i=S.cells.indexOf(+t.dataset.v),z=S.cells.indexOf(0),r=(i/n)|0,c=i%n,zr=(z/n)|0,zc=z%n;
+  if(r!==zr&&c!==zc){sd={id:e.pointerId,none:true};return}
+  const horiz=r===zr,step=horiz?(c<zc?1:-1):(r<zr?n:-n),group=[];for(let k=i;k!==z;k+=step)group.push(S.els[S.cells[k]]);
+  sd={id:e.pointerId,i,horiz,sign:Math.sign(step),group,x:e.clientX,y:e.clientY,d:0,max:0,cell:board.clientWidth/n};
+  group.forEach(el=>el.classList.add("drag"));try{board.setPointerCapture(e.pointerId)}catch(_){}});
+board.addEventListener("pointermove",e=>{if(!sd||sd.none||e.pointerId!==sd.id)return;
+  const raw=sd.horiz?e.clientX-sd.x:e.clientY-sd.y;sd.max=Math.max(sd.max,Math.abs(e.clientX-sd.x)+Math.abs(e.clientY-sd.y));
+  sd.d=Math.max(0,Math.min(sd.cell,raw*sd.sign));const tf=(sd.horiz?"translateX(":"translateY(")+sd.d*sd.sign+"px)";sd.group.forEach(el=>el.style.transform=tf)});
+function endSlide(e){if(!sd||e.pointerId!==sd.id)return;const d=sd;sd=null;if(d.none)return;
+  const commit=d.max<10||d.d>d.cell*.35; // a tap, or dragged more than about a third of a tile
+  if(!commit){d.group.forEach(el=>{el.classList.remove("drag");el.style.transform=""});return}
+  const k=slideFrom(d.i);layout();const off=(d.d-d.cell)*d.sign,tf=(d.horiz?"translateX(":"translateY(")+off+"px)";
+  d.group.forEach(el=>{el.style.transform=tf});void board.offsetWidth;
+  d.group.forEach(el=>{el.classList.remove("drag");el.style.transform=""});afterSlide(k)}
+board.addEventListener("pointerup",endSlide);board.addEventListener("pointercancel",e=>{if(sd&&!sd.none){sd.d=0;sd.max=99}endSlide(e)});
+function afterSlide(k){if(!k)return;S.moves+=k;Music.fx("tap");hud();
   if(solved(S.cells)){busy=true;const n=S.n,el=document.createElement("div");el.className="tile last";const i=document.createElement("i");bg(i,url,n,n-1,n-1);el.appendChild(i);
     el.style.left=el.style.top=(n-1)*100/n+"%";el.style.width=el.style.height=100/n+"%";board.appendChild(el);requestAnimationFrame(()=>el.classList.add("in"));
-    const st=S.moves<=S.par?3:S.moves<=S.par*2?2:1;win(S.moves+" moves"+(n===3?" · par "+S.par:"")+(st===3?" · perfect":""),st)}});
+    const st=S.moves<=S.par?3:S.moves<=S.par*2?2:1;win(S.moves+" moves"+(n===3?" · par "+S.par:"")+(st===3?" · perfect":""),st)}}
 function clearSlideHint(){board.querySelectorAll(".tile.hint").forEach(e=>e.classList.remove("hint"))}
 /* Next best move. 3x3: exact table. Bigger boards: IDA* with Manhattan distance, with a node budget. */
 function nextMove(){const n=S.n,c=S.cells,z=c.indexOf(0);

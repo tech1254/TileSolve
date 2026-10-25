@@ -114,12 +114,40 @@ with sync_playwright() as p:
         v = pg.evaluate(f"__picture.S.cells[{far}]"); pg.locator(f".tile[data-v='{v}']").click(); pg.wait_for_timeout(200)
         check(pg.evaluate("__picture.S.moves") == 2, "tapping the far tile in the gap's row slides two tiles")
 
+    # Dragging a tile toward the gap: a short nudge snaps back, a longer drag moves it
+    def adj():
+        c = pg.evaluate("__picture.S.cells"); z = c.index(0)
+        t = z - 1 if z % 3 else z + 1
+        return c[t], (z % 3) - (t % 3)
+    def drag_tile(frac):
+        v, dirx = adj(); bb = pg.locator(f".tile[data-v='{v}']").bounding_box()
+        x0, y0 = bb["x"] + bb["width"]/2, bb["y"] + bb["height"]/2
+        pg.mouse.move(x0, y0); pg.mouse.down()
+        for s in range(1, 7): pg.mouse.move(x0 + dirx*bb["width"]*frac*s/6, y0)
+        pg.mouse.up(); pg.wait_for_timeout(250)
+    m0 = pg.evaluate("__picture.S.moves"); drag_tile(.15)
+    check(pg.evaluate("__picture.S.moves") == m0, "a small nudge snaps the tile back")
+    drag_tile(.7)
+    check(pg.evaluate("__picture.S.moves") == m0 + 1, "dragging a tile toward the gap slides it")
+
     pg.click("#btnLevels"); pg.click("#levelGrid button:nth-child(17)")
     pg.wait_for_function("__picture.S && !__picture.busy && __picture.S.cells && __picture.L.n===17")
     ms = pg.evaluate("(()=>{const t=performance.now(),m=__picture.nextMove(),S=__picture.S,z=S.cells.indexOf(0),n=S.n;"
                      "const ok=[z-n,z+n,(z%n)?z-1:-9,(z%n<n-1)?z+1:-9].includes(m);return [ok,performance.now()-t]})()")
     check(pg.evaluate("__picture.L.size") == 4 and ms[0] and ms[1] < 2500, f"4x4 slider hint finds a legal move ({ms[1]:.0f} ms)")
     pg.screenshot(path=str(OUT / "pic-slide4.png"))
+
+    # Touch screen (iPad emulation): tapping a tile slides it
+    tctx = b.new_context(**p.devices["iPad Mini"])
+    tctx.add_init_script(f"localStorage.setItem('tilesolve:players', {json.dumps(PLAYERS)});"
+                         "localStorage.setItem('tilesolve:p:k1:picture',JSON.stringify({mode:'slide',drop:{},slide:{},numbers:false,all:false}))")
+    tp = tctx.new_page(); tp.on("pageerror", lambda e: errors.append(str(e))); tp.goto(PAGE)
+    tp.wait_for_function("__picture.S && __picture.S.cells && !__picture.busy")
+    c = tp.evaluate("__picture.S.cells"); z = c.index(0); t = z - 1 if z % 3 else z + 1
+    bb = tp.locator(f".tile[data-v='{c[t]}']").bounding_box()
+    tp.touchscreen.tap(bb["x"] + bb["width"]/2, bb["y"] + bb["height"]/2); tp.wait_for_timeout(300)
+    check(tp.evaluate("__picture.S.moves") == 1 and tp.evaluate(f"__picture.S.cells[{z}]") == c[t], "touch tap slides a tile on a tablet")
+    tctx.close()
 
     # Landscape iPad layout keeps tray beside the board
     ip = ctx.new_page(); ip.set_viewport_size({"width": 1180, "height": 820}); ip.goto(PAGE)
