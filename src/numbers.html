@@ -77,7 +77,7 @@ function hint(){if(!S||K.busy)return;const i=[...S.blanks].find(c=>val(c)!==S.so
   let t=S.tiles.find(x=>x.at<0&&x.v===want)||S.tiles.find(x=>x.v===want&&x.at>=0&&S.sol[x.at]!==want);if(!t)return;
   const cur=S.tiles.find(x=>x.at===i);if(cur)cur.at=-1;t.at=i;S.sel=null;S.selCell=null;draw();
   const b=document.querySelector('.nc[data-i="'+i+'"]');b&&b.classList.add("flash");K.tip("That square needs a "+want+".");check()}
-K=TS_KIT({id:"numbers",name:"Number Tiles",levels:40,start,hint,label:n=>{const s=spec(n);return s.size+"×"+s.size}});
+K=TS_KIT({id:"numbers",howto:[["🔢", "Every row and column has a total at the end."], ["👆", "Tap a yellow number tile, then tap an empty square."], ["➕", "Make every row and column add up to its total."], ["🟢", "A total turns green when it's right."]],point:()=>document.querySelector(".nt"),name:"Number Tiles",levels:40,start,hint,label:n=>{const s=spec(n);return s.size+"×"+s.size}});
 window.__game={get S(){return S},K,spec,tapTile,tapCell};// for tools/test_games2.py
 K.start();
 })();

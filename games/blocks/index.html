@@ -15,8 +15,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Barlow:wght@400;600;700&display=swap">
-<link rel="stylesheet" href="../../shared/ts.css?v=f30d1a5c">
-<link rel="stylesheet" href="../../shared/game.css?v=f30d1a5c">
+<link rel="stylesheet" href="../../shared/ts.css?v=3b582d24">
+<link rel="stylesheet" href="../../shared/game.css?v=3b582d24">
 <style>
 .bwrap{position:relative;touch-action:none}
 .bslot{position:absolute;box-sizing:border-box;border-radius:6px;background:#20262d;box-shadow:inset 0 0 0 2px #3b444d}
@@ -38,8 +38,8 @@
 </style>
 </head>
 <body>
-<script src="../../shared/ts.js?v=f30d1a5c"></script>
-<script src="../../shared/kit.js?v=f30d1a5c"></script>
+<script src="../../shared/ts.js?v=3b582d24"></script>
+<script src="../../shared/kit.js?v=3b582d24"></script>
 <script>
 (()=>{
 /* Block Fit: drag the blocks into the outline so every square is filled.
@@ -135,7 +135,7 @@ function check(){if(!done())return;const st=S.oops<=1?3:S.oops<=4?2:1;
 function hint(){if(!S||K.busy)return;const wrong=S.pieces.filter(p=>!(p.at&&p.rot===0&&p.at[0]===p.sol[0]&&p.at[1]===p.sol[1]));if(!wrong.length)return;
   const p=wrong[0],{w}=S.sp,cells=new Set(p.cells.map(([r,c])=>(p.sol[0]+r)*w+p.sol[1]+c)),occ=occupied(p);
   cells.forEach(i=>{const q=occ.get(i);if(q)q.at=null});p.rot=0;p.at=p.sol.slice();layout();stats();p.el.classList.add("flash");K.tip("That block goes there!");check()}
-K=TS_KIT({id:"blocks",name:"Block Fit",levels:40,start,hint,label:n=>{const s=spec(n);return s.w+"×"+s.h}});
+K=TS_KIT({id:"blocks",howto:[["🟦", "The blocks are in the tray below the outline."], ["👆", "Drag each block into the outline."], ["✅", "Fill every square, with no gaps."], ["🔄", "Tap a block in the tray to turn it. Tap a placed block to take it back."]],point:()=>document.querySelector("#tray .pz i"),name:"Block Fit",levels:40,start,hint,label:n=>{const s=spec(n);return s.w+"×"+s.h}});
 window.__game={get S(){return S},K,spec,shape,fits};// for tools/test_games2.py
 K.start();
 })();

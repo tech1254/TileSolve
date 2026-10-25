@@ -40,6 +40,7 @@ with sync_playwright() as p:
     b = p.chromium.launch()
     ctx = b.new_context(viewport={"width": 390, "height": 844}, device_scale_factor=2)
     ctx.add_init_script(f"if(!localStorage.getItem('tilesolve:players'))localStorage.setItem('tilesolve:players', {json.dumps(PLAYERS)})")
+    ctx.add_init_script(tsutil.INIT)
     pg = ctx.new_page()
     errors = []
     pg.on("pageerror", lambda e: errors.append(str(e)))
@@ -151,7 +152,7 @@ with sync_playwright() as p:
     pg.screenshot(path=str(OUT / "pic-slide4.png"))
 
     # Touch screen (iPad emulation): tapping a tile slides it
-    tctx = b.new_context(**p.devices["iPad Mini"])
+    tctx = b.new_context(**p.devices["iPad Mini"]); tctx.add_init_script(tsutil.INIT)
     tctx.add_init_script(f"localStorage.setItem('tilesolve:players', {json.dumps(PLAYERS)});"
                          "localStorage.setItem('tilesolve:p:k1:picture',JSON.stringify({mode:'slide',drop:{},slide:{},numbers:false,all:false}))")
     tp = tctx.new_page(); tp.on("pageerror", lambda e: errors.append(str(e))); tp.goto(PAGE)

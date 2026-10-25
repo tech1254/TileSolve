@@ -59,7 +59,7 @@ function tap(i){if(K.busy)return;S.el.querySelectorAll(".lb.hint").forEach(b=>b.
 /* Hint: ring one light that's part of the fewest-taps answer from here. */
 function hint(){if(!S||K.busy)return;const s=solve(S.g,S.N);if(!s||!s.w)return;const i=s.x.indexOf(1);S.el.querySelector('.lb[data-i="'+i+'"]').classList.add("hint");
   K.tip("Try tapping the light with the blue ring.")}
-K=TS_KIT({id:"lights",name:"Lights Out",levels:40,start,hint,label:n=>{const s=spec(n);return s.size+"×"+s.size}});
+K=TS_KIT({id:"lights",howto:[["💡", "Some lights are on."], ["👆", "Tapping a light flips it and the lights next to it."], ["🌑", "Turn every light off."], ["⭐", "Fewer taps means more stars."]],point:()=>{const s=solve(S.g,S.N);return S.el.querySelector('.lb[data-i="'+(s?s.x.indexOf(1):0)+'"]')},name:"Lights Out",levels:40,start,hint,label:n=>{const s=spec(n);return s.size+"×"+s.size}});
 window.__game={get S(){return S},K,spec,solve};// for tools/test_games4.py
 K.start();
 })();

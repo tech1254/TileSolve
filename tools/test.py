@@ -67,7 +67,8 @@ with sync_playwright() as p:
 
     # ---- Car game ----
     pg.click(".game[data-game='car']")
-    pg.wait_for_url("**/games/car/index.html")
+    pg.wait_for_url("**/games/car/index.html"); pg.wait_for_timeout(200)
+    if pg.locator(".ts-howto").is_visible(): pg.click(".ts-howto .bigbtn"); pg.wait_for_timeout(300)
     check(pg.text_content("#lvlNum") == "1", "Car opens at level 1 for the new player")
     curve = pg.evaluate("[1,5,10,20,30,50,100,200,500,1000].map(n=>[n,window.__tilesolve.getLevel(3,n).par])")
     print("grade 3 par by level:", curve)
@@ -131,7 +132,8 @@ with sync_playwright() as p:
     pg.click("#btnMe")
     check(pg.is_visible("#viewPlayers") and pg.locator(".player:not(.addp)").count() == 1, "player chip goes back to Who's playing")
     pg.click("#btnAdd"); add_player(pg, "Sam", 7, 1)
-    pg.click(".game[data-game='car']"); pg.wait_for_url("**/games/car/index.html")
+    pg.click(".game[data-game='car']"); pg.wait_for_url("**/games/car/index.html"); pg.wait_for_timeout(200)
+    if pg.locator(".ts-howto").is_visible(): pg.click(".ts-howto .bigbtn"); pg.wait_for_timeout(300)
     sam_par = pg.text_content("#par")
     check(pg.text_content("#moves") == "0" and sam_par == str(pg.evaluate("window.__tilesolve.getLevel(1,1).par")), "Sam starts fresh with grade 1 puzzles")
     pg.click("#btnHint"); qs, _ = question(pg)
@@ -139,7 +141,7 @@ with sync_playwright() as p:
     pg.goto(HOME)
     pg.click("#btnMe")
     pg.screenshot(path=str(OUT / "shot-players.png"))
-    keys = pg.evaluate("Object.keys(localStorage).filter(k=>k.startsWith('tilesolve:p:')).length")
+    keys = pg.evaluate("Object.keys(localStorage).filter(k=>k.startsWith('tilesolve:p:')&&k.endsWith(':car')).length")
     check(keys == 2, "each player has their own Car save")
 
     # ---- Edit and delete ----
@@ -148,7 +150,7 @@ with sync_playwright() as p:
     pg.click("#btnDelete")
     check(pg.locator(".player:has-text('Sam')").count() == 1, "first delete tap only asks to confirm")
     pg.click("#btnDelete")
-    check(pg.locator(".player:not(.addp)").count() == 1 and pg.evaluate("Object.keys(localStorage).filter(k=>k.startsWith('tilesolve:p:')).length") == 1,
+    check(pg.locator(".player:not(.addp)").count() == 1 and pg.evaluate("Object.keys(localStorage).filter(k=>k.startsWith('tilesolve:p:')&&k.endsWith(':car')).length") == 1,
           "second tap deletes the player and their progress")
 
     # ---- Old single-player save becomes "Player 1" ----

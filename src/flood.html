@@ -89,7 +89,7 @@ function choose(c){if(K.busy||!S||c===S.g[0])return;const prev=S.g;S.g=move(S.g,
 /* Hint: flash the colour the solver would pick next. */
 function hint(){if(!S||K.busy)return;const sol=solve(S.g,S.N,S.sp.colors);if(!sol||!sol.length)return;
   const b=document.querySelector('#pal button[data-c="'+sol[0]+'"]');b.classList.add("hint");K.tip("Hint: try "+C[sol[0]].name+" "+C[sol[0]].s+" next.")}
-K=TS_KIT({id:"flood",name:"Color Flood",levels:40,start,hint,label:n=>{const s=spec(n);return s.size+"×"+s.size}});
+K=TS_KIT({id:"flood",howto:[["★", "Your colour starts in the star corner."], ["👆", "Pick a colour. Your area grows into touching tiles of that colour."], ["🌈", "Make the whole board one colour."], ["🔢", "Do it before you run out of moves!"]],point:()=>document.querySelector("#pal button:not(:disabled)"),name:"Color Flood",levels:40,start,hint,label:n=>{const s=spec(n);return s.size+"×"+s.size}});
 window.__game={get S(){return S},K,spec,solve,choose};// for tools/test_games.py
 K.start();
 })();

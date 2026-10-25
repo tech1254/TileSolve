@@ -86,7 +86,7 @@ function check(){if(S.cur.some(v=>v<0)||clashes().size)return;const st=S.mistake
 /* Hint: fix a wrong square, or fill the selected (or first) empty square with its answer. */
 function hint(){if(!S||K.busy)return;let i=S.cur.findIndex((v,k)=>v>=0&&v!==S.sol[k]);if(i<0)i=S.sel>=0&&S.cur[S.sel]<0?S.sel:S.cur.findIndex(v=>v<0);if(i<0)return;
   S.cur[i]=S.sol[i];S.sel=-1;draw();const b=document.querySelector('.sc[data-i="'+i+'"]');b&&b.classList.add("flash");K.tip("That square is "+label(S.sol[i])+".");check()}
-K=TS_KIT({id:"sudoku",name:"Sudoku Light",levels:40,start,hint,label:n=>{const s=spec(n);return s.animals?"🐾":s.N+"×"+s.N}});
+K=TS_KIT({id:"sudoku",howto:[["🐶", "Every row needs each animal (or number) once."], ["⬇️", "So does every column, and every thick-lined box."], ["👆", "Tap an empty square, then tap what goes there."], ["🔴", "Red means two are the same, so fix it!"]],point:()=>document.querySelector(".sc:not(.given)"),name:"Sudoku Light",levels:40,start,hint,label:n=>{const s=spec(n);return s.animals?"🐾":s.N+"×"+s.N}});
 window.__game={get S(){return S},K,spec,count};// for tools/test_games3.py
 K.start();
 })();

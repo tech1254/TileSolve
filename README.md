@@ -10,6 +10,8 @@ Hints in every game cost a maths question one grade below the player's grade (gr
 
 **Maths checkpoints:** the first time a player clears level 3, 6, 9 and so on, the next level asks a maths question before it opens. Checkpoint questions are a little easier than hint questions (for grade 3: adding and taking away with no carrying or borrowing). They can't be skipped, and leaving and coming back asks again.
 
+**How to play:** the first time each player opens a game (each Picture Puzzle mode counts separately), a short picture-step card explains it. On level 1 a bouncing 👆 finger points at what to touch first. The **?** button shows the card again any time.
+
 ## Games
 
 - **Unblock the Car** (`games/car/`): slide cars until the red one can drive out. 1,000 levels from a bank of pre-generated, verified puzzles; the par is each puzzle's exact shortest solution. Difficulty ramps by grade: for grade 3, it's properly challenging by about level 30.
@@ -37,4 +39,4 @@ Hints in every game cost a maths question one grade below the player's grade (gr
 - More Car puzzles: `node tools/gen-bank.js SEED SECONDS out.json`, then `node tools/build.js out.json` to merge, verify and rebuild.
 - More Box Push levels: `node tools/gen-boxes.js SEED SECONDS out.json`, then `node tools/merge-boxes.js out.json` (re-verifies every par) and rebuild.
 - `shared/pictures.js`: the picture set, drawn in code. Photo entries can be added later.
-- `sh tools/test_all.sh` rebuilds and runs every browser test suite over a local web server (needs Playwright). Each `tools/test*.py` can also run on its own.
+- `sh tools/test_all.sh` rebuilds and runs all eight browser test suites over a local web server (needs Playwright). Each `tools/test*.py` can also run on its own.

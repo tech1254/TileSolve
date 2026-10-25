@@ -102,7 +102,7 @@ function hint(){if(!S||K.busy)return;const m=solveFrom();
   const W=S.W,b=S.boxes[m.k];S.boxEls[m.k].classList.add("hint");const a=document.createElement("div");a.className="arrow";a.textContent={1:"▶",[-1]:"◀",[W]:"▼",[-W]:"▲"}[m.d];
   a.style.left="calc(var(--cs)*"+((b+m.d)%W)+")";a.style.top="calc(var(--cs)*"+(((b+m.d)/W)|0)+")";S.el.appendChild(a);
   K.tip("Push the flashing crate "+({1:"right",[-1]:"left",[W]:"down",[-W]:"up"}[m.d])+". Stand on the other side of it first.")}
-K=TS_KIT({id:"boxes",name:"Box Push",levels:40,start,hint,label:n=>{const s=spec(n);return s.crates+(s.crates>1?" crates":" crate")}});
+K=TS_KIT({id:"boxes",howto:[["📦", "Push every crate onto a red spot."], ["👆", "Swipe, tap the arrows, or tap where you want to walk."], ["🚫", "You can push but not pull, so don't get a crate stuck in a corner!"], ["↶", "Stuck? Tap Undo."]],point:()=>document.querySelector(".dpad"),name:"Box Push",levels:40,start,hint,label:n=>{const s=spec(n);return s.crates+(s.crates>1?" crates":" crate")}});
 window.__game={get S(){return S},K,spec,step,solveFrom,plan};// for tools/test_games4.py
 K.start();
 })();

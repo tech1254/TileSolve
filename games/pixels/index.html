@@ -15,8 +15,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Barlow:wght@400;600;700&display=swap">
-<link rel="stylesheet" href="../../shared/ts.css?v=f30d1a5c">
-<link rel="stylesheet" href="../../shared/game.css?v=f30d1a5c">
+<link rel="stylesheet" href="../../shared/ts.css?v=3b582d24">
+<link rel="stylesheet" href="../../shared/game.css?v=3b582d24">
 <style>
 .ng{--cs:clamp(20px,min(calc((100vw - 48px)/(var(--n) + var(--cw))),calc((100dvh - 360px)/(var(--n) + var(--ch)))),60px);display:grid;
   grid-template-columns:calc(var(--cs)*var(--cw)) repeat(var(--n),var(--cs));grid-template-rows:calc(var(--cs)*var(--ch)) repeat(var(--n),var(--cs));touch-action:none;user-select:none}
@@ -44,8 +44,8 @@
 </style>
 </head>
 <body>
-<script src="../../shared/ts.js?v=f30d1a5c"></script>
-<script src="../../shared/kit.js?v=f30d1a5c"></script>
+<script src="../../shared/ts.js?v=3b582d24"></script>
+<script src="../../shared/kit.js?v=3b582d24"></script>
 <script>
 (()=>{
 /* Picture Logic (nonograms): the numbers say how many squares in a row (or column) are filled, in order, with gaps between groups.
@@ -126,7 +126,7 @@ function hint(){if(!S||K.busy)return;let i=S.cur.findIndex((v,k)=>v===1&&!S.sol[
   if(i>=0)S.cur[i]=2;else{i=S.cur.findIndex((v,k)=>S.sol[k]&&v!==1);if(i<0)return;S.cur[i]=1}
   S.hints++;const ok=draw();const p=S.el.querySelector('.px[data-i="'+i+'"]');p.classList.add("flash");setTimeout(()=>p.classList.remove("flash"),950);
   K.tip(S.cur[i]===1?"That square is part of the picture.":"That square should be empty.");if(ok)won()}
-K=TS_KIT({id:"pixels",name:"Picture Logic",levels:40,start,hint,label:n=>{const s=spec(n);return s.size+"×"+s.size}});
+K=TS_KIT({id:"pixels",howto:[["🔢", "The numbers say how many squares in a row (or column) are filled."], ["➖", "\"3 1\" means 3 filled squares, a gap, then 1 more."], ["👆", "Tap or drag to fill squares. Use ✕ for squares that must stay empty."], ["🖼️", "Match every clue and a picture appears!"]],point:()=>S.el.querySelector('.px[data-i="'+S.sol.indexOf(1)+'"]'),name:"Picture Logic",levels:40,start,hint,label:n=>{const s=spec(n);return s.size+"×"+s.size}});
 window.__game={get S(){return S},K,spec,PICS,runs};// for tools/test_games4.py
 K.start();
 })();

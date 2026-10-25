@@ -18,7 +18,7 @@ window.TS_KIT=function(o){
       '<button class="chip icon" id="kLevels" type="button" aria-label="Levels">'+svg(ICON.levels)+'</button>'+
       '<button class="chip icon" id="kMusic" type="button"></button></div>'+
       '<div class="lvl"><span class="lbl" id="kSub">'+o.name+'</span><div class="row1"><span class="lbl">Level</span><span class="num" id="kNum">1</span></div></div>'+
-      '<div class="stat"><b id="kS1"></b><span class="lbl" id="kS2"></span></div></header>'+
+      '<div class="right"><button class="chip icon help" id="kHelp" type="button" aria-label="How to play">?</button><div class="stat"><b id="kS1"></b><span class="lbl" id="kS2"></span></div></div></header>'+
     '<main class="stage" id="kStage"></main>'+
     '<nav class="controls"><button class="arrow" id="kPrev" type="button" aria-label="Previous level">‹</button>'+
       '<button id="kRestart" type="button">Restart</button><button id="kHint" type="button">Hint</button>'+
@@ -40,7 +40,7 @@ window.TS_KIT=function(o){
     load(n){n=Math.min(Math.max(1,n|0),LEVELS);
       if(TS.gate.pending(prog(),n)){$("kSheetWin").hidden=true;TS.gate.open(prog(),n,SAVE.save,K.load);return} // maths checkpoint first
       K.level=n;prog().last=n;SAVE.save();K.busy=false;
-      $("kSheetWin").hidden=true;K.stage.innerHTML="";K.tip("");K.stat("","");K.sub();nav();o.start(n)},
+      $("kSheetWin").hidden=true;K.stage.innerHTML="";K.tip("");K.stat("","");K.sub();nav();o.start(n);if(n===1&&!TS.howto.isOpen)setTimeout(showPoint,350)},
     win({stars,text,title}){K.busy=true;TS.music.fx("win");const pr=prog();
       pr.stars[K.level]=Math.max(pr.stars[K.level]||0,stars);TS.gate.afterWin(pr,K.level,LEVELS);if(K.level+1>pr.unlocked)pr.unlocked=Math.min(LEVELS,K.level+1);SAVE.save();
       setTimeout(()=>{$("kWinTitle").textContent=title||(K.level===LEVELS?"All "+LEVELS+" levels done!":"Level "+K.level+" done!");
@@ -66,7 +66,11 @@ window.TS_KIT=function(o){
   $("kCloseLevels").onclick=()=>{$("kSheetLevels").hidden=true};
   $("kSheetLevels").addEventListener("click",e=>{if(e.target===$("kSheetLevels"))$("kSheetLevels").hidden=true});
   $("kAll").onchange=e=>{save.all=e.target.checked;SAVE.save();drawPicker();nav()};
-  K.start=()=>K.load(prog().last||1);
+  /* How to play: o.howto is a list of [icon, text] steps; o.point() returns the element the 👆 finger points at on level 1. */
+  function showPoint(){if(K.level===1&&o.point&&!K.busy&&!TS.howto.isOpen&&!TS.math.isOpen){try{TS.point(o.point())}catch(e){}}}
+  function help(){TS.howto.show(o.id,o.name,o.howto||[],showPoint)}
+  $("kHelp").onclick=help;if(!o.howto)$("kHelp").hidden=true;
+  K.start=()=>{const first=o.howto&&!TS.howto.seen(o.id);K.load(prog().last||1);if(first)TS.howto.first(o.id,o.name,o.howto,showPoint)};
   return K};
 /* Colours for pattern and flood games, each with a shape so colour isn't the only clue. */
 window.TS_KIT.COLORS=[{c:"#e2412e",s:"●",name:"red"},{c:"#f2c230",s:"▲",name:"yellow"},{c:"#3b6fd9",s:"■",name:"blue"},

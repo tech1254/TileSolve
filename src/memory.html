@@ -84,7 +84,7 @@ function flip(i){if(K.busy||S.lock||S.done.has(i)||S.open.includes(i))return;
 function hint(){if(!S||K.busy)return;const left=[];S.deck.forEach((f,i)=>{if(!S.done.has(i)&&!S.open.includes(i))left.push(i)});if(!left.length)return;
   const f=S.deck[left[0]],pair=left.filter(i=>S.deck[i]===f);pair.forEach(i=>S.btns[i].classList.add("peek"));K.tip("Here's a pair! Remember where they are.");
   setTimeout(()=>pair.forEach(i=>S.btns[i].classList.remove("peek")),1500)}
-K=TS_KIT({id:"memory",name:"Memory Match",levels:40,start,hint,label:n=>{const s=spec(n);return s.cols+"×"+s.rows}});
+K=TS_KIT({id:"memory",howto:[["🃏", "All the cards are face down."], ["👆", "Tap two cards to flip them over."], ["✅", "Same picture? They stay face up!"], ["🧠", "Different? They flip back, so remember where they were."]],point:()=>document.querySelector(".cardbtn"),name:"Memory Match",levels:40,start,hint,label:n=>{const s=spec(n);return s.cols+"×"+s.rows}});
 window.__game={get S(){return S},K,spec};// for tools/test_games.py
 K.start();
 })();

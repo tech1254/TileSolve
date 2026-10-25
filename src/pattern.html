@@ -80,7 +80,7 @@ function check(){if(K.busy||S.phase!=="build")return;S.phase="done";let wrong=0;
   else{document.getElementById("banner").textContent="Not quite";K.fail({title:"Nearly!",text:wrong+" tiles were different. The ✕ tiles shouldn't be coloured, and outlined tiles were missed. Watch again and have another go!"})}}
 /* Hint: a quick replay of the pattern, then back to what you'd built. */
 function hint(){if(!S||S.phase!=="build")return;watch(1200,"Look again!")}
-K=TS_KIT({id:"pattern",name:"Copy the Pattern",levels:40,start,hint,label:n=>{const s=spec(n);return s.size+"×"+s.size}});
+K=TS_KIT({id:"pattern",howto:[["👀", "Watch: some tiles light up for a moment."], ["🧠", "Remember where they were."], ["👆", "Then tap the same tiles and press Done."], ["🎨", "Later there are more colours: pick a colour, then tap."]],name:"Copy the Pattern",levels:40,start,hint,label:n=>{const s=spec(n);return s.size+"×"+s.size}});
 window.__game={get S(){return S},K,spec};// for tools/test_games.py
 K.start();
 })();

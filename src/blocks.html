@@ -119,7 +119,7 @@ function check(){if(!done())return;const st=S.oops<=1?3:S.oops<=4?2:1;
 function hint(){if(!S||K.busy)return;const wrong=S.pieces.filter(p=>!(p.at&&p.rot===0&&p.at[0]===p.sol[0]&&p.at[1]===p.sol[1]));if(!wrong.length)return;
   const p=wrong[0],{w}=S.sp,cells=new Set(p.cells.map(([r,c])=>(p.sol[0]+r)*w+p.sol[1]+c)),occ=occupied(p);
   cells.forEach(i=>{const q=occ.get(i);if(q)q.at=null});p.rot=0;p.at=p.sol.slice();layout();stats();p.el.classList.add("flash");K.tip("That block goes there!");check()}
-K=TS_KIT({id:"blocks",name:"Block Fit",levels:40,start,hint,label:n=>{const s=spec(n);return s.w+"×"+s.h}});
+K=TS_KIT({id:"blocks",howto:[["🟦", "The blocks are in the tray below the outline."], ["👆", "Drag each block into the outline."], ["✅", "Fill every square, with no gaps."], ["🔄", "Tap a block in the tray to turn it. Tap a placed block to take it back."]],point:()=>document.querySelector("#tray .pz i"),name:"Block Fit",levels:40,start,hint,label:n=>{const s=spec(n);return s.w+"×"+s.h}});
 window.__game={get S(){return S},K,spec,shape,fits};// for tools/test_games2.py
 K.start();
 })();

@@ -182,4 +182,26 @@ const gate={
   pending:(pr,level)=>pr.gate===level,
   open(pr,level,save,go){if(pr.gate!==level)return false;math.open(()=>{delete pr.gate;save();go(level)},{checkpoint:true});return true}};
 
-return{HOME,rngFrom,store,players,requirePlayer,gameSave,music,MUSIC_SVG,math,problem,gate}})();
+/* ---------- how to play ----------
+   howto.show(game, title, steps, onClose) shows a "How to play" card: steps are [icon, text] pairs.
+   howto.first(game, ...) shows it only the first time this player opens that game.
+   point(el) bounces a 👆 finger over an element until the player touches anything. */
+const howto=(()=>{let el=null,done=null;
+  const key=()=>{const p=players.current();return"tilesolve:p:"+(p?p.id:"none")+":seen"};
+  function build(){el=document.createElement("div");el.className="sheet";el.hidden=true;el.innerHTML='<div class="card ts-howto" role="dialog" aria-labelledby="tsHowT"><h2 id="tsHowT"></h2><ol class="ts-steps"></ol><button class="bigbtn" type="button">Let\'s play!</button></div>';
+    document.body.appendChild(el);el.querySelector(".bigbtn").onclick=close;el.addEventListener("click",e=>{if(e.target===el)close()})}
+  function show(game,title,steps,onClose){if(!el)build();el.querySelector("#tsHowT").textContent="How to play "+title;
+    el.querySelector(".ts-steps").innerHTML=steps.map(([i,t])=>'<li><span class="ts-ico" aria-hidden="true">'+i+"</span><span>"+t+"</span></li>").join("");
+    done=onClose;el.hidden=false;const seen=store.get(key(),{});seen[game]=1;store.set(key(),seen)}
+  function close(){if(el)el.hidden=true;const d=done;done=null;if(d)setTimeout(d,150)}
+  const seen=game=>!!store.get(key(),{})[game];
+  return{show,first(game,title,steps,onClose){if(seen(game))return false;show(game,title,steps,onClose);return true},seen,get isOpen(){return!!el&&!el.hidden}}})();
+let finger=null;
+function point(target){unpoint();if(!target)return;const r=target.getBoundingClientRect();if(!r.width)return;
+  finger=document.createElement("div");finger.className="ts-finger";finger.textContent="👆";finger.setAttribute("aria-hidden","true");
+  finger.style.left=(r.left+r.width/2)+"px";finger.style.top=(r.top+r.height*.55)+"px";document.body.appendChild(finger);
+  const off=()=>{unpoint();removeEventListener("pointerdown",off,true)};addEventListener("pointerdown",off,true);setTimeout(unpoint,12000)}
+function unpoint(){if(finger){finger.remove();finger=null}}
+addEventListener("resize",unpoint);
+
+return{HOME,rngFrom,store,players,requirePlayer,gameSave,music,MUSIC_SVG,math,problem,gate,howto,point}})();

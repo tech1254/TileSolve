@@ -63,3 +63,14 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--paint);outline-
 .keys .ok{background:var(--paint);color:var(--night);border-color:var(--paint)}
 .keys .del{font-family:var(--font-body);font-weight:700;font-size:16px}
 @media (prefers-reduced-motion:reduce){.slot.bad{animation:none}}
+
+/* How to play card and pointing finger */
+.ts-howto{gap:16px}
+.ts-steps{list-style:none;margin:0;padding:0;display:grid;gap:12px}
+.ts-steps li{display:grid;grid-template-columns:52px 1fr;gap:12px;align-items:center;background:var(--asphalt);border-radius:14px;padding:10px 14px 10px 10px;font-size:17px;line-height:1.3}
+.ts-ico{width:52px;height:52px;border-radius:12px;background:#1b2027;display:grid;place-items:center;font-size:28px;line-height:1}
+.ts-howto .bigbtn{background:var(--paint);color:var(--night);border:0;border-radius:14px;padding:15px;font-weight:700;font-size:18px;cursor:pointer}
+.ts-finger{position:fixed;z-index:40;font-size:46px;line-height:1;pointer-events:none;transform:translate(-30%,0);filter:drop-shadow(0 4px 6px rgba(0,0,0,.5));animation:ts-tap 1s ease-in-out infinite}
+@keyframes ts-tap{50%{transform:translate(-30%,-14px)}}
+.chip.help{font-size:18px;font-weight:700;text-transform:none}
+@media (prefers-reduced-motion:reduce){.ts-finger{animation:none}}

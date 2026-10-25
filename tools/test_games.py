@@ -28,7 +28,7 @@ def go_level(pg, n):
 
 with sync_playwright() as p:
     b = p.chromium.launch()
-    ctx = b.new_context(viewport={"width": 390, "height": 844}, device_scale_factor=2); ctx.add_init_script(INIT)
+    ctx = b.new_context(viewport={"width": 390, "height": 844}, device_scale_factor=2); ctx.add_init_script(INIT); ctx.add_init_script(tsutil.INIT)
     errors = []
     def page():
         pg = ctx.new_page()
@@ -136,7 +136,7 @@ with sync_playwright() as p:
     pg.close()
 
     # ================= iPad touch =================
-    tctx = b.new_context(**p.devices["iPad Mini"]); tctx.add_init_script(INIT)
+    tctx = b.new_context(**p.devices["iPad Mini"]); tctx.add_init_script(INIT); tctx.add_init_script(tsutil.INIT)
     tp = tctx.new_page(); tp.on("pageerror", lambda e: errors.append(str(e)))
     tp.goto(URL("memory")); tp.wait_for_timeout(2400)
     deck = tp.evaluate("__game.S.deck"); j = next(k for k in range(1, len(deck)) if deck[k] == deck[0])

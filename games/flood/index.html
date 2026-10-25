@@ -15,8 +15,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Barlow:wght@400;600;700&display=swap">
-<link rel="stylesheet" href="../../shared/ts.css?v=f30d1a5c">
-<link rel="stylesheet" href="../../shared/game.css?v=f30d1a5c">
+<link rel="stylesheet" href="../../shared/ts.css?v=3b582d24">
+<link rel="stylesheet" href="../../shared/game.css?v=3b582d24">
 <style>
 .fgrid{--bw:max(220px,min(calc(100vw - 52px),520px,calc(100dvh - 330px)));width:var(--bw);height:var(--bw);display:grid;grid-template-columns:repeat(var(--n),1fr);
   border-radius:10px;overflow:hidden;touch-action:none;cursor:pointer}
@@ -27,8 +27,8 @@
 </style>
 </head>
 <body>
-<script src="../../shared/ts.js?v=f30d1a5c"></script>
-<script src="../../shared/kit.js?v=f30d1a5c"></script>
+<script src="../../shared/ts.js?v=3b582d24"></script>
+<script src="../../shared/kit.js?v=3b582d24"></script>
 <script>
 (()=>{
 /* Color Flood: your colour starts at the ★ corner. Pick a colour to flood into every touching tile of that colour.
@@ -89,7 +89,7 @@ function choose(c){if(K.busy||!S||c===S.g[0])return;const prev=S.g;S.g=move(S.g,
 /* Hint: flash the colour the solver would pick next. */
 function hint(){if(!S||K.busy)return;const sol=solve(S.g,S.N,S.sp.colors);if(!sol||!sol.length)return;
   const b=document.querySelector('#pal button[data-c="'+sol[0]+'"]');b.classList.add("hint");K.tip("Hint: try "+C[sol[0]].name+" "+C[sol[0]].s+" next.")}
-K=TS_KIT({id:"flood",name:"Color Flood",levels:40,start,hint,label:n=>{const s=spec(n);return s.size+"×"+s.size}});
+K=TS_KIT({id:"flood",howto:[["★", "Your colour starts in the star corner."], ["👆", "Pick a colour. Your area grows into touching tiles of that colour."], ["🌈", "Make the whole board one colour."], ["🔢", "Do it before you run out of moves!"]],point:()=>document.querySelector("#pal button:not(:disabled)"),name:"Color Flood",levels:40,start,hint,label:n=>{const s=spec(n);return s.size+"×"+s.size}});
 window.__game={get S(){return S},K,spec,solve,choose};// for tools/test_games.py
 K.start();
 })();

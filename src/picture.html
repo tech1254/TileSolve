@@ -121,6 +121,7 @@ body{overflow:hidden}
   <div class="ptools">
     <button class="chip" id="btnLook" type="button">👀 See the picture</button>
     <button class="chip" id="btnGhost" type="button" aria-pressed="false">Faint picture: off</button>
+    <button class="chip help" id="btnHelp" type="button" aria-label="How to play">?</button>
   </div>
   <main class="stage" id="stage">
     <div class="frame"><div class="board" id="board"></div></div>
@@ -225,7 +226,14 @@ async function load(n){if(TS.gate.pending(prog(),n)){$("sheetWin").hidden=true;T
   $("stage").classList.toggle("drop",mode==="drop");tray.hidden=mode!=="drop";
   if(mode==="drop")startDrop();else await startSlide(my);
   drawGhost();
-  if(my!==token)return;busy=false;hud()}
+  if(my!==token)return;busy=false;hud();
+  if(!TS.howto.first("picture-"+mode,HOWNAME[mode],HOWTO[mode],picPoint)&&n===1)setTimeout(picPoint,350)}
+/* How to play, one card per mode; the 👆 finger points at a piece (Drop-in) or the tile to slide (Slider) on level 1. */
+const HOWNAME={drop:"Drop-in pictures",slide:"Slider pictures"};
+const HOWTO={drop:[["🧩","Pieces of a picture are in the tray."],["👆","Drag each piece to its place on the board."],["👀","Tap 👀 to see the whole picture, or turn on the faint picture."],["🔄","Later, pieces are turned: tap one to turn it."]],
+  slide:[["🔲","One square is empty."],["👆","Tap or drag a tile next to the gap to slide it in."],["🖼️","Keep sliding until the picture is back together."],["👀","Tap 👀 to see how it should look."]]};
+function picPoint(){if(!L||L.n!==1||busy||!S||TS.howto.isOpen||TS.math.isOpen)return;
+  if(mode==="drop"){const p=S.pieces.find(q=>!q.done);if(p)TS.point(p.el)}else{const t=nextMove();if(t>=0)TS.point(S.els[S.cells[t]])}}
 
 function win(text,stars){busy=true;Music.fx("win");const pr=prog();
   pr.stars[L.n]=Math.max(pr.stars[L.n]||0,stars);TS.gate.afterWin(pr,L.n,LEVELS);if(L.n+1>pr.unlocked)pr.unlocked=Math.min(LEVELS,L.n+1);persist();
@@ -364,6 +372,7 @@ $("btnPeek").onclick=()=>peek(true);$("btnLook").onclick=()=>peek(true);$("peek"
 function drawGhost(){const on=!!save.ghost,b=$("btnGhost");b.setAttribute("aria-pressed",String(on));b.textContent="Faint picture: "+(on?"on":"off");
   b.hidden=mode!=="drop";let g=board.querySelector(".ghostimg");
   if(on&&mode==="drop"&&url){if(!g){g=document.createElement("div");g.className="ghostimg";board.prepend(g)}g.style.backgroundImage='url("'+url+'")'}else if(g)g.remove()}
+$("btnHelp").onclick=()=>TS.howto.show("picture-"+mode,HOWNAME[mode],HOWTO[mode],picPoint);
 $("btnGhost").onclick=()=>{save.ghost=!save.ghost;persist();drawGhost()};
 
 function openModes(first){document.querySelectorAll(".modes button").forEach(b=>b.classList.toggle("cur",!first&&b.dataset.mode===mode));

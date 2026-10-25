@@ -15,8 +15,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Barlow:wght@400;600;700&display=swap">
-<link rel="stylesheet" href="../../shared/ts.css?v=f30d1a5c">
-<link rel="stylesheet" href="../../shared/game.css?v=f30d1a5c">
+<link rel="stylesheet" href="../../shared/ts.css?v=3b582d24">
+<link rel="stylesheet" href="../../shared/game.css?v=3b582d24">
 <style>
 .pgrid{--cs:clamp(40px,min(calc((100vw - 60px)/var(--n)),calc((100dvh - 330px)/var(--n))),96px);display:grid;grid-template-columns:repeat(var(--n),var(--cs));grid-auto-rows:var(--cs);
   gap:3px;background:#3a2e22;padding:6px;border-radius:14px;box-shadow:inset 0 0 0 3px #5a4632}
@@ -35,8 +35,8 @@
 </style>
 </head>
 <body>
-<script src="../../shared/ts.js?v=f30d1a5c"></script>
-<script src="../../shared/kit.js?v=f30d1a5c"></script>
+<script src="../../shared/ts.js?v=3b582d24"></script>
+<script src="../../shared/kit.js?v=3b582d24"></script>
 <script>
 (()=>{
 /* Pipe Connect: tap pipes to turn them until water from the tap 💧 reaches every flower and no pipe end is left open.
@@ -91,7 +91,7 @@ function hint(){if(!S||K.busy)return;const{wet}=flow(),N=S.N,wrong=[];
   while(cur(near)!==S.sol[near])S.turns[near]++;draw();S.cells[near].classList.add("flash");setTimeout(()=>S.cells[near].classList.remove("flash"),900);
   K.tip("That pipe is turned the right way now.");const{wet:w,leak}=flow();
   if(w.size===N*N&&!leak){S.el.classList.add("won");const st=S.taps<=S.par+2?3:S.taps<=S.par*2+4?2:1;K.win({stars:st,text:"All flowers watered!"})}}
-K=TS_KIT({id:"pipes",name:"Pipe Connect",levels:40,start,hint,label:n=>{const s=spec(n);return s.size+"×"+s.size}});
+K=TS_KIT({id:"pipes",howto:[["💧", "Water comes from the tap."], ["👆", "Tap a pipe to turn it."], ["🌷", "Join the pipes so water reaches every flower."], ["🚫", "Don't leave any pipe ends open!"]],point:()=>{const i=S.sol.findIndex((m,k)=>cur(k)!==m);return S.cells[i<0?0:i]},name:"Pipe Connect",levels:40,start,hint,label:n=>{const s=spec(n);return s.size+"×"+s.size}});
 window.__game={get S(){return S},K,spec,cur};// for tools/test_games3.py
 K.start();
 })();

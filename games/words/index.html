@@ -15,8 +15,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Barlow:wght@400;600;700&display=swap">
-<link rel="stylesheet" href="../../shared/ts.css?v=f30d1a5c">
-<link rel="stylesheet" href="../../shared/game.css?v=f30d1a5c">
+<link rel="stylesheet" href="../../shared/ts.css?v=3b582d24">
+<link rel="stylesheet" href="../../shared/game.css?v=3b582d24">
 <style>
 .clue{font-size:clamp(64px,22vw,110px);line-height:1;filter:drop-shadow(0 6px 10px rgba(0,0,0,.4));min-height:1em}
 .slots,.letters{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;max-width:600px}
@@ -35,8 +35,8 @@
 </style>
 </head>
 <body>
-<script src="../../shared/ts.js?v=f30d1a5c"></script>
-<script src="../../shared/kit.js?v=f30d1a5c"></script>
+<script src="../../shared/ts.js?v=3b582d24"></script>
+<script src="../../shared/kit.js?v=3b582d24"></script>
 <script>
 (()=>{
 /* Word Builder: tap the letter tiles in order to spell the picture's word. Tap a placed letter to send it back.
@@ -84,7 +84,7 @@ function hint(){if(!S||K.busy)return;const k=S.slots.findIndex((t,j)=>t<0||S.til
   let t=S.tiles.find(x=>x.at<0&&x.ch===S.word[k]);
   if(!t){const j=S.slots.findIndex((x,m)=>m!==k&&x>=0&&S.tiles[x].ch===S.word[k]&&!S.fixed.has(m));if(j<0)return;t=S.tiles[S.slots[j]];S.slots[j]=-1;t.at=-1}
   t.at=k;S.slots[k]=t.i;S.fixed.add(k);draw();K.tip("Letter "+(k+1)+" is "+S.word[k].toUpperCase()+".");if(S.slots.indexOf(-1)<0)check()}
-K=TS_KIT({id:"words",name:"Word Builder",levels:40,start,hint,label:n=>{const b=spec(n).band;return(b>=8?"8+":b)+" letters"}});
+K=TS_KIT({id:"words",howto:[["🖼️", "Look at the picture."], ["👆", "Tap the letters in order to spell its name."], ["↩️", "Tap a placed letter to take it back."], ["⚠️", "Later, some letters don't belong in the word!"]],point:()=>{const t=S.tiles.find(x=>x.ch===S.word[0]);return document.querySelector('.letters .lt[data-t="'+t.i+'"]')},name:"Word Builder",levels:40,start,hint,label:n=>{const b=spec(n).band;return(b>=8?"8+":b)+" letters"}});
 window.__game={get S(){return S},K,spec,LIST};// for tools/test_games2.py
 K.start();
 })();

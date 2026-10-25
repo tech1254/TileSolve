@@ -68,7 +68,7 @@ function hint(){if(!S||K.busy)return;const k=S.slots.findIndex((t,j)=>t<0||S.til
   let t=S.tiles.find(x=>x.at<0&&x.ch===S.word[k]);
   if(!t){const j=S.slots.findIndex((x,m)=>m!==k&&x>=0&&S.tiles[x].ch===S.word[k]&&!S.fixed.has(m));if(j<0)return;t=S.tiles[S.slots[j]];S.slots[j]=-1;t.at=-1}
   t.at=k;S.slots[k]=t.i;S.fixed.add(k);draw();K.tip("Letter "+(k+1)+" is "+S.word[k].toUpperCase()+".");if(S.slots.indexOf(-1)<0)check()}
-K=TS_KIT({id:"words",name:"Word Builder",levels:40,start,hint,label:n=>{const b=spec(n).band;return(b>=8?"8+":b)+" letters"}});
+K=TS_KIT({id:"words",howto:[["🖼️", "Look at the picture."], ["👆", "Tap the letters in order to spell its name."], ["↩️", "Tap a placed letter to take it back."], ["⚠️", "Later, some letters don't belong in the word!"]],point:()=>{const t=S.tiles.find(x=>x.ch===S.word[0]);return document.querySelector('.letters .lt[data-t="'+t.i+'"]')},name:"Word Builder",levels:40,start,hint,label:n=>{const b=spec(n).band;return(b>=8?"8+":b)+" letters"}});
 window.__game={get S(){return S},K,spec,LIST};// for tools/test_games2.py
 K.start();
 })();

@@ -15,7 +15,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Barlow:wght@400;600;700&display=swap">
-<link rel="stylesheet" href="../../shared/ts.css?v=f30d1a5c">
+<link rel="stylesheet" href="../../shared/ts.css?v=3b582d24">
 <style>
 /* Layout: one-screen night parking garage. HUD on top, asphalt lot in the middle, thumb controls at the bottom. */
 body{overflow:hidden}
@@ -25,6 +25,7 @@ body{overflow:hidden}
 .left{display:flex;gap:6px;align-items:center}
 .lvl{display:flex;align-items:baseline;gap:8px;justify-content:center}
 .num{font-family:var(--font-sign);font-size:30px;line-height:1;color:var(--paint);font-variant-numeric:tabular-nums}
+.right{display:flex;justify-content:flex-end;align-items:center;gap:8px}
 .stat{display:grid;justify-items:end;gap:2px;font-variant-numeric:tabular-nums}
 .stat #moves{font-family:var(--font-sign);font-size:22px;line-height:1}
 .stat b{color:var(--text)}
@@ -89,7 +90,7 @@ body{overflow:hidden}
       <button class="chip icon" id="btnMusic" type="button"></button>
     </div>
     <div class="lvl"><span class="lbl">Level</span><span class="num" id="lvlNum">1</span></div>
-    <div class="stat"><span id="moves">0</span><span class="lbl">Moves · Par <b id="par">–</b></span></div>
+    <div class="right"><button class="chip icon help" id="btnHelp" type="button" aria-label="How to play">?</button><div class="stat"><span id="moves">0</span><span class="lbl">Par <b id="par">–</b></span></div></div>
   </header>
   <main class="stage">
     <div class="lot">
@@ -126,7 +127,7 @@ body{overflow:hidden}
   </div>
 </div>
 
-<script src="../../shared/ts.js?v=f30d1a5c"></script>
+<script src="../../shared/ts.js?v=3b582d24"></script>
 <script>
 (()=>{
 const PLAYER=TS.requirePlayer(),Music=TS.music;
@@ -229,7 +230,7 @@ function load(n){
     const col=i===0?"var(--target)":c.len===3?TRUCKS[ti++%TRUCKS.length]:COLORS[ci++%COLORS.length];
     el.style.setProperty("--c",col);el.appendChild(document.createElement("i"));
     gridEl.appendChild(el);els.push(el);place(i)});
-  hud()}
+  hud();if(n===1&&!TS.howto.isOpen)setTimeout(carPoint,350)}
 
 function range(i){const c=L.cars[i],g=new Int8Array(36);fillGrid(pos,L.cars,g,i);let lo=pos[i],hi=pos[i];
   if(c.h){const b=c.f*6;while(lo>0&&g[b+lo-1]<0)lo--;while(hi+c.len<6&&g[b+hi+c.len]<0)hi++}
@@ -304,7 +305,12 @@ $("unlockAll").onchange=e=>{save.all=e.target.checked;persist();drawPicker();hud
 document.querySelectorAll(".sheet").forEach(s=>s.addEventListener("click",e=>{if(e.target===s&&s.id==="sheetLevels")s.hidden=true}));
 
 window.__tilesolve={targetPar,getLevel,solveNext,PARS};// for tools/test.py
+/* How to play: shown the first time; the 👆 finger points at the car to move first on level 1. */
+const HOWTO=[["🚗","Cars slide along their lanes, forwards and backwards."],["👆","Drag a car to move it."],["🔴","Get the red car out through the EXIT on the right."],["⭐","Fewer moves means more stars. Par is the fewest possible."]];
+function carPoint(){if(level!==1||busy||!L||TS.howto.isOpen||TS.math.isOpen)return;const s=solveNext(L.cars,pos);TS.point(els[s?s.i:0])}
+$("btnHelp").onclick=()=>TS.howto.show("car","Unblock the Car",HOWTO,carPoint);
 load(Math.min(Math.max(1,prog().last|0),TOTAL));
+TS.howto.first("car","Unblock the Car",HOWTO,carPoint);
 })();
 </script>
 

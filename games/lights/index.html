@@ -15,8 +15,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Barlow:wght@400;600;700&display=swap">
-<link rel="stylesheet" href="../../shared/ts.css?v=f30d1a5c">
-<link rel="stylesheet" href="../../shared/game.css?v=f30d1a5c">
+<link rel="stylesheet" href="../../shared/ts.css?v=3b582d24">
+<link rel="stylesheet" href="../../shared/game.css?v=3b582d24">
 <style>
 .lgrid{--cs:clamp(44px,min(calc((100vw - 70px)/var(--n)),calc((100dvh - 330px)/var(--n))),100px);display:grid;grid-template-columns:repeat(var(--n),var(--cs));grid-auto-rows:var(--cs);gap:10px;
   padding:14px;border-radius:20px;background:radial-gradient(circle at 50% 30%,#1e2636,#121620)}
@@ -30,8 +30,8 @@
 </style>
 </head>
 <body>
-<script src="../../shared/ts.js?v=f30d1a5c"></script>
-<script src="../../shared/kit.js?v=f30d1a5c"></script>
+<script src="../../shared/ts.js?v=3b582d24"></script>
+<script src="../../shared/kit.js?v=3b582d24"></script>
 <script>
 (()=>{
 /* Lights Out: tapping a light flips it and the lights next to it (up, down, left, right). Turn every light off.
@@ -75,7 +75,7 @@ function tap(i){if(K.busy)return;S.el.querySelectorAll(".lb.hint").forEach(b=>b.
 /* Hint: ring one light that's part of the fewest-taps answer from here. */
 function hint(){if(!S||K.busy)return;const s=solve(S.g,S.N);if(!s||!s.w)return;const i=s.x.indexOf(1);S.el.querySelector('.lb[data-i="'+i+'"]').classList.add("hint");
   K.tip("Try tapping the light with the blue ring.")}
-K=TS_KIT({id:"lights",name:"Lights Out",levels:40,start,hint,label:n=>{const s=spec(n);return s.size+"×"+s.size}});
+K=TS_KIT({id:"lights",howto:[["💡", "Some lights are on."], ["👆", "Tapping a light flips it and the lights next to it."], ["🌑", "Turn every light off."], ["⭐", "Fewer taps means more stars."]],point:()=>{const s=solve(S.g,S.N);return S.el.querySelector('.lb[data-i="'+(s?s.x.indexOf(1):0)+'"]')},name:"Lights Out",levels:40,start,hint,label:n=>{const s=spec(n);return s.size+"×"+s.size}});
 window.__game={get S(){return S},K,spec,solve};// for tools/test_games4.py
 K.start();
 })();
