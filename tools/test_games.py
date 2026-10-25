@@ -1,9 +1,10 @@
 """Browser tests for Memory Match, Copy the Pattern and Color Flood.  python3 tools/test_games.py [screenshot_dir]"""
 import sys, json, re, pathlib
 from playwright.sync_api import sync_playwright
+import tsutil
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-URL = lambda g: (ROOT / f"games/{g}/index.html").as_uri()
+URL = tsutil.URL
 OUT = pathlib.Path(sys.argv[1]) if len(sys.argv) > 1 else pathlib.Path(".")
 fails = []
 def check(ok, msg):
@@ -62,7 +63,7 @@ with sync_playwright() as p:
     pg.wait_for_timeout(1000)
     check(pg.is_visible("#kSheetWin") and pg.locator("#kWinStars .off").inner_text() == "", "finding all pairs wins (1 miss = 3 stars)")
     pg.screenshot(path=str(OUT / "mem-win.png"))
-    unlock_all(pg, "memory"); pg.reload(); pg.wait_for_timeout(200)
+    tsutil.unlock_all(pg, "memory", reload=True)
     go_level(pg, 31)
     check(pg.locator(".cardbtn").count() == 30, "level 31 is a 30-card board (look-alikes)")
     pg.wait_for_timeout(300); pg.screenshot(path=str(OUT / "mem-big.png"))
@@ -92,7 +93,7 @@ with sync_playwright() as p:
     pg.click("#done"); pg.wait_for_timeout(700)
     check(pg.is_visible("#kSheetWin") and "Nearly" in pg.text_content("#kWinTitle") and pg.text_content("#kReplay") == "Try again", "too many mistakes: try again")
     pg.screenshot(path=str(OUT / "pat-fail.png"))
-    unlock_all(pg, "pattern"); pg.reload(); pg.wait_for_timeout(200)
+    tsutil.unlock_all(pg, "pattern", reload=True)
     go_level(pg, 12); pg.wait_for_function("__game.S && __game.S.phase==='build'", timeout=15000)
     check(pg.locator("#pal button").count() == 2, "level 12 has a two-colour palette")
     pg.click("#kHint"); solve_math(pg)
@@ -130,7 +131,7 @@ with sync_playwright() as p:
                     "const g=Int8Array.from({length:N*N},()=>Math.floor(r()*s.colors));const t0=performance.now(),sol=__game.solve(g,N,s.colors);"
                     "worst=Math.max(worst,performance.now()-t0);if(!sol)bad++}return [worst,bad]})()")
     check(t[1] == 0 and t[0] < 1500, f"solver handles every level (slowest {t[0]:.0f} ms)")
-    unlock_all(pg, "flood"); pg.reload(); pg.wait_for_timeout(200); go_level(pg, 35); pg.wait_for_timeout(300)
+    tsutil.unlock_all(pg, "flood", reload=True); go_level(pg, 35); pg.wait_for_timeout(300)
     pg.screenshot(path=str(OUT / "flood-big.png"))
     pg.close()
 

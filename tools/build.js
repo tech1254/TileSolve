@@ -65,6 +65,7 @@ const KIT=`<script src="../../shared/ts.js?v=__V__"></script>
 <script src="../../shared/kit.js?v=__V__"></script>`;
 for(const[src,out]of PAGES){
   let html=fs.readFileSync(path.join(ROOT,src),'utf8').replace(/<!--HEAD:([^>]*)-->/,(_,t)=>HEAD(t)).replace('<!--KIT-->',KIT)
-    .replace(/__V__/g,V).replace('"__BANK__"','"'+b64+'"');
+    .replace(/__V__/g,V).replace('"__BANK__"','"'+b64+'"')
+    .replace('__BOXBANK__',()=>fs.existsSync(path.join(__dirname,'box-bank.json'))?fs.readFileSync(path.join(__dirname,'box-bank.json'),'utf8'):'[]');
   fs.mkdirSync(path.dirname(path.join(ROOT,out)),{recursive:true});fs.writeFileSync(path.join(ROOT,out),html);
   console.log(out,(html.length/1024).toFixed(1)+'KB','v='+V)}

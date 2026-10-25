@@ -15,7 +15,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Barlow:wght@400;600;700&display=swap">
-<link rel="stylesheet" href="shared/ts.css?v=f78a34b8">
+<link rel="stylesheet" href="shared/ts.css?v=f30d1a5c">
 <style>
 body{overflow-y:auto}
 .app{min-height:100%;max-width:760px;margin:0 auto;box-sizing:border-box;display:flex;flex-direction:column;gap:22px;
@@ -110,7 +110,7 @@ h1{font-family:var(--font-sign);font-weight:400;font-size:clamp(26px,6vw,36px);m
   </form>
 </div>
 
-<script src="shared/ts.js?v=f78a34b8"></script>
+<script src="shared/ts.js?v=f30d1a5c"></script>
 <script>
 (()=>{
 const{players,music}=TS,$=id=>document.getElementById(id);
@@ -128,9 +128,9 @@ const GAMES=[
   {id:"words",name:"Word Builder",desc:"Unscramble the letter tiles",art:"🔤",href:"games/words/index.html",g:["#4fb3d9","#1f6585"]},
   {id:"sudoku",name:"Sudoku Light",desc:"Animals, colours, then numbers",art:"🐾",href:"games/sudoku/index.html",g:["#d9b37a","#80602d"]},
   {id:"pipes",name:"Pipe Connect",desc:"Turn pipes to water the flower",art:"🚰",href:"games/pipes/index.html",g:["#1f6f8b","#0e3a4a"]},
-  {id:"lights",name:"Lights Out",desc:"Switch every light off",art:"💡",g:["#c9a400","#6b5600"]},
-  {id:"pixels",name:"Picture Logic",desc:"Number clues hide a picture",art:"🖼️",g:["#7a4fb5","#3c2266"]},
-  {id:"boxes",name:"Box Push",desc:"Push crates onto the spots",art:"📦",g:["#b86b1f","#5e3409"]}];
+  {id:"lights",name:"Lights Out",desc:"Switch every light off",art:"💡",href:"games/lights/index.html",g:["#c9a400","#6b5600"]},
+  {id:"pixels",name:"Picture Logic",desc:"Number clues hide a picture",art:"🖼️",href:"games/pixels/index.html",g:["#7a4fb5","#3c2266"]},
+  {id:"boxes",name:"Box Push",desc:"Push crates onto the spots",art:"📦",href:"games/boxes/index.html",g:["#b86b1f","#5e3409"]}];
 
 let editing=false;
 music.button($("btnMusic"));$("btnMusic").innerHTML=TS.MUSIC_SVG;

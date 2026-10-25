@@ -5,8 +5,9 @@ import sys, re, pathlib
 from playwright.sync_api import sync_playwright
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-HOME = (ROOT / "index.html").as_uri()
-CAR = (ROOT / "games/car/index.html").as_uri()
+import tsutil
+HOME = tsutil.HOME_URL
+CAR = tsutil.URL("car")
 OUT = pathlib.Path(sys.argv[1]) if len(sys.argv) > 1 else pathlib.Path(".")
 fails = []
 def check(ok, msg):

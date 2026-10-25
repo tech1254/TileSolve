@@ -15,7 +15,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Barlow:wght@400;600;700&display=swap">
-<link rel="stylesheet" href="../../shared/ts.css?v=f78a34b8">
+<link rel="stylesheet" href="../../shared/ts.css?v=f30d1a5c">
 <style>
 body{overflow:hidden}
 .app{height:100%;display:flex;flex-direction:column;align-items:center;gap:12px;
@@ -160,8 +160,8 @@ body{overflow:hidden}
   </div>
 </div>
 
-<script src="../../shared/ts.js?v=f78a34b8"></script>
-<script src="../../shared/pictures.js?v=f78a34b8"></script>
+<script src="../../shared/ts.js?v=f30d1a5c"></script>
+<script src="../../shared/pictures.js?v=f30d1a5c"></script>
 <script>
 (()=>{
 const PLAYER=TS.requirePlayer(),Music=TS.music,PICS=window.TS_PICTURES,$=id=>document.getElementById(id);
@@ -190,7 +190,8 @@ function picURL(p){if(imgCache.has(p.id))return imgCache.get(p.id);
     const raw="data:image/svg+xml;charset=utf-8,"+encodeURIComponent(p.svg),im=new Image();
     im.onload=()=>{try{const c=document.createElement("canvas");c.width=c.height=1024;c.getContext("2d").drawImage(im,0,0,1024,1024);
         c.toBlob(b=>res(b?URL.createObjectURL(b):raw),"image/png")}catch(e){res(raw)}};
-    im.onerror=()=>res(raw);im.src=raw});
+    im.onerror=()=>res(raw);im.src=raw;
+    setTimeout(()=>res(raw),2000)}); // safety net: never leave the game waiting if the browser is slow to draw
   imgCache.set(p.id,pr);return pr}
 const bg=(el,url,n,r,c)=>{el.style.backgroundImage='url("'+url+'")';el.style.backgroundSize=n*100+"% "+n*100+"%";
   el.style.backgroundPosition=(n>1?c/(n-1)*100:0)+"% "+(n>1?r/(n-1)*100:0)+"%"};
@@ -206,7 +207,8 @@ function hud(){$("modeLbl").textContent=mode==="drop"?"Drop-in":"Slider";$("lvlN
   else{$("stat1").textContent=S.moves;$("stat2").textContent=S.par?"Par "+S.par:"Moves"}}
 const canPlay=n=>n>=1&&n<=LEVELS&&(save.all||n<=prog().unlocked);
 
-async function load(n){const my=++token;busy=true;closeDrag();
+async function load(n){if(TS.gate.pending(prog(),n)){$("sheetWin").hidden=true;TS.gate.open(prog(),n,persist,load);return} // maths checkpoint first
+  const my=++token;busy=true;closeDrag();
   L=spec(mode,n);prog().last=n;save.mode=mode;persist();
   board.innerHTML="";tray.innerHTML="";S=null;hud();tip(mode==="drop"?"":"Getting the tiles ready…");
   url=await picURL(L.pic);if(my!==token)return;
@@ -217,10 +219,10 @@ async function load(n){const my=++token;busy=true;closeDrag();
   if(my!==token)return;busy=false;hud()}
 
 function win(text,stars){busy=true;Music.fx("win");const pr=prog();
-  pr.stars[L.n]=Math.max(pr.stars[L.n]||0,stars);if(L.n+1>pr.unlocked)pr.unlocked=Math.min(LEVELS,L.n+1);persist();
+  pr.stars[L.n]=Math.max(pr.stars[L.n]||0,stars);TS.gate.afterWin(pr,L.n,LEVELS);if(L.n+1>pr.unlocked)pr.unlocked=Math.min(LEVELS,L.n+1);persist();
   setTimeout(()=>{$("winTitle").textContent="You made "+L.pic.name+"!";$("winPic").style.backgroundImage='url("'+url+'")';
     $("winStars").innerHTML="★".repeat(stars)+'<span class="off">'+"★".repeat(3-stars)+"</span>";$("winText").textContent=text;
-    $("btnWinNext").hidden=L.n>=LEVELS;$("sheetWin").hidden=false;hud()},700)}
+    $("btnWinNext").hidden=L.n>=LEVELS;$("btnWinNext").textContent=TS.gate.pending(pr,L.n+1)?"Maths, then next level":"Next level";$("sheetWin").hidden=false;hud()},700)}
 
 /* ================= Drop-in ================= */
 function startDrop(){const n=L.size,r=TS.rngFrom(L.seed),order=[];

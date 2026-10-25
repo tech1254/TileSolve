@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#161b21">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box;height:100%}body{margin:0}[hidden]{display:none!important}</style>
+<title>Picture Logic · Tile Solve</title>
+<meta name="apple-mobile-web-app-title" content="Tile Solve">
+<link rel="apple-touch-icon" href="../../icon-180.png">
+<link rel="icon" type="image/png" href="../../icon-512.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Barlow:wght@400;600;700&display=swap">
+<link rel="stylesheet" href="../../shared/ts.css?v=f30d1a5c">
+<link rel="stylesheet" href="../../shared/game.css?v=f30d1a5c">
+<style>
+.ng{--cs:clamp(20px,min(calc((100vw - 48px)/(var(--n) + var(--cw))),calc((100dvh - 360px)/(var(--n) + var(--ch)))),60px);display:grid;
+  grid-template-columns:calc(var(--cs)*var(--cw)) repeat(var(--n),var(--cs));grid-template-rows:calc(var(--cs)*var(--ch)) repeat(var(--n),var(--cs));touch-action:none;user-select:none}
+.ng .colclue{display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:1px;padding-bottom:3px;box-sizing:border-box}
+.ng .rowclue{display:flex;justify-content:flex-end;align-items:center;gap:calc(var(--cs)*.22);padding-right:5px;box-sizing:border-box}
+.ng .colclue b,.ng .rowclue b{font-weight:700;font-size:calc(var(--cs)*.5);line-height:1.05;color:var(--text);font-variant-numeric:tabular-nums}
+.ng .done b{color:#5c6773}
+.px{background:#e9e4d6;box-shadow:inset 0 0 0 .5px #b9b2a2;position:relative;cursor:pointer}
+.px.fill{background:#2a3140}
+.px.x::after{content:"✕";position:absolute;inset:0;display:grid;place-items:center;color:#a49c8b;font-size:calc(var(--cs)*.6);line-height:1}
+/* guide lines every 5 squares, drawn inside the square so the grid stays even */
+.px.r5{box-shadow:inset 0 -2px 0 #6e6759,inset 0 0 0 .5px #b9b2a2}
+.px.c5{box-shadow:inset -2px 0 0 #6e6759,inset 0 0 0 .5px #b9b2a2}
+.px.r5.c5{box-shadow:inset 0 -2px 0 #6e6759,inset -2px 0 0 #6e6759,inset 0 0 0 .5px #b9b2a2}
+.px.flash{animation:xflash .9s ease}
+@keyframes xflash{40%{box-shadow:inset 0 0 0 3px var(--paint)}}
+.ng.won .px{box-shadow:none;transition:background .4s}
+.ng.won .px.fill{background:var(--pc)}
+.ng.won .px.x::after{content:""}
+.modes2{display:flex;gap:10px;justify-content:center}
+.modes2 button{min-width:110px;padding:12px 16px;border-radius:14px;border:2px solid var(--lane);background:var(--panel);font-weight:700;font-size:16px;cursor:pointer;touch-action:manipulation}
+.modes2 button.cur{border-color:var(--paint);background:#3d3a24}
+.reveal{font-family:var(--font-sign);font-size:24px;color:var(--paint);min-height:1.2em;margin:0}
+@media (prefers-reduced-motion:reduce){.px.flash{animation:none}}
+</style>
+</head>
+<body>
+<script src="../../shared/ts.js?v=f30d1a5c"></script>
+<script src="../../shared/kit.js?v=f30d1a5c"></script>
+<script>
+(()=>{
+/* Picture Logic (nonograms): the numbers say how many squares in a row (or column) are filled, in order, with gaps between groups.
+   Fill the right squares and a hidden picture appears. Drag to fill several. Switch to ✕ to mark squares you know are empty.
+   5x5 first, then 8x8, then 10x10. Later levels may show a picture mirrored. Every picture can be solved by row/column logic alone (checked by tools/test_games4.py). */
+const PICS=[
+ ["Heart","#e2412e",".#.#.|#####|#####|.###.|..#.."],["House","#d9763a","..#..|.###.|#####|.#.#.|.#.#."],["Arrow","#3b6fd9","..#..|.###.|#.#.#|..#..|..#.."],
+ ["Plus","#6bb34a","..#..|..#..|#####|..#..|..#.."],["Smile","#f2b705",".#.#.|.#.#.|.....|#.#.#|.###."],["Tree","#2f9e5a","..#..|.###.|#####|..#..|..#.."],
+ ["Star","#f2c230","..#..|#####|.###.|.#.#.|#...#"],["Boat","#4fb3d9","..#..|..##.|..#..|#####|.###."],["Fish","#f08a24",".....|.##.#|#####|.##.#|....."],
+ ["Cat","#8f5bd6","#...#|##.##|#####|#.#.#|.###."],["Mushroom","#e2412e",".###.|#####|..#..|..#..|.###."],["Moon","#c9a400",".###.|##...|#....|##...|.###."],
+ ["Apple","#e2412e","....#...|...#....|.###.##.|########|########|########|.######.|..##.##."],
+ ["Ghost","#8f5bd6","..####..|.######.|##.##.##|##.##.##|########|########|########|##.##.##"],
+ ["Umbrella","#e06aa6","..####..|.######.|########|##.##.##|...##...|...##...|.#.##...|..##...."],
+ ["Crown","#f2b705","#.#..#.#|#.#..#.#|########|########|#.####.#|########|########|.######."],
+ ["Sun","#f08a24","...##...|.#.##.#.|..####..|########|########|..####..|.#.##.#.|...##..."],
+ ["Rocket","#3b6fd9","...##...|..####..|..#..#..|..####..|..####..|.######.|########|##.##.##"],
+ ["Kitty","#7a4fb5","#......#|##....##|########|#.####.#|########|##.##.##|.######.|..####.."],
+ ["Music","#2a9d8f","...#####|...#####|...#...#|...#...#|...#...#|.###.###|####.###|.##...#."],
+ ["Duck","#e6b800","..###...|.#.###..|#######.|..###...|.######.|########|.######.|..####.."],
+ ["Turtle","#3f8a34","..####..|.##..##.|########|##.##.##|########|.##..##.|.#....#.|##....##"],
+ ["Robot","#5d6874","..####..|.#....#.|.#.##.#.|.#....#.|..####..|########|#.####.#|..#..#.."],
+ ["Butterfly","#e06aa6","##....##|###..###|########|.######.|..####..|.######.|########|##....##"],
+ ["Big house","#b86b1f","...##...|..####..|.######.|########|.#....#.|.#.##.#.|.#.##.#.|.######."],
+ ["Big heart","#e2412e",".##..##.|########|########|########|.######.|..####..|...##...|...##..."],
+ ["Happy face","#f2b705","..######..|.########.|###.##.###|###.##.###|##########|##########|##.####.##|###....###|.########.|..######.."],
+ ["Shooting star","#f2c230","....##....|....##....|...####...|##########|.########.|..######..|..######..|.###..###.|.##....##.|##......##"],
+ ["Pine tree","#2f9e5a","....##....|...####...|..######..|....##....|..######..|.########.|##########|....##....|....##....|..######.."],
+ ["Toadstool","#e2412e","...####...|.##.##.##.|##########|#.##..##.#|##########|...#..#...|...#..#...|...#..#...|..######..|.########."],
+ ["Owl","#8a5a2b",".##....##.|.########.|#..####..#|#.#.##.#.#|#..#..#..#|.#..##..#.|.########.|.#.#..#.#.|.########.|..#....#.."],
+ ["Big fish","#f08a24","......#...|...####..#|..######.#|.##.#####.|##########|##########|.########.|..######.#|...####..#|......#..."],
+ ["Ice cream","#e06aa6","...####...|..######..|.########.|.##.##.##.|.########.|..######..|..#.##.#..|...####...|....##....|....##...."],
+ ["Space rocket","#3b6fd9","....##....|...####...|...#..#...|...####...|...####...|..######..|.##.##.##.|##..##..##|....##....|...#..#..."],
+ ["Alien","#6bb34a","..#....#..|...#..#...|..######..|.##.##.##.|##########|#.######.#|#.######.#|...#..#...|..##..##..|.##....##."],
+ ["Flower","#e06aa6","...#..#...|..######..|..######..|...####...|....##....|.##.##.##.|..####.#..|....##....|....##....|..######.."],
+ ["Sailboat","#4fb3d9","....#.....|....##....|....###...|....####..|....#####.|....#.....|##########|.########.|..######..|...####..."],
+ ["Puppy","#b86b1f",".##....##.|###.##.###|##########|#.##..##.#|##########|..######..|..##..##..|..######..|...####...|....##...."],
+ ["Cupcake","#e06aa6","....##....|...####...|..######..|.########.|##########|.#.#.#.#.#|.########.|..######..|..######..|...####..."],
+ ["Snowman","#4fb3d9","...####...|...####...|..######..|....##....|..######..|.##.##.##.|.########.|.########.|..######..|...####..."]
+].map(([name,col,s])=>({name,col,rows:s.split("|")}));
+const BY={5:PICS.filter(p=>p.rows.length===5),8:PICS.filter(p=>p.rows.length===8),10:PICS.filter(p=>p.rows.length===10)};
+let K,S=null;
+function pick(steps,n){let v=steps[0];for(const s of steps)if(n>=s[0])v=s;return v}
+const PLAN={1:[[1,5],[21,8]],2:[[1,5],[16,8],[34,10]],3:[[1,5],[11,8],[27,10]],4:[[1,5],[8,8],[22,10]],5:[[1,5],[5,8],[19,10]],6:[[1,8],[13,10]],7:[[1,8],[9,10]]};
+function spec(n){const[from,size]=pick(PLAN[K.grade],n),list=BY[size],k=n-from,pic=list[k%list.length];return{size,pic,mirror:Math.floor(k/list.length)%2===1}}
+const runs=a=>{const o=[];let c=0;for(const v of a){if(v)c++;else if(c){o.push(c);c=0}}if(c)o.push(c);return o.length?o:[0]};
+function start(n){const sp=spec(n),N=sp.size,rows=sp.pic.rows.map(r=>sp.mirror?r.split("").reverse().join(""):r),sol=[];
+  rows.forEach(r=>r.split("").forEach(ch=>sol.push(ch==="#"?1:0)));
+  const rc=[...Array(N).keys()].map(r=>runs(sol.slice(r*N,r*N+N))),cc=[...Array(N).keys()].map(c=>runs([...Array(N).keys()].map(r=>sol[r*N+c])));
+  K.stage.insertAdjacentHTML("beforeend",'<p class="reveal" id="rv"></p><div class="ng" id="ng"></div><div class="modes2"><button type="button" id="mFill" class="cur">■ Fill</button><button type="button" id="mX">✕ Empty</button></div>');
+  S={sp,N,sol,rc,cc,cur:new Array(N*N).fill(0),mode:1,hints:0,el:document.getElementById("ng"),drag:null};
+  const cw=Math.max(...rc.map(x=>x.length)),ch=Math.max(...cc.map(x=>x.length));S.el.style.setProperty("--n",N);S.el.style.setProperty("--cw",cw*.62+.4);S.el.style.setProperty("--ch",ch*.62+.3);
+  build();document.getElementById("mFill").onclick=()=>setMode(1);document.getElementById("mX").onclick=()=>setMode(2);
+  K.sub(sp.size+"×"+sp.size);K.tip("Numbers show groups of filled squares in each row and column. Fill squares to find the hidden picture!")}
+function setMode(m){S.mode=m;document.getElementById("mFill").classList.toggle("cur",m===1);document.getElementById("mX").classList.toggle("cur",m===2)}
+function build(){const N=S.N,el=S.el;el.innerHTML="";const corner=document.createElement("div");corner.className="corner";el.appendChild(corner);
+  S.cc.forEach((c,k)=>{const d=document.createElement("div");d.className="colclue";d.dataset.c=k;d.innerHTML=c.map(v=>"<b>"+v+"</b>").join("");el.appendChild(d)});
+  for(let r=0;r<N;r++){const d=document.createElement("div");d.className="rowclue";d.dataset.r=r;d.innerHTML=S.rc[r].map(v=>"<b>"+v+"</b>").join("");el.appendChild(d);
+    for(let c=0;c<N;c++){const p=document.createElement("div");p.className="px"+((r%5===4&&r<N-1)?" r5":"")+((c%5===4&&c<N-1)?" c5":"");p.dataset.i=r*N+c;el.appendChild(p)}}
+  draw()}
+const sameRuns=(a,b)=>a.length===b.length&&a.every((v,i)=>v===b[i]);
+function draw(){const N=S.N,filled=S.cur.map(v=>v===1?1:0);
+  S.el.querySelectorAll(".px").forEach(p=>{const v=S.cur[+p.dataset.i];p.className=p.className.replace(/ (fill|x)\b/g,"")+(v===1?" fill":v===2?" x":"")});
+  let ok=true;for(let r=0;r<N;r++){const d=sameRuns(runs(filled.slice(r*N,r*N+N)),S.rc[r]);S.el.querySelector('.rowclue[data-r="'+r+'"]').classList.toggle("done",d);ok=ok&&d}
+  for(let c=0;c<N;c++){const d=sameRuns(runs([...Array(N).keys()].map(r=>filled[r*N+c])),S.cc[c]);S.el.querySelector('.colclue[data-c="'+c+'"]').classList.toggle("done",d);ok=ok&&d}
+  const n=filled.reduce((a,b)=>a+b,0),need=S.sol.reduce((a,b)=>a+b,0);K.stat(n+"/"+need,"Filled");return ok}
+/* Painting: press on a square and drag; every square you pass gets the same change. */
+function cellAt(x,y){const el=document.elementFromPoint(x,y);return el&&el.classList.contains("px")&&S.el.contains(el)?+el.dataset.i:-1}
+function apply(i){if(i<0||S.drag.done.has(i))return;S.drag.done.add(i);S.cur[i]=S.drag.to;draw()}
+document.addEventListener("pointerdown",e=>{if(!S||K.busy)return;const i=cellAt(e.clientX,e.clientY);if(i<0)return;e.preventDefault();
+  const target=S.mode;S.drag={to:S.cur[i]===target?0:target,done:new Set(),id:e.pointerId};apply(i);TS.music.fx("tap")});
+document.addEventListener("pointermove",e=>{if(!S||!S.drag||e.pointerId!==S.drag.id)return;apply(cellAt(e.clientX,e.clientY))});
+function end(e){if(!S||!S.drag)return;S.drag=null;if(draw())won()}
+document.addEventListener("pointerup",end);document.addEventListener("pointercancel",end);
+function won(){if(K.busy)return;S.el.classList.add("won");S.el.style.setProperty("--pc",S.sp.pic.col);document.getElementById("rv").textContent="It's a "+S.sp.pic.name.toLowerCase()+"!";
+  const st=S.hints===0?3:S.hints<=2?2:1;K.win({stars:st,title:"You found the "+S.sp.pic.name.toLowerCase()+"!",text:S.sp.size+"×"+S.sp.size+" picture"+(S.hints?" · "+S.hints+" hint"+(S.hints>1?"s":""):" · no hints")})}
+/* Hint: fix one wrong square, or fill one square that belongs in the picture. */
+function hint(){if(!S||K.busy)return;let i=S.cur.findIndex((v,k)=>v===1&&!S.sol[k]);
+  if(i>=0)S.cur[i]=2;else{i=S.cur.findIndex((v,k)=>S.sol[k]&&v!==1);if(i<0)return;S.cur[i]=1}
+  S.hints++;const ok=draw();const p=S.el.querySelector('.px[data-i="'+i+'"]');p.classList.add("flash");setTimeout(()=>p.classList.remove("flash"),950);
+  K.tip(S.cur[i]===1?"That square is part of the picture.":"That square should be empty.");if(ok)won()}
+K=TS_KIT({id:"pixels",name:"Picture Logic",levels:40,start,hint,label:n=>{const s=spec(n);return s.size+"×"+s.size}});
+window.__game={get S(){return S},K,spec,PICS,runs};// for tools/test_games4.py
+K.start();
+})();
+</script>
+</body>
+</html>

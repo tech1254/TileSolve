@@ -220,6 +220,7 @@ function clearHint(){if(ghost){ghost.remove();ghost=null}els.forEach(e=>e.classL
 function tip(t){$("tip").textContent=t||"Drag cars along their lanes. Slide the red car out the exit."}
 
 function load(n){
+  if(TS.gate.pending(prog(),n)){$("sheetWin").hidden=true;TS.gate.open(prog(),n,persist,load);return} // maths checkpoint first
   level=n;prog().last=n;persist();busy=false;gridEl.innerHTML="";els=[];
   L=getLevel(GRADE,n);pos=L.pos.slice();hist=[];moves=0;tip();
   let ci=n%COLORS.length,ti=n%TRUCKS.length;
@@ -259,13 +260,13 @@ gridEl.addEventListener("pointerup",endDrag);gridEl.addEventListener("pointercan
 function win(){busy=true;const el=els[0];Music.fx("win");
   setTimeout(()=>{el.classList.add("leave");el.style.transform="translateX("+gridEl.clientWidth*0.75+"px)"},150);
   const s=moves<=L.par?3:moves<=Math.ceil(L.par*1.5)?2:1,pr=prog();
-  pr.stars[level]=Math.max(pr.stars[level]||0,s);
+  pr.stars[level]=Math.max(pr.stars[level]||0,s);TS.gate.afterWin(pr,level,TOTAL);
   if(level+1>pr.unlocked)pr.unlocked=Math.min(TOTAL,level+1);persist();
   setTimeout(()=>{
     $("winTitle").textContent=level===TOTAL?"All 1,000 levels cleared!":"Level "+level+" cleared";
     $("winStars").innerHTML="★".repeat(s)+'<span class="off">'+"★".repeat(3-s)+"</span>";
     $("winText").textContent=moves+" moves · par "+L.par+(s===3?" · perfect":"");
-    $("btnWinNext").hidden=level>=TOTAL;
+    $("btnWinNext").hidden=level>=TOTAL;$("btnWinNext").textContent=TS.gate.pending(pr,level+1)?"Maths, then next level":"Next level";
     $("sheetWin").hidden=false;hud()},750)}
 
 function showHint(){if(busy||!L)return;clearHint();const s=solveNext(L.cars,pos);if(!s)return;

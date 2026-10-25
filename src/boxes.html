@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!--HEAD:Box Push-->
+<style>
+.bb{--cs:clamp(28px,min(calc((100vw - 52px)/var(--w)),calc((100dvh - 420px)/var(--h))),72px);position:relative;width:calc(var(--cs)*var(--w));height:calc(var(--cs)*var(--h));touch-action:none}
+.bb .t{position:absolute;width:var(--cs);height:var(--cs);box-sizing:border-box}
+.bb .wall{background:#6b4f3a;background-image:linear-gradient(#5a4130 2px,transparent 2px),linear-gradient(90deg,#5a4130 2px,transparent 2px);
+  background-size:calc(var(--cs)/2) calc(var(--cs)/2);border-radius:4px;box-shadow:inset 0 -4px 0 rgba(0,0,0,.25)}
+.bb .floor{background:#d8cdb4;box-shadow:inset 0 0 0 .5px #c6b99c}
+.bb .goal::after{content:"";position:absolute;inset:26%;border-radius:50%;border:3px dashed #c0392b;background:rgba(226,65,46,.15)}
+.bb .crate,.bb .me{position:absolute;width:var(--cs);height:var(--cs);transition:left .11s linear,top .11s linear;box-sizing:border-box;pointer-events:none}
+.bb .crate{padding:calc(var(--cs)*.08)}
+.bb .crate i{display:block;width:100%;height:100%;border-radius:12%;background:#c98a2e;border:3px solid #8a5a1e;box-sizing:border-box;
+  background-image:linear-gradient(45deg,transparent 44%,#8a5a1e 44% 56%,transparent 56%),linear-gradient(-45deg,transparent 44%,#8a5a1e 44% 56%,transparent 56%);box-shadow:0 3px 4px rgba(0,0,0,.3)}
+.bb .crate.home i{background-color:#7cc25e;border-color:#3f7d3a;background-image:linear-gradient(45deg,transparent 44%,#3f7d3a 44% 56%,transparent 56%),linear-gradient(-45deg,transparent 44%,#3f7d3a 44% 56%,transparent 56%)}
+.bb .crate.hint i{animation:bxh .7s ease 3}
+@keyframes bxh{50%{transform:scale(1.1);box-shadow:0 0 0 4px var(--paint)}}
+.bb .me{display:grid;place-items:center;font-size:calc(var(--cs)*.72);line-height:1;filter:drop-shadow(0 2px 2px rgba(0,0,0,.4));z-index:2}
+.bb .arrow{position:absolute;width:var(--cs);height:var(--cs);display:grid;place-items:center;font-size:calc(var(--cs)*.6);color:var(--paint);font-weight:900;pointer-events:none;
+  text-shadow:0 0 4px #000;animation:bxh .7s ease 3;z-index:3}
+.under{display:flex;gap:18px;align-items:center;justify-content:center}
+.dpad{display:grid;grid-template-columns:repeat(3,54px);grid-template-rows:repeat(2,46px);gap:6px}
+.dpad button,.undo{border:1px solid var(--lane);background:var(--panel);border-radius:12px;font-size:22px;font-weight:700;cursor:pointer;touch-action:manipulation}
+.dpad .up{grid-column:2}.dpad .left{grid-column:1;grid-row:2}.dpad .down{grid-column:2;grid-row:2}.dpad .right{grid-column:3;grid-row:2}
+.undo{padding:12px 18px;font-size:16px}
+.undo:disabled{opacity:.35}
+@media (prefers-reduced-motion:reduce){.bb .crate,.bb .me{transition:none}.bb .crate.hint i,.bb .arrow{animation:none}}
+</style>
+</head>
+<body>
+<!--KIT-->
+<script>
+(()=>{
+/* Box Push: push every crate onto a red spot. You can push, never pull, so think before you shove!
+   Swipe, use the arrows, or tap a square to walk there. Undo takes back a move.
+   Levels were made backwards from the finished puzzle, so every one can be solved, and par is the fewest pushes. */
+const BANK=__BOXBANK__;
+let K,S=null;
+function pick(steps,n){let v=steps[0];for(const s of steps)if(n>=s[0])v=s;return v}
+// [fromLevel, crates, pushes at start of band, at end]
+const PLAN={1:[[1,1,2,6],[11,1,5,10],[21,2,4,10],[31,2,8,14]],2:[[1,1,3,7],[9,1,6,11],[17,2,5,12],[30,3,8,16]],3:[[1,1,3,8],[7,2,5,12],[17,2,10,17],[25,3,10,20],[33,3,16,26]],
+  4:[[1,1,4,10],[6,2,6,14],[16,3,8,18],[28,3,15,26]],5:[[1,2,5,12],[8,3,8,18],[20,3,14,26],[30,4,14,28]],6:[[1,2,6,14],[6,3,10,20],[18,4,12,26]],7:[[1,2,8,16],[5,3,12,24],[15,4,14,28]]};
+let PLANS={};
+function plan(){if(PLANS[K.grade])return PLANS[K.grade];const P=PLAN[K.grade],used=new Set(),out=[null];
+  for(let n=1;n<=40;n++){const b=pick(P,n),i=P.indexOf(b),to=i+1<P.length?P[i+1][0]-1:40,t=(n-b[0])/Math.max(1,to-b[0]),want=Math.round(b[2]+(b[3]-b[2])*t);
+    let best=-1,bs=1e9;BANK.forEach((l,k)=>{if(l.b!==b[1]||used.has(k))return;const s=Math.abs(l.p-want)*100+((k*2654435761+K.grade*97)>>>0)%97;if(s<bs){bs=s;best=k}});
+    if(best<0)best=n%BANK.length;used.add(best);out.push(BANK[best])}
+  return PLANS[K.grade]=out}
+const spec=n=>{const l=plan()[n];return{crates:l.b,par:l.p}};
+function start(n){const lv=plan()[n],rows=lv.r.split("|"),H=rows.length,W=rows[0].length,wall=[],goal=new Set(),boxes=[];let me=0;
+  rows.forEach((row,y)=>row.split("").forEach((ch,x)=>{const i=y*W+x;wall[i]=ch==="#";if(".*+".includes(ch))goal.add(i);if("$*".includes(ch))boxes.push(i);if("@+".includes(ch))me=i}));
+  K.stage.insertAdjacentHTML("beforeend",'<div class="frame"><div class="bb" id="bb"></div></div><div class="under"><button class="undo" id="undo" type="button">↶ Undo</button>'+
+    '<div class="dpad"><button class="up" type="button" aria-label="Up">▲</button><button class="left" type="button" aria-label="Left">◀</button><button class="down" type="button" aria-label="Down">▼</button><button class="right" type="button" aria-label="Right">▶</button></div></div>');
+  S={W,H,wall,goal,boxes,me,par:lv.p,moves:0,pushes:0,hist:[],walking:false,el:document.getElementById("bb")};
+  const el=S.el;el.style.setProperty("--w",W);el.style.setProperty("--h",H);
+  wall.forEach((w,i)=>{const t=document.createElement("div");t.className="t "+(w?"wall":"floor")+(goal.has(i)?" goal":"");t.style.left="calc(var(--cs)*"+(i%W)+")";t.style.top="calc(var(--cs)*"+((i/W)|0)+")";t.dataset.i=i;el.appendChild(t)});
+  S.boxEls=boxes.map(()=>{const d=document.createElement("div");d.className="crate";d.appendChild(document.createElement("i"));el.appendChild(d);return d});
+  S.meEl=document.createElement("div");S.meEl.className="me";S.meEl.textContent=K.player.avatar;el.appendChild(S.meEl);
+  document.getElementById("undo").onclick=undo;
+  [["up",-W],["down",W],["left",-1],["right",1]].forEach(([c,d])=>document.querySelector(".dpad ."+c).onclick=()=>step(d));
+  draw();K.sub("Par "+S.par+" pushes");K.tip("Push every crate onto a red spot. Swipe, use the arrows, or tap where to walk.")}
+const pos=(el,i)=>{el.style.left="calc(var(--cs)*"+(i%S.W)+")";el.style.top="calc(var(--cs)*"+((i/S.W)|0)+")"};
+function draw(){S.boxes.forEach((b,k)=>{pos(S.boxEls[k],b);S.boxEls[k].classList.toggle("home",S.goal.has(b))});pos(S.meEl,S.me);
+  S.el.querySelectorAll(".arrow").forEach(a=>a.remove());S.boxEls.forEach(e=>e.classList.remove("hint"));
+  document.getElementById("undo").disabled=!S.hist.length;const home=S.boxes.filter(b=>S.goal.has(b)).length;K.stat(home+"/"+S.boxes.length,"Crates home")}
+function step(d){if(K.busy||!S||S.walking)return false;const np=S.me+d;if(S.wall[np])return false;const k=S.boxes.indexOf(np);
+  if(k>=0){const nb=np+d;if(S.wall[nb]||S.boxes.includes(nb)){TS.music.fx("bad");return false}
+    S.hist.push({me:S.me,boxes:S.boxes.slice(),pushes:S.pushes,moves:S.moves});S.boxes[k]=nb;S.pushes++}
+  else S.hist.push({me:S.me,boxes:S.boxes.slice(),pushes:S.pushes,moves:S.moves});
+  S.me=np;S.moves++;TS.music.fx("tap");draw();after();return true}
+function after(){K.sub("Pushes "+S.pushes+" · par "+S.par);
+  if(S.boxes.every(b=>S.goal.has(b))){const st=S.pushes<=S.par?3:S.pushes<=S.par+4?2:1;K.win({stars:st,text:S.pushes+" pushes · "+S.moves+" steps · par "+S.par+(st===3?" · strong mover!":"")});return}
+  const W=S.W,stuck=S.boxes.some(b=>!S.goal.has(b)&&((S.wall[b-W]||S.wall[b+W])&&(S.wall[b-1]||S.wall[b+1])));
+  K.tip(stuck?"Uh oh, a crate is stuck in a corner. Tap Undo to take it back!":"Push every crate onto a red spot.")}
+function undo(){if(K.busy||!S||!S.hist.length||S.walking)return;const h=S.hist.pop();S.me=h.me;S.boxes=h.boxes;S.pushes=h.pushes;S.moves=h.moves;draw();after()}
+/* Tap to walk: shortest path around crates (never pushes). Tapping next to you just steps (and may push). */
+function walkTo(t){const W=S.W,d=t-S.me;if([1,-1,W,-W].includes(d))return step(d);if(S.wall[t]||S.boxes.includes(t))return;
+  const prev=new Map([[S.me,-1]]),q=[S.me];for(let h=0;h<q.length&&!prev.has(t);h++){const i=q[h];for(const dd of[1,-1,W,-W]){const j=i+dd;if(!S.wall[j]&&!S.boxes.includes(j)&&!prev.has(j)){prev.set(j,i);q.push(j)}}}
+  if(!prev.has(t))return;const path=[];for(let c=t;c!==S.me;c=prev.get(c))path.unshift(c);
+  S.walking=true;let k=0;const go=()=>{if(!S||k>=path.length){S.walking=false;return}S.walking=false;step(path[k]-S.me);S.walking=k<path.length-1;k++;if(S.walking)setTimeout(go,95)};go()}
+let sw=null;
+document.addEventListener("pointerdown",e=>{if(!S||K.busy||!e.target.closest("#bb"))return;e.preventDefault();sw={x:e.clientX,y:e.clientY,id:e.pointerId}});
+document.addEventListener("pointerup",e=>{if(!sw||e.pointerId!==sw.id)return;const dx=e.clientX-sw.x,dy=e.clientY-sw.y;sw=null;
+  if(Math.hypot(dx,dy)>24){step(Math.abs(dx)>Math.abs(dy)?(dx>0?1:-1):(dy>0?S.W:-S.W));return}
+  const r=S.el.getBoundingClientRect(),cs=r.width/S.W,c=Math.floor((e.clientX-r.left)/cs),rr=Math.floor((e.clientY-r.top)/cs);if(c>=0&&rr>=0&&c<S.W&&rr<S.H)walkTo(rr*S.W+c)});
+document.addEventListener("pointercancel",()=>{sw=null});
+addEventListener("keydown",e=>{if(!S||TS.math.isOpen)return;const m={ArrowUp:-S.W,ArrowDown:S.W,ArrowLeft:-1,ArrowRight:1}[e.key];if(m){e.preventDefault();step(m)}
+  else if(e.key==="z"||e.key==="Backspace")undo()});
+/* Hint: search for the fewest-pushes solution from here and show the next push. */
+function solveFrom(){const W=S.W,key=(bx,rep)=>bx.slice().sort((a,b)=>a-b).join(",")+"|"+rep;
+  const reach=(bx,from)=>{const bs=new Set(bx),seen=new Set([from]),q=[from];for(let h=0;h<q.length;h++){const i=q[h];for(const d of[1,-1,W,-W]){const j=i+d;if(!S.wall[j]&&!bs.has(j)&&!seen.has(j)){seen.add(j);q.push(j)}}}return seen};
+  const r0=reach(S.boxes,S.me),start={bx:S.boxes.slice(),reg:r0,first:null},seen=new Set([key(start.bx,Math.min(...r0))]),q=[start];
+  for(let h=0;h<q.length;h++){const s=q[h];if(s.bx.every(b=>S.goal.has(b)))return s.first;
+    for(let k=0;k<s.bx.length;k++){const b=s.bx[k];for(const d of[1,-1,W,-W]){const stand=b-d,to=b+d;if(!s.reg.has(stand)||S.wall[to]||s.bx.includes(to))continue;
+      const nb=s.bx.slice();nb[k]=to;const reg=reach(nb,b),kk=key(nb,Math.min(...reg));if(seen.has(kk))continue;seen.add(kk);
+      q.push({bx:nb,reg,first:s.first||{k,d,stand}})}}
+    if(q.length>120000)break}
+  return null}
+function hint(){if(!S||K.busy)return;const m=solveFrom();
+  if(!m){K.tip("Hmm, I can't find a way from here. Try Undo or Restart.");return}
+  const W=S.W,b=S.boxes[m.k];S.boxEls[m.k].classList.add("hint");const a=document.createElement("div");a.className="arrow";a.textContent={1:"▶",[-1]:"◀",[W]:"▼",[-W]:"▲"}[m.d];
+  a.style.left="calc(var(--cs)*"+((b+m.d)%W)+")";a.style.top="calc(var(--cs)*"+(((b+m.d)/W)|0)+")";S.el.appendChild(a);
+  K.tip("Push the flashing crate "+({1:"right",[-1]:"left",[W]:"down",[-W]:"up"}[m.d])+". Stand on the other side of it first.")}
+K=TS_KIT({id:"boxes",name:"Box Push",levels:40,start,hint,label:n=>{const s=spec(n);return s.crates+(s.crates>1?" crates":" crate")}});
+window.__game={get S(){return S},K,spec,step,solveFrom,plan};// for tools/test_games4.py
+K.start();
+})();
+</script>
+</body>
+</html>

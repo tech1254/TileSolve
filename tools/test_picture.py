@@ -3,7 +3,8 @@ import sys, json, re, pathlib
 from playwright.sync_api import sync_playwright
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-PAGE = (ROOT / "games/picture/index.html").as_uri()
+import tsutil
+PAGE = tsutil.URL("picture")
 OUT = pathlib.Path(sys.argv[1]) if len(sys.argv) > 1 else pathlib.Path(".")
 fails = []
 def check(ok, msg):

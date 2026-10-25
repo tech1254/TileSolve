@@ -99,13 +99,16 @@ const music=(()=>{
 const MUSIC_SVG='<svg class="on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg>'+
   '<svg class="off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/><path d="M3 3l18 18"/></svg>';
 
-/* ---------- maths for a hint ----------
-   Questions sit one grade below the player's grade (grade 3 gets grade 2 maths: adding and taking away within 100).
-   Three tries at the same question; after the third miss the answer is shown and a new question appears.
-   Closing keeps the question and tries, so it can't be skipped for an easier one. */
-function problem(level){const ri=(a,b)=>a+Math.floor(Math.random()*(b-a+1)),pick=a=>a[Math.floor(Math.random()*a.length)];
+/* ---------- maths: hint questions and level checkpoints ----------
+   Hint questions sit one grade below the player's grade (grade 3 gets grade 2 maths: adding and taking away within 100).
+   Checkpoints (before every 3rd new level) use an easier set from the same level: no carrying or borrowing,
+   smaller times tables. Three tries at the same question; after the third miss the answer is shown and a new
+   question appears. Closing a hint question keeps it and its tries, so it can't be skipped for an easier one. */
+function problem(level,easy){const ri=(a,b)=>a+Math.floor(Math.random()*(b-a+1)),pick=a=>a[Math.floor(Math.random()*a.length)];
   const op=(a,o,b,ans)=>({a,op:o,b,ans,slot:"c"}),add=(a,b)=>op(a,"+",b,a+b),sub=(a,b)=>op(a,"−",b,a-b),
     mul=(a,b)=>op(a,"×",b,a*b),div=(q,b)=>op(q*b,"÷",b,q),miss=(a,c)=>({a,op:"+",c,ans:c-a,slot:"b"});
+  // two-digit ± one-digit with no carrying/borrowing (e.g. 43 + 5, 68 − 3)
+  const noCarryAdd=()=>{const t=10*ri(1,8),u=ri(0,8),b=ri(1,9-u);return add(t+u,b)},noBorrowSub=()=>{const t=10*ri(1,9),u=ri(1,9),b=ri(1,u);return sub(t+u,b)};
   const T={
     1:[()=>add(ri(1,10),ri(1,10)),()=>{const a=ri(5,20);return sub(a,ri(1,Math.min(10,a)))},()=>{const a=ri(1,9);return miss(a,ri(a+1,Math.min(20,a+10)))}],
     2:[()=>{const b=ri(3,9);return add(ri(11,99-b),b)},()=>{const a=ri(10,79);return add(a,ri(10,99-a))},()=>sub(ri(12,99),ri(3,9)),
@@ -115,15 +118,23 @@ function problem(level){const ri=(a,b)=>a+Math.floor(Math.random()*(b-a+1)),pick
     4:[()=>mul(ri(2,10),ri(2,10)),()=>div(ri(2,10),ri(2,10)),()=>{const a=ri(300,999);return sub(a,ri(100,a-20))},()=>mul(ri(11,30),pick([2,3,4,5]))],
     5:[()=>mul(ri(12,99),ri(2,9)),()=>div(ri(2,12),ri(2,12)),()=>{const a=ri(1000,8999);return add(a,ri(100,9999-a))},()=>mul(ri(2,12),ri(2,12))],
     6:[()=>mul(ri(12,99),ri(3,9)),()=>div(ri(6,25),ri(3,9)),()=>{const a=ri(2000,9999);return sub(a,ri(500,a-100))},()=>mul(ri(11,25),ri(11,19))]};
+  const E={ // a little easier than the hint questions at the same level
+    1:[()=>add(ri(1,5),ri(1,5)),()=>{const a=ri(3,10);return sub(a,ri(1,a-1))},()=>{const a=ri(1,5);return miss(a,ri(a+1,10))}],
+    2:[noCarryAdd,noBorrowSub,()=>{const a=10*ri(1,8);return add(a,10*ri(1,9-a/10))},()=>{const a=10*ri(3,9);return sub(a,10*ri(1,a/10-1))},()=>{const a=ri(2,9);return add(a,a)},
+       ()=>{const a=ri(2,9);return miss(a,ri(a+2,Math.min(20,a+9)))}],
+    3:[()=>{const a=10*ri(1,7)+ri(0,4),b=10*ri(1,8-Math.floor(a/10))+ri(0,5);return add(a,b)},()=>mul(pick([2,5,10]),ri(1,10)),noBorrowSub,()=>{const a=100*ri(1,8);return add(a,100*ri(1,9-a/100))}],
+    4:[()=>mul(ri(2,6),ri(2,6)),()=>div(ri(2,5),ri(2,5)),()=>mul(pick([2,5,10]),ri(2,12)),()=>{const a=10*ri(20,90);return sub(a,10*ri(1,15))}],
+    5:[()=>mul(ri(2,10),ri(2,10)),()=>div(ri(2,10),ri(2,5)),()=>mul(ri(11,20),pick([2,3]))],
+    6:[()=>mul(ri(2,12),ri(2,12)),()=>div(ri(2,10),ri(2,10)),()=>mul(ri(12,40),pick([2,3,4]))]};
   // Weight the first kinds a little more so the gentlest question type comes up often.
-  const list=T[Math.max(1,Math.min(6,level))];return pick(list.concat([list[0]]))()}
+  const list=(easy?E:T)[Math.max(1,Math.min(6,level))];return pick(list.concat([list[0]]))()}
 const mathLevel=()=>{const p=players.current();return Math.max(1,Math.min(6,(p?p.grade:3)-1))};
 
 const math=(()=>{
-  const M={q:null,lvl:0,tries:3,entry:"",lock:false,mark:"",done:null};let el=null;
+  const blank=()=>({q:null,lvl:0,tries:3,entry:"",lock:false,mark:"",done:null}),Ms={hint:blank(),check:blank()};let M=Ms.hint,kind="hint",el=null;
   function build(){el=document.createElement("div");el.className="sheet";el.hidden=true;el.innerHTML=
     '<div class="card" role="dialog" aria-labelledby="tsMathT"><div class="row"><h2 id="tsMathT">Solve it for a hint!</h2><button class="close" type="button">Not now</button></div>'+
-    '<div class="prob" aria-live="polite"></div><div class="tries" aria-label="Tries left"></div><p class="fb" aria-live="polite"></p><div class="keys"></div></div>';
+    '<p class="result ts-sub" hidden></p><div class="prob" aria-live="polite"></div><div class="tries" aria-label="Tries left"></div><p class="fb" aria-live="polite"></p><div class="keys"></div></div>';
     document.body.appendChild(el);el.querySelector(".close").onclick=close;
     const keys=el.querySelector(".keys");
     ["1","2","3","4","5","6","7","8","9","del","0","ok"].forEach(k=>{const b=document.createElement("button");b.type="button";
@@ -132,20 +143,24 @@ const math=(()=>{
       if(k==="ok"){b.className="ok";b.setAttribute("aria-label","Check answer")}
       b.onclick=()=>press(k);keys.appendChild(b)});
     addEventListener("keydown",e=>{if(el.hidden)return;
-      if(/^[0-9]$/.test(e.key))press(e.key);else if(e.key==="Backspace")press("del");else if(e.key==="Enter")press("ok");else if(e.key==="Escape")close()})}
-  function newQ(){M.lvl=mathLevel();M.q=problem(M.lvl);M.tries=3;M.entry="";M.mark=""}
+      if(/^[0-9]$/.test(e.key))press(e.key);else if(e.key==="Backspace")press("del");else if(e.key==="Enter")press("ok");else if(e.key==="Escape"&&kind==="hint")close()})}
+  function newQ(){M.lvl=mathLevel();M.q=problem(M.lvl,kind==="check");M.tries=3;M.entry="";M.mark=""}
   const left=()=>M.tries<3?(M.tries===1?"Last try!":M.tries+" tries left"):"";
   function render(){const q=M.q,txt=M.entry||(M.mark==="show"?String(q.ans):"?");
     const slot='<span class="slot'+(M.entry||M.mark==="show"?"":" empty")+(M.mark?" "+M.mark:"")+'">'+txt+"</span>",s=x=>"<span>"+x+"</span>";
     el.querySelector(".prob").innerHTML=q.slot==="b"?s(q.a)+s(q.op)+slot+s("=")+s(q.c):s(q.a)+s(q.op)+s(q.b)+s("=")+slot;
     el.querySelector(".tries").innerHTML=[0,1,2].map(k=>'<i class="'+(k<M.tries?"":"used")+'"></i>').join("")}
   function fb(t,cls){const f=el.querySelector(".fb");f.textContent=t||"";f.className="fb"+(cls?" "+cls:"")}
-  function open(onSolved){if(!el)build();if(!M.q||M.lvl!==mathLevel())newQ();M.done=onSolved;M.entry="";M.mark="";M.lock=false;
-    render();fb(left());el.hidden=false}
+  /* open(onSolved) asks a hint question; open(onSolved,{checkpoint:true}) asks an easier checkpoint question that can't be closed. */
+  function open(onSolved,opts){if(!el)build();kind=opts&&opts.checkpoint?"check":"hint";M=Ms[kind];
+    el.dataset.kind=kind;el.querySelector("#tsMathT").textContent=kind==="check"?"Maths checkpoint!":"Solve it for a hint!";
+    const sub=el.querySelector(".ts-sub");sub.hidden=kind!=="check";sub.textContent="Answer this to unlock the next level.";
+    el.querySelector(".close").hidden=kind==="check";
+    if(!M.q||M.lvl!==mathLevel())newQ();M.done=onSolved;M.entry="";M.mark="";M.lock=false;render();fb(left());el.hidden=false}
   function close(){if(el)el.hidden=true}
   function check(){if(M.lock||!M.entry)return;
-    if(+M.entry===M.q.ans){M.lock=true;M.mark="good";render();fb("Correct! Here's your hint.","good");music.fx("good");
-      setTimeout(()=>{M.q=null;M.lock=false;close();M.done&&M.done()},900);return}
+    if(+M.entry===M.q.ans){M.lock=true;M.mark="good";render();fb(kind==="check"?"Correct! On to the next level.":"Correct! Here's your hint.","good");music.fx("good");
+      const m=M;setTimeout(()=>{m.q=null;m.lock=false;close();m.done&&m.done()},900);return}
     M.tries--;music.fx("bad");
     if(M.tries>0){M.mark="bad";render();M.entry="";M.mark="";
       fb(M.tries===1?"Not quite. Last try!":"Not quite. Try again! "+M.tries+" tries left","bad");
@@ -156,6 +171,15 @@ const math=(()=>{
     if(k==="ok")return check();
     if(k==="del")M.entry=M.entry.slice(0,-1);else if(M.entry.length<4)M.entry=(M.entry+k).replace(/^0+(?=\d)/,"");
     M.mark="";render();if(M.entry)fb(left())}
-  return{open,close,get isOpen(){return !!el&&!el.hidden}}})();
+  return{open,close,get isOpen(){return !!el&&!el.hidden},get kind(){return kind}}})();
 
-return{HOME,rngFrom,store,players,requirePlayer,gameSave,music,MUSIC_SVG,math,problem}})();
+/* ---------- maths checkpoints every 3 levels ----------
+   The first time a player clears level 3, 6, 9…, the next level is "gated": opening it asks a checkpoint question first.
+   Games call gate.afterWin(progress, level, totalLevels) when a level is won (before unlocking the next one),
+   and gate.open(progress, level, save, go) at the top of loading a level; it returns true if it took over. */
+const gate={
+  afterWin(pr,level,total){if(level%3===0&&level<total&&level+1>(pr.unlocked|0))pr.gate=level+1},
+  pending:(pr,level)=>pr.gate===level,
+  open(pr,level,save,go){if(pr.gate!==level)return false;math.open(()=>{delete pr.gate;save();go(level)},{checkpoint:true});return true}};
+
+return{HOME,rngFrom,store,players,requirePlayer,gameSave,music,MUSIC_SVG,math,problem,gate}})();

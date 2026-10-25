@@ -8,6 +8,8 @@ A pack of puzzle games for kids. Open `index.html` in a browser. Everything is s
 
 Hints in every game cost a maths question one grade below the player's grade (grade 3 gets grade 2 maths). There are three tries at the same question, then the answer is shown and a new question appears.
 
+**Maths checkpoints:** the first time a player clears level 3, 6, 9 and so on, the next level asks a maths question before it opens. Checkpoint questions are a little easier than hint questions (for grade 3: adding and taking away with no carrying or borrowing). They can't be skipped, and leaving and coming back asks again.
+
 ## Games
 
 - **Unblock the Car** (`games/car/`): slide cars until the red one can drive out. 1,000 levels from a bank of pre-generated, verified puzzles; the par is each puzzle's exact shortest solution. Difficulty ramps by grade: for grade 3, it's properly challenging by about level 30.
@@ -23,7 +25,9 @@ Hints in every game cost a maths question one grade below the player's grade (gr
 - **Word Builder** (`games/words/`): spell the picture's word by tapping letter tiles in order. Words get longer by grade (3 letters up to 8+), and later levels add extra letters that don't belong. After a wrong try, letters in the right spot stay put. Hints place the next letter.
 - **Sudoku Light** (`games/sudoku/`): every row, column and box needs each symbol once. Starts on 4×4 with animals, then numbers, then 6×6 (9×9 for grade 5 and up). Every puzzle has exactly one answer. Clashes turn red. Tap a square then a symbol, or pick a symbol and tap squares. Hints fill or fix a square.
 - **Pipe Connect** (`games/pipes/`): tap pipes to turn them until water from the 💧 reaches every flower with no open ends. Boards are one connected pipe network, from 3×3 up to 7×7 (8×8 older). Par is the fewest taps. Hints turn one pipe the right way.
-- Coming soon: Lights Out, Picture Logic, Box Push.
+- **Lights Out** (`games/lights/`): tapping a light flips it and its neighbours; turn them all off. Boards grow from 3×3 to 5×5 (6×6 older). Par is the exact fewest taps, worked out with linear algebra. Hints ring a light from the best answer.
+- **Picture Logic** (`games/pixels/`): number clues reveal a hidden pixel picture (nonograms). 40 drawn pictures at 5×5, 8×8 and 10×10, each checked to be solvable by logic alone. Drag to fill several squares, and switch to ✕ to mark empty ones. Hints fix or fill one square.
+- **Box Push** (`games/boxes/`): push every crate onto a red spot (Sokoban). Swipe, use the arrows, or tap where to walk; Undo takes a move back. Levels come from a bank of 1,118 made backwards from solved positions, each re-verified, and par is the exact fewest pushes. Grade 3 goes from 1 crate to 3. Hints show the next push.
 
 ## Working on it
 
@@ -31,5 +35,6 @@ Hints in every game cost a maths question one grade below the player's grade (gr
 - `shared/kit.js` and `shared/game.css`: the standard game screen (top bar, level picker, win card, hints, progress). New games only supply their puzzle; any `src/<game>.html` is built to `games/<game>/`, and `<!--HEAD:Title-->` / `<!--KIT-->` expand to the standard head and scripts.
 - Pages are edited in `src/` (`home.html`, and one file per game). Run `node tools/build.js` to publish them (`index.html` and `games/<game>/index.html`). The build bakes in the Car puzzle bank and stamps a version on the shared files, so devices pick up updates.
 - More Car puzzles: `node tools/gen-bank.js SEED SECONDS out.json`, then `node tools/build.js out.json` to merge, verify and rebuild.
+- More Box Push levels: `node tools/gen-boxes.js SEED SECONDS out.json`, then `node tools/merge-boxes.js out.json` (re-verifies every par) and rebuild.
 - `shared/pictures.js`: the picture set, drawn in code. Photo entries can be added later.
-- `python3 tools/test.py`, `tools/test_picture.py` and `tools/test_games.py`, `tools/test_games2.py`, `tools/test_games3.py` run the browser tests (need Playwright).
+- `sh tools/test_all.sh` rebuilds and runs every browser test suite over a local web server (needs Playwright). Each `tools/test*.py` can also run on its own.

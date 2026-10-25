@@ -37,13 +37,15 @@ window.TS_KIT=function(o){
     canPlay:n=>n>=1&&n<=LEVELS&&(save.all||n<=prog().unlocked),
     /* seeded random for level n, different per game and grade */
     rng:n=>TS.rngFrom((o.id.length*7919+o.id.charCodeAt(0)*131)*100003+GRADE*1009+n),
-    load(n){n=Math.min(Math.max(1,n|0),LEVELS);K.level=n;prog().last=n;SAVE.save();K.busy=false;
+    load(n){n=Math.min(Math.max(1,n|0),LEVELS);
+      if(TS.gate.pending(prog(),n)){$("kSheetWin").hidden=true;TS.gate.open(prog(),n,SAVE.save,K.load);return} // maths checkpoint first
+      K.level=n;prog().last=n;SAVE.save();K.busy=false;
       $("kSheetWin").hidden=true;K.stage.innerHTML="";K.tip("");K.stat("","");K.sub();nav();o.start(n)},
     win({stars,text,title}){K.busy=true;TS.music.fx("win");const pr=prog();
-      pr.stars[K.level]=Math.max(pr.stars[K.level]||0,stars);if(K.level+1>pr.unlocked)pr.unlocked=Math.min(LEVELS,K.level+1);SAVE.save();
+      pr.stars[K.level]=Math.max(pr.stars[K.level]||0,stars);TS.gate.afterWin(pr,K.level,LEVELS);if(K.level+1>pr.unlocked)pr.unlocked=Math.min(LEVELS,K.level+1);SAVE.save();
       setTimeout(()=>{$("kWinTitle").textContent=title||(K.level===LEVELS?"All "+LEVELS+" levels done!":"Level "+K.level+" done!");
         $("kWinStars").hidden=false;$("kWinStars").innerHTML="★".repeat(stars)+'<span class="off">'+"★".repeat(3-stars)+"</span>";
-        $("kWinText").textContent=text||"";$("kReplay").textContent="Replay";$("kWinNext").hidden=K.level>=LEVELS;$("kWinNext").disabled=false;
+        $("kWinText").textContent=text||"";$("kReplay").textContent="Replay";$("kWinNext").hidden=K.level>=LEVELS;$("kWinNext").textContent=TS.gate.pending(pr,K.level+1)?"Maths, then next level":"Next level";$("kWinNext").disabled=false;
         $("kSheetWin").hidden=false;nav()},700)},
     fail({title,text}){K.busy=true;TS.music.fx("bad");
       setTimeout(()=>{$("kWinTitle").textContent=title||"Nearly!";$("kWinStars").hidden=true;$("kWinText").textContent=text||"";

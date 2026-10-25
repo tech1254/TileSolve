@@ -1,8 +1,18 @@
 """Shared helpers for the Tile Solve browser tests."""
-import json, re, pathlib
+import json, re, pathlib, http.server, threading, functools
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-URL = lambda g: (ROOT / f"games/{g}/index.html").as_uri()
+
+def _serve():
+    """Serve the repo over http on a free local port, like GitHub Pages does (file:// pages lose storage on reload in headless Chrome)."""
+    class Quiet(http.server.SimpleHTTPRequestHandler):
+        def log_message(self, *a): pass
+    srv = http.server.ThreadingHTTPServer(("127.0.0.1", 0), functools.partial(Quiet, directory=str(ROOT)))
+    threading.Thread(target=srv.serve_forever, daemon=True).start()
+    return f"http://127.0.0.1:{srv.server_address[1]}"
+BASE = _serve()
+URL = lambda g: f"{BASE}/games/{g}/index.html"
+HOME_URL = f"{BASE}/index.html"
 PLAYERS = json.dumps({"list": [{"id": "k1", "name": "Mia", "avatar": "🐯", "grade": 3, "color": "#e2412e"}], "current": "k1", "music": True})
 INIT = f"if(!localStorage.getItem('tilesolve:players'))localStorage.setItem('tilesolve:players', {json.dumps(PLAYERS)})"
 
