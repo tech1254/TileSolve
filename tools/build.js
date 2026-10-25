@@ -1,4 +1,4 @@
-// Builds index.html from src/index.template.html with the puzzle bank baked in.
+// Builds the published pages from src/ (home -> index.html, car -> games/car/index.html), baking in the puzzle bank.
 //   node tools/build.js                 rebuild from tools/car-bank.json
 //   node tools/build.js new1.json ...   merge generator output into the bank first
 // Every puzzle is re-verified: legal layout, and par equals its true shortest solution.
@@ -33,7 +33,15 @@ for(const p of Object.keys(bank).map(Number).sort((a,b)=>a-b))for(const b of ban
   bytes.push(p,b.length,...b);total++}
 fs.writeFileSync(BANKFILE,JSON.stringify(bank));
 const b64=Buffer.from(bytes).toString('base64');
-const html=fs.readFileSync(path.join(ROOT,'src/index.template.html'),'utf8').replace('"__BANK__"','"'+b64+'"');
-fs.writeFileSync(path.join(ROOT,'index.html'),html);
 console.log(total,'puzzles;',Object.keys(bank).map(p=>p+':'+bank[p].length).join(' '));
-console.log('index.html',(html.length/1024).toFixed(1)+'KB');
+
+// Pages: src template -> published path. __V__ is a content hash of the shared files, so Safari
+// fetches fresh copies after every update instead of reusing a cached old one.
+const crypto=require('crypto'),h=crypto.createHash('sha1');
+for(const f of fs.readdirSync(path.join(ROOT,'shared')).sort())h.update(fs.readFileSync(path.join(ROOT,'shared',f)));
+const V=h.digest('hex').slice(0,8);
+const PAGES=[['src/home.html','index.html'],['src/car.html','games/car/index.html']];
+for(const[src,out]of PAGES){
+  let html=fs.readFileSync(path.join(ROOT,src),'utf8').replace(/__V__/g,V).replace('"__BANK__"','"'+b64+'"');
+  fs.mkdirSync(path.dirname(path.join(ROOT,out)),{recursive:true});fs.writeFileSync(path.join(ROOT,out),html);
+  console.log(out,(html.length/1024).toFixed(1)+'KB','v='+V)}

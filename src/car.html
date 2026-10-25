@@ -8,47 +8,22 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#161b21">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box;height:100%}body{margin:0}[hidden]{display:none!important}</style>
-<title>Unblock the Car</title>
+<title>Unblock the Car · Tile Solve</title>
 <meta name="apple-mobile-web-app-title" content="Tile Solve">
-<link rel="apple-touch-icon" href="icon-180.png">
-<link rel="icon" type="image/png" href="icon-512.png">
-<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="apple-touch-icon" href="../../icon-180.png">
+<link rel="icon" type="image/png" href="../../icon-512.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Barlow:wght@400;600;700&display=swap">
+<link rel="stylesheet" href="../../shared/ts.css?v=__V__">
 <style>
 /* Layout: one-screen night parking garage. HUD on top, asphalt lot in the middle, thumb controls at the bottom. */
-:root{
-  --night:#161b21;      /* garage background */
-  --asphalt:#2b3239;    /* lot surface */
-  --lane:#3b444d;       /* painted cell lines */
-  --paint:#f2c230;      /* yellow parking paint, exit, accents */
-  --text:#e9edf1;
-  --muted:#93a0ad;
-  --target:#e2412e;     /* the car you free */
-  --panel:#212830;
-  --good:#6bb34a;
-  --font-sign:"Bungee","Arial Black",Impact,sans-serif;
-  --font-body:"Barlow","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-  color-scheme:dark;
-}
-html,body{height:100%}
-body{background:var(--night);color:var(--text);font-family:var(--font-body);font-size:16px;overflow:hidden;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
-button{font:inherit;color:inherit}
-button:focus-visible{outline:3px solid var(--paint);outline-offset:2px}
-
+body{overflow:hidden}
 .app{height:100%;display:flex;flex-direction:column;align-items:center;gap:14px;
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:12px;box-sizing:border-box}
-.top{width:100%;max-width:460px;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:12px}
-.left{display:flex;gap:8px;align-items:center}
-.chip{background:var(--panel);border:1px solid var(--lane);border-radius:999px;padding:8px 14px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;font-size:13px;cursor:pointer}
-.chip.icon{padding:0;width:36px;height:36px;display:grid;place-items:center}
-.chip.icon svg{width:18px;height:18px}
-.chip.icon .off,.chip.icon[aria-pressed="false"] .on{display:none}
-.chip.icon[aria-pressed="false"] .off{display:block}
-.chip.icon[aria-pressed="false"]{color:var(--muted)}
+.top{width:100%;max-width:460px;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px}
+.left{display:flex;gap:6px;align-items:center}
 .lvl{display:flex;align-items:baseline;gap:8px;justify-content:center}
-.lbl{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:600}
 .num{font-family:var(--font-sign);font-size:30px;line-height:1;color:var(--paint);font-variant-numeric:tabular-nums}
 .stat{display:grid;justify-items:end;gap:2px;font-variant-numeric:tabular-nums}
 .stat #moves{font-family:var(--font-sign);font-size:22px;line-height:1}
@@ -88,12 +63,6 @@ button:focus-visible{outline:3px solid var(--paint);outline-offset:2px}
 .controls .arrow{font-size:22px;padding:8px 0}
 .tip{margin:0;color:var(--muted);font-size:14px;text-align:center;min-height:2.6em;max-width:36ch}
 
-.sheet{position:fixed;inset:0;background:rgba(8,11,14,.72);display:grid;place-items:end center;z-index:20}
-.card{width:100%;max-width:520px;max-height:85%;background:var(--panel);border-radius:20px 20px 0 0;border-top:3px solid var(--paint);
-  display:flex;flex-direction:column;gap:14px;padding-block:18px calc(18px + env(safe-area-inset-bottom,0px));
-  padding-left:max(18px,env(safe-area-inset-left,0px));padding-right:max(18px,env(safe-area-inset-right,0px));box-sizing:border-box}
-.card h2{margin:0;font-family:var(--font-sign);font-weight:400;font-size:22px;color:var(--paint);text-wrap:balance}
-.row{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
 .pages{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px}
 .pages button{flex:none;background:var(--asphalt);border:1px solid var(--lane);border-radius:8px;padding:6px 10px;font-size:13px;font-weight:600;cursor:pointer;font-variant-numeric:tabular-nums}
 .pages button.on{background:var(--paint);color:var(--night);border-color:var(--paint)}
@@ -103,55 +72,21 @@ button:focus-visible{outline:3px solid var(--paint);outline-offset:2px}
 .levels button span{font-size:10px;color:var(--paint);letter-spacing:1px;min-height:12px}
 .levels button.cur{border-color:var(--paint)}
 .levels button:disabled{opacity:.35;cursor:default}
-.toggle{display:flex;gap:8px;align-items:center;font-size:14px;color:var(--muted)}
-.toggle b{color:var(--text)}
-.toggle input{width:18px;height:18px;accent-color:var(--paint)}
 .stars{font-size:40px;letter-spacing:6px;color:var(--paint);text-align:center;line-height:1}
 .stars .off{color:var(--lane)}
-.result{text-align:center;color:var(--muted);margin:0;font-variant-numeric:tabular-nums}
 .btns{display:grid;grid-template-columns:1fr 1.4fr;gap:10px}
 .btns button{border-radius:12px;padding:14px 0;font-weight:700;cursor:pointer;border:1px solid var(--lane);background:var(--asphalt)}
 .btns .go{background:var(--paint);color:var(--night);border-color:var(--paint)}
-.close{background:none;border:0;color:var(--muted);font-weight:700;cursor:pointer;padding:6px}
-
-/* Grade picker */
-.grades{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
-.grades button{background:var(--asphalt);border:1px solid var(--lane);border-radius:14px;padding:12px 0 10px;cursor:pointer;display:grid;gap:2px}
-.grades button b{font-family:var(--font-sign);font-weight:400;font-size:28px;line-height:1;color:var(--paint)}
-.grades button span{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:600}
-.grades button.cur{border-color:var(--paint);box-shadow:inset 0 0 0 1px var(--paint)}
-
-/* Maths-for-a-hint */
-.prob{font-family:var(--font-sign);font-size:clamp(30px,10vw,44px);text-align:center;line-height:1.2;font-variant-numeric:tabular-nums;display:flex;justify-content:center;align-items:center;gap:.3em;flex-wrap:wrap}
-.slot{display:inline-grid;place-items:center;min-width:2.1em;padding:0 .2em;height:1.3em;border-radius:10px;border:3px solid var(--paint);color:var(--text);box-sizing:border-box}
-.slot.empty{color:var(--lane)}
-.slot.good{border-color:var(--good);color:var(--good)}
-.slot.bad{border-color:var(--target);animation:shake .35s}
-.slot.show{border-style:dashed;color:var(--muted)}
-@keyframes shake{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
-.fb{margin:0;text-align:center;font-weight:700;min-height:1.4em;color:var(--muted)}
-.fb.good{color:var(--good)}.fb.bad{color:#ff8a78}
-.tries{display:flex;justify-content:center;gap:8px}
-.tries i{width:12px;height:12px;border-radius:50%;background:var(--paint)}
-.tries i.used{background:var(--lane)}
-.keys{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-.keys button{background:var(--asphalt);border:1px solid var(--lane);border-radius:12px;padding:12px 0;font-family:var(--font-sign);font-size:22px;cursor:pointer}
-.keys button:active{transform:translateY(1px)}
-.keys .ok{background:var(--paint);color:var(--night);border-color:var(--paint)}
-.keys .del{font-family:var(--font-body);font-weight:700;font-size:16px}
-@media (prefers-reduced-motion:reduce){.car,.car.leave{transition:none}.car.hint>i{animation:none;box-shadow:0 0 0 4px var(--paint)}.slot.bad{animation:none}}
+@media (prefers-reduced-motion:reduce){.car,.car.leave{transition:none}.car.hint>i{animation:none;box-shadow:0 0 0 4px var(--paint)}}
 </style>
-
 </head>
 <body>
 <div class="app">
   <header class="top">
     <div class="left">
-      <button class="chip" id="btnLevels" type="button">Levels</button>
-      <button class="chip icon" id="btnMusic" type="button" aria-label="Music" aria-pressed="true">
-        <svg class="on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg>
-        <svg class="off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/><path d="M3 3l18 18"/></svg>
-      </button>
+      <a class="chip icon" id="btnHome" href="../../index.html" aria-label="Home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg></a>
+      <button class="chip icon" id="btnLevels" type="button" aria-label="Levels"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></button>
+      <button class="chip icon" id="btnMusic" type="button"></button>
     </div>
     <div class="lvl"><span class="lbl">Level</span><span class="num" id="lvlNum">1</span></div>
     <div class="stat"><span id="moves">0</span><span class="lbl">Moves · Par <b id="par">–</b></span></div>
@@ -175,28 +110,10 @@ button:focus-visible{outline:3px solid var(--paint);outline-offset:2px}
 <div class="sheet" id="sheetLevels" hidden>
   <div class="card">
     <div class="row"><h2>1,000 levels</h2><button class="close" id="closeLevels" type="button">Close</button></div>
-    <div class="row"><span class="toggle">Playing as <b id="gradeLbl">Grade 3</b></span><button class="chip" id="btnGrade" type="button">Change grade</button></div>
+    <span class="toggle">Playing as&nbsp;<b id="whoLbl"></b></span>
     <div class="pages" id="pages"></div>
     <div class="levels" id="levelGrid"></div>
     <label class="toggle"><input type="checkbox" id="unlockAll"> Open every level (for testing)</label>
-  </div>
-</div>
-
-<div class="sheet" id="sheetGrade" hidden>
-  <div class="card">
-    <div class="row"><h2>What grade are you in?</h2><button class="close" id="closeGrade" type="button" hidden>Close</button></div>
-    <p class="result">Puzzles get tricky faster for older players. Each grade keeps its own progress.</p>
-    <div class="grades" id="gradeGrid"></div>
-  </div>
-</div>
-
-<div class="sheet" id="sheetMath" hidden>
-  <div class="card" role="dialog" aria-labelledby="mathTitle">
-    <div class="row"><h2 id="mathTitle">Solve it for a hint!</h2><button class="close" id="closeMath" type="button">Not now</button></div>
-    <div class="prob" id="mathQ" aria-live="polite"></div>
-    <div class="tries" id="mathTries" aria-label="Tries left"></div>
-    <p class="fb" id="mathFb" aria-live="polite"></p>
-    <div class="keys" id="mathKeys"></div>
   </div>
 </div>
 
@@ -209,13 +126,15 @@ button:focus-visible{outline:3px solid var(--paint);outline-offset:2px}
   </div>
 </div>
 
+<script src="../../shared/ts.js?v=__V__"></script>
 <script>
 (()=>{
+const PLAYER=TS.requirePlayer(),Music=TS.music;
 const TOTAL=1000;
 const P6=[];for(let i=0,v=1;i<16;i++,v*=6)P6.push(v);
 const COLORS=["#2a9d8f","#3b6fd9","#f08a24","#8f5bd6","#6bb34a","#e06aa6","#d9b37a","#4fb3d9","#c7cfd6"];
 const TRUCKS=["#1f6f8b","#7a4fb5","#b86b1f","#3f7d3a","#9a3d6e"];
-const GRADES=[1,2,3,4,5,6,7]; // 7 means "7 and up"
+const GRADE=Math.max(1,Math.min(7,PLAYER.grade|0||3));
 
 /* ---------- seeded random ---------- */
 function rngFrom(seed){let a=seed>>>0;return()=>{a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
@@ -281,82 +200,28 @@ function getLevel(g,n){const e=planFor(g)[n],bytes=BUCKETS.get(e.b)[e.ix],cars=[
   for(const x of bytes){cars.push({h:!!(x&1),len:x&2?3:2,f:(x>>2)&7});pos.push(x>>5)}
   return{cars,pos,par:e.b}}
 
-/* ---------- storage ---------- */
-const store={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},
-             set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
-// The first version cached its (much easier) generated levels under "ubc:"; those no longer apply.
-try{for(let k=localStorage.length-1;k>=0;k--){const key=localStorage.key(k);if(key&&key.startsWith("ubc:"))localStorage.removeItem(key)}}catch(e){}
-const save=Object.assign({grade:null,music:true,all:false,prog:{}},store.get("tilesolve:car",{}));
-const persist=()=>store.set("tilesolve:car",save);
-const prog=()=>save.prog[save.grade]||(save.prog[save.grade]={unlocked:1,stars:{},last:1});
-
-/* ---------- music & sounds (generated live with Web Audio; nothing to download) ---------- */
-const Music=(()=>{
-  let ctx=null,master=null,bus=null,timer=null,next=0,step=0,mel=[];
-  const rng=rngFrom(20261025),E=60/84/2; // 84 bpm, eighth notes
-  const CH=[[48,52,55],[45,48,52],[41,45,48],[43,47,50],[48,52,55],[40,43,47],[41,45,48],[43,47,50]]; // C Am F G C Em F G
-  const PENT=[69,72,74,76,79,81,84,86]; // A4..D6, C major pentatonic
-  const hz=m=>440*Math.pow(2,(m-69)/12);
-  function init(){const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return false;
-    ctx=new AC();master=ctx.createGain();master.gain.value=0;
-    const lp=ctx.createBiquadFilter();lp.type="lowpass";lp.frequency.value=2600;
-    const dl=ctx.createDelay(1);dl.delayTime.value=E*3;const fb=ctx.createGain();fb.gain.value=.28;const wet=ctx.createGain();wet.gain.value=.25;
-    bus=ctx.createGain();bus.connect(lp);bus.connect(dl);dl.connect(fb);fb.connect(dl);dl.connect(wet);wet.connect(lp);
-    lp.connect(master);master.connect(ctx.destination);return true}
-  function tone(m,t,dur,type,vol,att){const o=ctx.createOscillator(),g=ctx.createGain();o.type=type;o.frequency.value=hz(m);
-    g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+att);g.gain.exponentialRampToValueAtTime(.0001,t+dur);
-    o.connect(g);g.connect(bus);o.start(t);o.stop(t+dur+.05)}
-  function compose(){mel=[];let ix=2+Math.floor(rng()*3);
-    for(let bar=0;bar<8;bar++){const ct=CH[bar].map(n=>n%12);
-      for(let e=0;e<8;e++){const strong=e%4===0;
-        if(!(strong?rng()<.85:rng()<.42)||(bar%4===3&&e>4)){mel.push(null);continue}
-        if(strong){let best=ix,bd=99;for(let k=0;k<PENT.length;k++)if(ct.includes(PENT[k]%12)&&Math.abs(k-ix)<bd){bd=Math.abs(k-ix);best=k}ix=best}
-        else ix=Math.max(0,Math.min(PENT.length-1,ix+[-2,-1,-1,1,1,2][Math.floor(rng()*6)]));
-        mel.push(PENT[ix])}}}
-  function tick(){while(next<ctx.currentTime+.3){const s=step%64,bar=s>>3,e=s&7,t=next,ch=CH[bar];
-      if(step%128===0)compose(); // a fresh tune every two times round the chords
-      if(e===0){ch.forEach(n=>tone(n+12,t,E*8.6,"sine",.03,.4));tone(ch[0]-12,t,E*3,"triangle",.12,.02)}
-      if(e===4)tone(ch[0]-5,t,E*2.5,"triangle",.07,.02);
-      if(mel[s])tone(mel[s],t,E*2.4,"triangle",.055,.01);
-      next+=E;step++}}
-  const api={
-    get on(){return save.music!==false},
-    start(){if(!api.on)return;if(!ctx&&!init())return;if(ctx.state==="suspended")ctx.resume();if(timer)return;
-      next=ctx.currentTime+.08;master.gain.cancelScheduledValues(ctx.currentTime);master.gain.setTargetAtTime(.55,ctx.currentTime,.8);
-      timer=setInterval(tick,60);tick()},
-    stop(){if(!timer)return;clearInterval(timer);timer=null;master.gain.cancelScheduledValues(ctx.currentTime);master.gain.setTargetAtTime(0,ctx.currentTime,.12)},
-    set(v){save.music=v;persist();v?api.start():api.stop()},
-    fx(kind){if(!api.on||!ctx||ctx.state!=="running")return;const t=ctx.currentTime+.02;
-      if(timer===null){master.gain.cancelScheduledValues(t);master.gain.setValueAtTime(.55,t)}
-      if(kind==="win")[72,76,79,84].forEach((m,i)=>tone(m,t+i*.11,.55,"triangle",.1,.005));
-      else if(kind==="good")[76,84].forEach((m,i)=>tone(m,t+i*.1,.4,"triangle",.1,.005));
-      else if(kind==="bad")tone(55,t,.3,"sine",.1,.01)},
-    pause(){if(ctx&&ctx.state==="running")ctx.suspend()},
-    resume(){if(ctx&&api.on&&timer)ctx.resume()}};
-  return api})();
-// Browsers only allow sound after the player touches something.
-addEventListener("pointerdown",()=>Music.start(),true);
-addEventListener("keydown",()=>Music.start(),true);
-document.addEventListener("visibilitychange",()=>document.hidden?Music.pause():Music.resume());
+/* ---------- save: per player, and per grade within a player (so changing a grade never loses stars) ---------- */
+const SAVE=TS.gameSave("car",{grades:{},all:false}),save=SAVE.data,persist=SAVE.save;
+const prog=()=>save.grades[GRADE]||(save.grades[GRADE]={unlocked:1,stars:{},last:1});
 
 /* ---------- game state ---------- */
 const $=id=>document.getElementById(id);
 const gridEl=$("grid");
 let level=1,L=null,pos=[],hist=[],moves=0,els=[],busy=false,drag=null,ghost=null;
-const canPlay=n=>!!save.grade&&n>=1&&n<=TOTAL&&(save.all||n<=prog().unlocked);
+const canPlay=n=>n>=1&&n<=TOTAL&&(save.all||n<=prog().unlocked);
+$("btnMusic").innerHTML=TS.MUSIC_SVG;Music.button($("btnMusic"));
 
 function place(i){const c=L.cars[i],el=els[i],s=100/6;
   el.style.left=(c.h?pos[i]:c.f)*s+"%";el.style.top=(c.h?c.f:pos[i])*s+"%";
   el.style.width=(c.h?c.len:1)*s+"%";el.style.height=(c.h?1:c.len)*s+"%"}
 function hud(){$("lvlNum").textContent=level;$("moves").textContent=moves;$("par").textContent=L?L.par:"–";
-  $("btnUndo").disabled=!hist.length;$("btnPrev").disabled=level<=1;$("btnNext").disabled=!canPlay(level+1);
-  const m=$("btnMusic");m.setAttribute("aria-pressed",String(Music.on));m.setAttribute("aria-label",Music.on?"Music on":"Music off")}
+  $("btnUndo").disabled=!hist.length;$("btnPrev").disabled=level<=1;$("btnNext").disabled=!canPlay(level+1)}
 function clearHint(){if(ghost){ghost.remove();ghost=null}els.forEach(e=>e.classList.remove("hint"))}
 function tip(t){$("tip").textContent=t||"Drag cars along their lanes. Slide the red car out the exit."}
 
 function load(n){
   level=n;prog().last=n;persist();busy=false;gridEl.innerHTML="";els=[];
-  L=getLevel(save.grade,n);pos=L.pos.slice();hist=[];moves=0;tip();
+  L=getLevel(GRADE,n);pos=L.pos.slice();hist=[];moves=0;tip();
   let ci=n%COLORS.length,ti=n%TRUCKS.length;
   L.cars.forEach((c,i)=>{const el=document.createElement("div");
     el.className="car "+(c.h?"h":"v")+(i===0?" target":"");el.dataset.i=i;
@@ -413,65 +278,11 @@ function showHint(){if(busy||!L)return;clearHint();const s=solveNext(L.cars,pos)
 
 $("btnUndo").onclick=()=>{if(busy||!hist.length)return;clearHint();pos=hist.pop();moves++;els.forEach((_,i)=>place(i));hud()};
 $("btnReset").onclick=()=>{if(busy||!L)return;clearHint();pos=L.pos.slice();hist=[];moves=0;els.forEach((_,i)=>place(i));hud();tip()};
-$("btnHint").onclick=()=>{if(busy||!L||pos[0]===4)return;openMath()};
+$("btnHint").onclick=()=>{if(busy||!L||pos[0]===4)return;TS.math.open(showHint)}; // a maths question first
 $("btnPrev").onclick=()=>{if(level>1&&!busy)load(level-1)};
 $("btnNext").onclick=()=>{if(canPlay(level+1)&&!busy)load(level+1)};
 $("btnReplay").onclick=()=>{$("sheetWin").hidden=true;load(level)};
 $("btnWinNext").onclick=()=>{$("sheetWin").hidden=true;load(Math.min(TOTAL,level+1))};
-$("btnMusic").onclick=()=>{Music.set(!Music.on);hud()};
-
-/* ---------- maths for a hint (grade 2: adding and taking away within 100) ----------
-   Three tries at the same question; after the third miss she sees the answer and gets a new one.
-   Closing the sheet keeps the question and tries, so it can't be skipped for an easier one. */
-const M={q:null,tries:3,entry:"",lock:false,mark:""};
-function newQ(){const ri=(a,b)=>a+Math.floor(Math.random()*(b-a+1)),t=Math.random();let a,b,op="+",slot="c";
-  if(t<.22){b=ri(3,9);a=ri(11,99-b)}                     // 47 + 8
-  else if(t<.46){a=ri(10,79);b=ri(10,99-a)}              // 36 + 25
-  else if(t<.64){a=ri(12,99);b=ri(3,9);op="−"}           // 52 − 7
-  else if(t<.84){a=ri(25,99);b=ri(10,a-5);op="−"}        // 74 − 38
-  else if(t<.93){a=ri(3,9);b=ri(a+3,a+9);slot="b"}      // 6 + ? = 13
-  else{a=10*ri(1,7);b=10*ri(a/10+1,9);slot="b"}          // 30 + ? = 70
-  const ans=slot==="b"?b-a:op==="+"?a+b:a-b;
-  M.q={a,b,op,slot,ans};M.tries=3;M.entry="";M.mark=""}
-function renderMath(){const q=M.q,txt=M.entry||(M.mark==="show"?String(q.ans):"?");
-  const slot='<span class="slot'+(M.entry||M.mark==="show"?"":" empty")+(M.mark?" "+M.mark:"")+'">'+txt+"</span>";
-  $("mathQ").innerHTML=q.slot==="b"?"<span>"+q.a+"</span><span>+</span>"+slot+"<span>=</span><span>"+q.b+"</span>"
-    :"<span>"+q.a+"</span><span>"+q.op+"</span><span>"+q.b+"</span><span>=</span>"+slot;
-  $("mathTries").innerHTML=[0,1,2].map(k=>'<i class="'+(k<M.tries?"":"used")+'"></i>').join("")}
-function fb(t,cls){const f=$("mathFb");f.textContent=t||"";f.className="fb"+(cls?" "+cls:"")}
-function openMath(){if(!M.q)newQ();M.entry="";M.mark="";M.lock=false;renderMath();
-  fb(M.tries<3?(M.tries===1?"Last try!":M.tries+" tries left"):"");$("sheetMath").hidden=false}
-function closeMath(){$("sheetMath").hidden=true}
-function check(){if(M.lock||!M.entry)return;const v=+M.entry;
-  if(v===M.q.ans){M.lock=true;M.mark="good";renderMath();fb("Correct! Here's your hint.","good");Music.fx("good");
-    setTimeout(()=>{M.q=null;M.lock=false;closeMath();showHint()},900);return}
-  M.tries--;Music.fx("bad");
-  if(M.tries>0){M.mark="bad";renderMath();M.entry="";M.mark="";
-    fb(M.tries===1?"Not quite. Last try!":"Not quite. Try again! "+M.tries+" tries left","bad");
-    setTimeout(()=>{if(!M.lock&&!M.entry)renderMath()},500);return}
-  M.lock=true;M.entry="";M.mark="show";renderMath();fb("The answer was "+M.q.ans+". Here's a new one!","bad");
-  setTimeout(()=>{newQ();M.lock=false;renderMath();fb("")},2400)}
-function press(k){if(M.lock)return;
-  if(k==="ok")return check();
-  if(k==="del")M.entry=M.entry.slice(0,-1);else if(M.entry.length<3)M.entry=(M.entry+k).replace(/^0+(?=\d)/,"");
-  M.mark="";renderMath();if(M.entry)fb(M.tries<3?(M.tries===1?"Last try!":M.tries+" tries left"):"")}
-["1","2","3","4","5","6","7","8","9","del","0","ok"].forEach(k=>{const b=document.createElement("button");b.type="button";
-  b.textContent=k==="del"?"⌫":k==="ok"?"✓":k;if(k==="del"){b.className="del";b.setAttribute("aria-label","Delete")}
-  if(k==="ok"){b.className="ok";b.setAttribute("aria-label","Check answer")}
-  b.onclick=()=>press(k);$("mathKeys").appendChild(b)});
-$("closeMath").onclick=closeMath;
-addEventListener("keydown",e=>{if($("sheetMath").hidden)return;
-  if(/^[0-9]$/.test(e.key))press(e.key);else if(e.key==="Backspace")press("del");else if(e.key==="Enter")press("ok");else if(e.key==="Escape")closeMath()});
-
-/* ---------- grade picker ---------- */
-function drawGrades(){const gg=$("gradeGrid");gg.innerHTML="";
-  GRADES.forEach(g=>{const b=document.createElement("button");b.type="button";
-    b.innerHTML="<b>"+(g===7?"7+":g)+"</b><span>Grade</span>";if(g===save.grade)b.className="cur";
-    b.onclick=()=>setGrade(g);gg.appendChild(b)})}
-function openGrades(){drawGrades();$("closeGrade").hidden=!save.grade;$("sheetLevels").hidden=true;$("sheetGrade").hidden=false}
-function setGrade(g){save.grade=g;persist();$("sheetGrade").hidden=true;$("sheetWin").hidden=true;M.q=null;load(Math.min(Math.max(1,prog().last|0),TOTAL))}
-$("closeGrade").onclick=()=>{$("sheetGrade").hidden=true};
-$("btnGrade").onclick=openGrades;
 
 /* ---------- level picker ---------- */
 let page=0;
@@ -484,15 +295,15 @@ function drawPicker(){
     const st=pr.stars[n]||0;b.innerHTML="<b>"+n+"</b><span>"+(st?"★".repeat(st):canPlay(n)?"":"🔒")+"</span>";
     if(n===level)b.className="cur";b.disabled=!canPlay(n);
     b.onclick=()=>{$("sheetLevels").hidden=true;load(n)};lg.appendChild(b)}
-  $("unlockAll").checked=!!save.all;$("gradeLbl").textContent=save.grade===7?"Grade 7+":"Grade "+save.grade}
+  $("unlockAll").checked=!!save.all;
+  $("whoLbl").textContent=PLAYER.avatar+" "+PLAYER.name+" · "+TS.players.gradeName(GRADE)}
 $("btnLevels").onclick=()=>{page=Math.floor((level-1)/100);drawPicker();$("sheetLevels").hidden=false};
 $("closeLevels").onclick=()=>{$("sheetLevels").hidden=true};
 $("unlockAll").onchange=e=>{save.all=e.target.checked;persist();drawPicker();hud()};
 document.querySelectorAll(".sheet").forEach(s=>s.addEventListener("click",e=>{if(e.target===s&&s.id==="sheetLevels")s.hidden=true}));
 
 window.__tilesolve={targetPar,getLevel,solveNext,PARS};// for tools/test.py
-if(save.grade)load(Math.min(Math.max(1,prog().last|0),TOTAL));
-else{hud();openGrades()}
+load(Math.min(Math.max(1,prog().last|0),TOTAL));
 })();
 </script>
 

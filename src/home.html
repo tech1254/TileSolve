@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#161b21">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box;height:100%}body{margin:0}[hidden]{display:none!important}</style>
+<title>Tile Solve</title>
+<meta name="apple-mobile-web-app-title" content="Tile Solve">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" href="icon-512.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Barlow:wght@400;600;700&display=swap">
+<link rel="stylesheet" href="shared/ts.css?v=__V__">
+<style>
+body{overflow-y:auto}
+.app{min-height:100%;max-width:760px;margin:0 auto;box-sizing:border-box;display:flex;flex-direction:column;gap:22px;
+  padding:16px max(16px,env(safe-area-inset-right,0px)) 28px max(16px,env(safe-area-inset-left,0px))}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:40px}
+.brand{font-family:var(--font-sign);font-size:26px;line-height:1;color:var(--paint);letter-spacing:.02em;margin:0}
+.brand span{color:var(--text)}
+.tools{display:flex;gap:8px;align-items:center}
+h1{font-family:var(--font-sign);font-weight:400;font-size:clamp(26px,6vw,36px);margin:0;text-align:center;text-wrap:balance}
+.sub{margin:-12px 0 0;text-align:center;color:var(--muted)}
+
+/* Who's playing */
+.players{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px}
+.player{background:var(--panel);border:2px solid var(--lane);border-radius:22px;padding:18px 10px 14px;cursor:pointer;display:grid;justify-items:center;gap:8px;position:relative}
+.player:active{transform:translateY(1px)}
+.face{width:88px;height:88px;border-radius:50%;display:grid;place-items:center;font-size:50px;line-height:1;background:var(--pc,var(--asphalt));
+  box-shadow:inset 0 -6px 0 rgba(0,0,0,.22),0 4px 10px rgba(0,0,0,.35)}
+.player b{font-size:19px;font-weight:700;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.player span{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.player.addp{border-style:dashed;color:var(--muted)}
+.player.addp .face{background:transparent;border:3px dashed var(--lane);box-shadow:none;font-size:40px;color:var(--paint);font-family:var(--font-sign)}
+.editing .player:not(.addp)::after{content:"Edit";position:absolute;top:10px;right:12px;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--paint)}
+.foot{display:flex;justify-content:center}
+.linkbtn{background:none;border:0;color:var(--muted);font-weight:700;cursor:pointer;padding:10px;text-decoration:underline;text-underline-offset:3px}
+
+/* Game grid */
+.me{display:inline-flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--lane);border-radius:999px;padding:4px 14px 4px 4px;cursor:pointer;font-weight:700}
+.me i{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;font-style:normal;font-size:19px;background:var(--pc)}
+.games{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px}
+.game{position:relative;border-radius:20px;padding:14px;min-height:150px;display:flex;flex-direction:column;justify-content:flex-end;gap:4px;
+  text-decoration:none;color:var(--text);background:linear-gradient(160deg,var(--g1),var(--g2));box-shadow:inset 0 -6px 0 rgba(0,0,0,.18),0 6px 16px rgba(0,0,0,.35);overflow:hidden}
+.game:active{transform:translateY(1px)}
+.game .art{position:absolute;top:12px;right:12px;font-size:46px;line-height:1;filter:drop-shadow(0 3px 4px rgba(0,0,0,.3))}
+.game .art img{width:64px;height:64px;border-radius:14px;display:block}
+.game b{font-family:var(--font-sign);font-weight:400;font-size:18px;line-height:1.1;text-shadow:0 2px 0 rgba(0,0,0,.25)}
+.game span{font-size:13px;font-weight:600;opacity:.92}
+.game .badge{order:3;align-self:flex-start;margin-top:4px;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;background:rgba(0,0,0,.35);border-radius:999px;padding:4px 9px}
+.game.soon{filter:saturate(.35) brightness(.7);pointer-events:none}
+
+/* Player form */
+.field{display:grid;gap:8px}
+.field>label,.field>.lbl{font-weight:700;font-size:14px;color:var(--muted)}
+.name{background:var(--asphalt);border:1px solid var(--lane);border-radius:12px;padding:12px 14px;font:inherit;font-size:18px;color:var(--text);user-select:text;-webkit-user-select:text}
+.avatars{display:grid;grid-template-columns:repeat(8,1fr);gap:6px}
+.avatars button{aspect-ratio:1;border-radius:12px;border:2px solid var(--lane);background:var(--asphalt);font-size:26px;line-height:1;cursor:pointer;padding:0}
+.avatars button.cur{border-color:var(--paint);background:#3a3a2a}
+.colors{display:flex;gap:8px;flex-wrap:wrap}
+.colors button{width:34px;height:34px;border-radius:50%;border:3px solid transparent;cursor:pointer;background:var(--c)}
+.colors button.cur{border-color:var(--text)}
+.formbtns{display:grid;grid-template-columns:1fr 1.4fr;gap:10px}
+.formbtns button{border-radius:12px;padding:14px 0;font-weight:700;cursor:pointer;border:1px solid var(--lane);background:var(--asphalt)}
+.formbtns .go{background:var(--paint);color:var(--night);border-color:var(--paint)}
+.danger{background:none;border:1px solid #6b2a24;color:#ff8a78;border-radius:12px;padding:12px;font-weight:700;cursor:pointer}
+@media (max-width:420px){.avatars{grid-template-columns:repeat(8,1fr);gap:4px}.avatars button{font-size:22px}.grades button b{font-size:18px}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <p class="brand">TILE<span>SOLVE</span></p>
+    <div class="tools">
+      <button class="me" id="btnMe" type="button" hidden><i id="meFace"></i><span id="meName"></span></button>
+      <button class="chip icon" id="btnMusic" type="button"></button>
+    </div>
+  </header>
+
+  <section id="viewPlayers" hidden>
+    <div style="display:grid;gap:22px">
+      <h1>Who's playing?</h1>
+      <div class="players" id="playerGrid"></div>
+      <div class="foot"><button class="linkbtn" id="btnEdit" type="button">Edit players</button></div>
+    </div>
+  </section>
+
+  <section id="viewGames" hidden>
+    <div style="display:grid;gap:22px">
+      <h1 id="hello">Pick a game</h1>
+      <div class="games" id="gameGrid"></div>
+    </div>
+  </section>
+</div>
+
+<div class="sheet" id="sheetPlayer" hidden>
+  <form class="card" id="playerForm" autocomplete="off">
+    <div class="row"><h2 id="formTitle">New player</h2><button class="close" id="closeForm" type="button">Cancel</button></div>
+    <div class="field"><label for="fName">Name</label><input class="name" id="fName" maxlength="16" placeholder="Your name" enterkeyhint="done"></div>
+    <div class="field"><span class="lbl">Pick a buddy</span><div class="avatars" id="fAvatars"></div></div>
+    <div class="field"><span class="lbl">Colour</span><div class="colors" id="fColors"></div></div>
+    <div class="field"><span class="lbl">Grade</span><div class="grades" id="fGrades"></div></div>
+    <div class="formbtns"><button type="button" id="formCancel">Cancel</button><button class="go" type="submit" id="formSave">Save</button></div>
+    <button class="danger" type="button" id="btnDelete" hidden>Delete player</button>
+  </form>
+</div>
+
+<script src="shared/ts.js?v=__V__"></script>
+<script>
+(()=>{
+const{players,music}=TS,$=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+/* Games in the pack. href = playable now; the rest show as "Coming soon". */
+const GAMES=[
+  {id:"car",name:"Unblock the Car",desc:"Slide cars to free the red one",img:"icon-180.png",href:"games/car/index.html",g:["#e2412e","#8a2318"]},
+  {id:"picture",name:"Picture Puzzle",desc:"Drop-in and slider pictures",art:"🧩",g:["#3b6fd9","#1d3d85"]},
+  {id:"memory",name:"Memory Match",desc:"Flip cards, find the pairs",art:"🃏",g:["#8f5bd6","#4b2a85"]},
+  {id:"pattern",name:"Copy the Pattern",desc:"Watch, remember, rebuild",art:"🎨",g:["#e06aa6","#8a2f5f"]},
+  {id:"flood",name:"Color Flood",desc:"Fill the board in few moves",art:"🌈",g:["#f08a24","#99500d"]},
+  {id:"blocks",name:"Block Fit",desc:"Fit the shapes in the outline",art:"🟦",g:["#2a9d8f","#135a52"]},
+  {id:"numbers",name:"Number Tiles",desc:"Make the rows add up",art:"➕",g:["#6bb34a","#36651f"]},
+  {id:"words",name:"Word Builder",desc:"Unscramble the letter tiles",art:"🔤",g:["#4fb3d9","#1f6585"]},
+  {id:"sudoku",name:"Sudoku Light",desc:"Animals, colours, then numbers",art:"🐾",g:["#d9b37a","#80602d"]},
+  {id:"pipes",name:"Pipe Connect",desc:"Turn pipes to water the flower",art:"🚰",g:["#1f6f8b","#0e3a4a"]},
+  {id:"lights",name:"Lights Out",desc:"Switch every light off",art:"💡",g:["#c9a400","#6b5600"]},
+  {id:"pixels",name:"Picture Logic",desc:"Number clues hide a picture",art:"🖼️",g:["#7a4fb5","#3c2266"]},
+  {id:"boxes",name:"Box Push",desc:"Push crates onto the spots",art:"📦",g:["#b86b1f","#5e3409"]}];
+
+let editing=false;
+music.button($("btnMusic"));$("btnMusic").innerHTML=TS.MUSIC_SVG;
+
+function show(){const cur=players.current();
+  $("viewPlayers").hidden=!!cur;$("viewGames").hidden=!cur;$("btnMe").hidden=!cur;
+  if(cur){$("meFace").textContent=cur.avatar;$("meFace").style.setProperty("--pc",cur.color);$("meName").textContent=cur.name;
+    $("hello").textContent="Hi "+cur.name+"! Pick a game";drawGames()}
+  else drawPlayers()}
+
+function drawPlayers(){const g=$("playerGrid");g.innerHTML="";g.classList.toggle("editing",editing);
+  players.list().forEach(p=>{const b=document.createElement("button");b.type="button";b.className="player";
+    b.innerHTML='<div class="face" style="--pc:'+p.color+'">'+esc(p.avatar)+"</div><b>"+esc(p.name)+"</b><span>"+players.gradeName(p.grade)+"</span>";
+    b.onclick=()=>{if(editing)openForm(p);else{players.use(p.id);music.fx("tap");show()}};g.appendChild(b)});
+  const a=document.createElement("button");a.type="button";a.className="player addp";a.id="btnAdd";
+  a.innerHTML='<div class="face">+</div><b>Add player</b><span>&nbsp;</span>';a.onclick=()=>openForm(null);g.appendChild(a);
+  $("btnEdit").hidden=!players.list().length;$("btnEdit").textContent=editing?"Done editing":"Edit players"}
+
+function drawGames(){const g=$("gameGrid");g.innerHTML="";
+  GAMES.forEach(x=>{const a=document.createElement(x.href?"a":"div");a.className="game"+(x.href?"":" soon");
+    if(x.href)a.href=x.href;a.style.setProperty("--g1",x.g[0]);a.style.setProperty("--g2",x.g[1]);a.dataset.game=x.id;
+    a.innerHTML=(x.href?"":'<span class="badge">Coming soon</span>')+'<div class="art">'+(x.img?'<img src="'+x.img+'" alt="">':x.art)+"</div><b>"+x.name+"</b><span>"+x.desc+"</span>";
+    g.appendChild(a)})}
+
+/* ---------- add / edit player ---------- */
+let form=null,delArmed=0;
+function openForm(p){form=p?{id:p.id,name:p.name,avatar:p.avatar,color:p.color,grade:p.grade}
+    :{id:null,name:"",avatar:players.AVATARS[players.list().length%players.AVATARS.length],color:players.COLORS[players.list().length%players.COLORS.length],grade:3};
+  $("formTitle").textContent=p?"Edit "+p.name:"New player";$("fName").value=form.name;$("btnDelete").hidden=!p;
+  $("btnDelete").textContent="Delete player";delArmed=0;drawForm();$("sheetPlayer").hidden=false;
+  if(!p)setTimeout(()=>$("fName").focus(),50)}
+function drawForm(){
+  const av=$("fAvatars");av.innerHTML="";players.AVATARS.forEach(x=>{const b=document.createElement("button");b.type="button";b.textContent=x;
+    b.setAttribute("aria-label","Buddy "+x);if(x===form.avatar)b.className="cur";b.onclick=()=>{form.avatar=x;drawForm()};av.appendChild(b)});
+  const co=$("fColors");co.innerHTML="";players.COLORS.forEach(c=>{const b=document.createElement("button");b.type="button";b.style.setProperty("--c",c);
+    b.setAttribute("aria-label","Colour "+c);if(c===form.color)b.className="cur";b.onclick=()=>{form.color=c;drawForm()};co.appendChild(b)});
+  const gr=$("fGrades");gr.innerHTML="";[1,2,3,4,5,6,7].forEach(g=>{const b=document.createElement("button");b.type="button";
+    b.innerHTML="<b>"+(g===7?"7+":g)+"</b><span>Grade</span>";if(g===form.grade)b.className="cur";b.onclick=()=>{form.grade=g;drawForm()};gr.appendChild(b)})}
+function closeForm(){$("sheetPlayer").hidden=true;form=null}
+$("playerForm").addEventListener("submit",e=>{e.preventDefault();if(!form)return;
+  const name=$("fName").value.trim();if(!name){$("fName").focus();$("fName").placeholder="Type a name first";return}
+  const o={name,avatar:form.avatar,color:form.color,grade:form.grade};
+  if(form.id)players.update(form.id,o);else{const p=players.add(o);if(!editing)players.use(p.id)}
+  closeForm();show()});
+$("fName").addEventListener("input",e=>{if(form)form.name=e.target.value});
+$("closeForm").onclick=closeForm;$("formCancel").onclick=closeForm;
+$("btnDelete").onclick=()=>{if(!form||!form.id)return;
+  if(!delArmed){delArmed=1;$("btnDelete").textContent="Tap again to delete "+form.name+" and all their progress";
+    setTimeout(()=>{if(delArmed===1&&form){delArmed=0;$("btnDelete").textContent="Delete player"}},4000);return}
+  players.remove(form.id);closeForm();if(!players.list().length)editing=false;show()};
+$("btnEdit").onclick=()=>{editing=!editing;drawPlayers()};
+$("btnMe").onclick=()=>{players.use(null);editing=false;show()};
+$("sheetPlayer").addEventListener("click",e=>{if(e.target===$("sheetPlayer"))closeForm()});
+
+show();
+if(!players.list().length)openForm(null);
+})();
+</script>
+</body>
+</html>

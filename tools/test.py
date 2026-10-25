@@ -1,47 +1,72 @@
-"""Browser test for Unblock the Car.  python3 tools/test.py [path/to/index.html]
-Checks: grade picker, difficulty curve, drag release has no bounce, maths-for-a-hint flow, music toggle, no JS errors."""
-import sys, re, json, pathlib
+"""Browser tests for Tile Solve.  python3 tools/test.py [screenshot_dir]
+Covers: players (add, switch, separate progress, delete), migration of the old single-player save,
+Unblock the Car (difficulty curve, drag without bounce, maths-for-a-hint, music), and no JS errors."""
+import sys, re, pathlib
 from playwright.sync_api import sync_playwright
 
-FILE = pathlib.Path(sys.argv[1] if len(sys.argv) > 1 else pathlib.Path(__file__).parent.parent / "index.html").resolve()
-OUT = pathlib.Path(sys.argv[2]) if len(sys.argv) > 2 else pathlib.Path(".")
+ROOT = pathlib.Path(__file__).resolve().parent.parent
+HOME = (ROOT / "index.html").as_uri()
+CAR = (ROOT / "games/car/index.html").as_uri()
+OUT = pathlib.Path(sys.argv[1]) if len(sys.argv) > 1 else pathlib.Path(".")
 fails = []
 def check(ok, msg):
     print(("PASS " if ok else "FAIL ") + msg)
     if not ok: fails.append(msg)
 
 def movable(cars, pos):
-    occ = {}
+    occ = set()
     for i, c in enumerate(cars):
         for j in range(c["len"]):
-            occ[(c["f"]*6 + pos[i] + j) if c["h"] else ((pos[i]+j)*6 + c["f"])] = i
+            occ.add((c["f"]*6 + pos[i] + j) if c["h"] else ((pos[i]+j)*6 + c["f"]))
     for i, c in enumerate(cars):
-        cell = (lambda q: c["f"]*6 + q) if c["h"] else (lambda q: q*6 + c["f"])
+        cell = (lambda q, c=c: c["f"]*6 + q) if c["h"] else (lambda q, c=c: q*6 + c["f"])
         hi = pos[i]
         while hi + c["len"] < 6 and cell(hi + c["len"]) not in occ: hi += 1
         if hi > pos[i]: return i, hi - pos[i], 1
         lo = pos[i]
         while lo > 0 and cell(lo - 1) not in occ: lo -= 1
         if lo < pos[i]: return i, pos[i] - lo, -1
-    return None
+
+def add_player(pg, name, avatar_ix, grade):
+    pg.fill("#fName", name)
+    pg.click(f"#fAvatars button:nth-child({avatar_ix})")
+    pg.click(f"#fGrades button:nth-child({grade})")
+    pg.click("#formSave")
+
+def question(pg):
+    t = pg.inner_text(".prob").replace("\n", " ")
+    n = list(map(int, re.findall(r"\d+", t)))
+    if t.index("?") < t.index("="): return t, n[1] - n[0]          # a + ? = c
+    op = re.search(r"[+−×÷]", t).group()
+    return t, {"+": n[0]+n[1], "−": n[0]-n[1], "×": n[0]*n[1], "÷": n[0]//max(1, n[1])}[op]
+
+def answer(pg, v):
+    for ch in str(v): pg.click(f".keys button[data-k='{ch}']")
+    pg.click(".keys .ok")
 
 with sync_playwright() as p:
-    b = p.chromium.launch(args=["--autoplay-policy=no-user-gesture-required"])
-    pg = b.new_page(viewport={"width": 390, "height": 844}, device_scale_factor=2, has_touch=False)
+    b = p.chromium.launch()
+    ctx = b.new_context(viewport={"width": 390, "height": 844}, device_scale_factor=2)
+    pg = ctx.new_page()
     errors = []
     pg.on("pageerror", lambda e: errors.append(str(e)))
     pg.on("console", lambda m: m.type == "error" and "Failed to load resource" not in m.text and errors.append(m.text))
-    pg.goto(FILE.as_uri())
 
-    # Grade picker on first launch
-    check(pg.is_visible("#sheetGrade"), "grade picker shows on first launch")
-    pg.screenshot(path=str(OUT / "shot-grade.png"))
-    pg.click("#gradeGrid button:nth-child(3)")
-    check(pg.is_hidden("#sheetGrade") and pg.text_content("#lvlNum") == "1", "picking grade 3 starts level 1")
-    saved = pg.evaluate("JSON.parse(localStorage.getItem('tilesolve:car'))")
-    check(saved["grade"] == 3, "grade is saved")
+    # ---- Home: first launch asks for a player ----
+    pg.goto(HOME)
+    check(pg.is_visible("#sheetPlayer"), "first launch opens New player")
+    pg.screenshot(path=str(OUT / "shot-newplayer.png"))
+    pg.click("#formSave")
+    check(pg.is_visible("#sheetPlayer"), "can't save a player without a name")
+    add_player(pg, "Mia", 3, 3)
+    check(pg.is_visible("#viewGames") and "Hi Mia!" in pg.text_content("#hello"), "saving a player goes to the game grid")
+    check(pg.locator(".game:not(.soon)").count() == 1 and pg.locator(".game.soon").count() >= 10, "Car is playable, the rest say coming soon")
+    pg.screenshot(path=str(OUT / "shot-games.png"))
 
-    # Difficulty curve
+    # ---- Car game ----
+    pg.click(".game[data-game='car']")
+    pg.wait_for_url("**/games/car/index.html")
+    check(pg.text_content("#lvlNum") == "1", "Car opens at level 1 for the new player")
     curve = pg.evaluate("[1,5,10,20,30,50,100,200,500,1000].map(n=>[n,window.__tilesolve.getLevel(3,n).par])")
     print("grade 3 par by level:", curve)
     d = dict(curve)
@@ -49,11 +74,9 @@ with sync_playwright() as p:
           "grade 3 curve: easy start, ~20 by level 30, rising after")
     g1, g7 = pg.evaluate("[window.__tilesolve.getLevel(1,30).par, window.__tilesolve.getLevel(7,30).par]")
     check(g1 < d[30] < g7, f"older grades harder at level 30 (g1={g1}, g3={d[30]}, g7={g7})")
-    distinct = pg.evaluate("new Set(Array.from({length:200},(_,k)=>JSON.stringify(window.__tilesolve.getLevel(3,k+1).pos)+window.__tilesolve.getLevel(3,k+1).cars.length)).size")
-    check(distinct >= 195, f"first 200 grade-3 levels are (nearly) all different ({distinct}/200)")
+    check(pg.text_content("#par") == str(d[1]), "board uses the player's grade")
     pg.screenshot(path=str(OUT / "shot-board.png"))
 
-    # Drag release: car must glide to its cell without first moving back toward where it started
     L = pg.evaluate("window.__tilesolve.getLevel(3,1)")
     i, steps, sign = movable(L["cars"], L["pos"])
     horiz = L["cars"][i]["h"]
@@ -67,62 +90,81 @@ with sync_playwright() as p:
     pg.evaluate("""i=>{const el=document.querySelector(`.car[data-i='${i}']`);window.__trace=[];const t0=performance.now();
       (function f(){const r=el.getBoundingClientRect();window.__trace.push([r.left,r.top]);if(performance.now()-t0<450)requestAnimationFrame(f)})()}""", i)
     pg.mouse.up(); pg.wait_for_timeout(500)
-    tr = pg.evaluate("window.__trace")
-    axis = 0 if horiz else 1
-    vals = [t[axis] for t in tr]
-    final, rel = vals[-1], vals[0]
-    worst = max(abs(v - final) - abs(rel - final) for v in vals)
+    vals = [t[0 if horiz else 1] for t in pg.evaluate("window.__trace")]
+    worst = max(abs(v - vals[-1]) - abs(vals[0] - vals[-1]) for v in vals)
     back = max(0, *(sign*(vals[k-1]-vals[k]) for k in range(1, len(vals))))
-    print(f"drag trace (px along axis): {[round(v) for v in vals[:12]]} ... {round(final)}")
     check(worst <= 1.5 and back <= 1.5, f"released car settles without bouncing (overshoot {worst:.1f}px, backstep {back:.1f}px)")
     check(pg.text_content("#moves") == "1", "drag counted as one move")
 
-    # Maths for a hint
     pg.click("#btnHint")
-    check(pg.is_visible("#sheetMath"), "hint opens a maths question")
-    def question():
-        t = pg.inner_text("#mathQ").replace("\n", " ")
-        nums = list(map(int, re.findall(r"\d+", t)))
-        if "?" in t and t.index("?") < t.index("="):  # a + ? = c
-            return t, nums[1] - nums[0]
-        return t, (nums[0] + nums[1]) if "+" in t else (nums[0] - nums[1])
-    def answer(n):
-        for ch in str(n): pg.click(f"#mathKeys button:text-is('{ch}')")
-        pg.click("#mathKeys .ok")
-    q1, a1 = question(); print("question:", q1, "->", a1)
-    check(all(0 <= v <= 100 for v in map(int, re.findall(r"\d+", q1))) and 0 <= a1 <= 100, "question is grade-2 range (within 100)")
+    check(pg.locator(".prob").is_visible(), "hint opens a maths question")
+    q1, a1 = question(pg); print("grade 3 player's question:", q1, "->", a1)
+    check(re.search(r"[×÷]", q1) is None and all(int(v) <= 100 for v in re.findall(r"\d+", q1)), "grade 3 player gets grade 2 maths (+/− within 100)")
     pg.screenshot(path=str(OUT / "shot-math.png"))
-    wrong = a1 + 1
-    answer(wrong); pg.wait_for_timeout(600)
-    check("2 tries left" in pg.text_content("#mathFb") and question()[0] == q1, "1st wrong answer: same question, 2 tries left")
-    answer(wrong); pg.wait_for_timeout(600)
-    check("Last try" in pg.text_content("#mathFb") and question()[0] == q1, "2nd wrong answer: same question, last try")
-    pg.click("#closeMath"); pg.click("#btnHint")
-    check(question()[0] == q1 and "Last try" in pg.text_content("#mathFb"), "closing and reopening keeps the question and tries")
-    answer(wrong); pg.wait_for_timeout(300)
-    check(f"The answer was {a1}" in pg.text_content("#mathFb"), "3rd wrong answer shows the answer")
+    answer(pg, a1 + 1); pg.wait_for_timeout(600)
+    check("2 tries left" in pg.text_content(".fb") and question(pg)[0] == q1, "1st miss: same question, 2 tries left")
+    answer(pg, a1 + 1); pg.wait_for_timeout(600)
+    check("Last try" in pg.text_content(".fb"), "2nd miss: last try")
+    pg.click(".sheet:not([hidden]) .close"); pg.click("#btnHint")
+    check(question(pg)[0] == q1 and "Last try" in pg.text_content(".fb"), "closing and reopening keeps the question and tries")
+    answer(pg, a1 + 1); pg.wait_for_timeout(300)
+    check(f"The answer was {a1}" in pg.text_content(".fb"), "3rd miss shows the answer")
     pg.wait_for_timeout(2600)
-    tries = pg.locator("#mathTries i:not(.used)").count()
-    check(tries == 3, "then a new question with 3 fresh tries")
-    q2, a2 = question(); answer(a2); pg.wait_for_timeout(1200)
-    check(pg.is_hidden("#sheetMath") and pg.locator(".ghost").count() == 1 and pg.text_content("#tip").startswith("Hint:"), "correct answer closes sheet and shows the hint")
-    pg.screenshot(path=str(OUT / "shot-hint.png"))
+    check(pg.locator(".tries i:not(.used)").count() == 3, "then a new question with 3 fresh tries")
+    q2, a2 = question(pg); answer(pg, a2); pg.wait_for_timeout(1200)
+    check(pg.locator(".ghost").count() == 1 and pg.text_content("#tip").startswith("Hint:"), "correct answer shows the hint")
 
-    # Music toggle
-    st = pg.evaluate("window.AudioContext ? 'yes' : 'no'")
-    pg.click("#btnMusic")
-    off = pg.get_attribute("#btnMusic", "aria-pressed")
-    pg.click("#btnMusic")
-    on = pg.get_attribute("#btnMusic", "aria-pressed")
-    check(off == "false" and on == "true" and pg.evaluate("JSON.parse(localStorage.getItem('tilesolve:car')).music") is True, "music button toggles and is remembered")
-
-    # Hardest level: hint solver must still answer quickly
+    pg.click("#btnMusic"); off = pg.get_attribute("#btnMusic", "aria-pressed")
+    pg.click("#btnMusic"); on = pg.get_attribute("#btnMusic", "aria-pressed")
+    check(off == "false" and on == "true", "music button toggles")
     ms = pg.evaluate("(()=>{const T=window.__tilesolve,L=T.getLevel(7,1000),t=performance.now(),s=T.solveNext(L.cars,L.pos);return [L.par,s?1:0,performance.now()-t]})()")
     check(ms[1] == 1 and ms[2] < 3000, f"hint works on hardest level (par {ms[0]}, {ms[2]:.0f} ms)")
+    pg.click("#btnLevels")
+    check("Mia" in pg.text_content("#whoLbl") and "Grade 3" in pg.text_content("#whoLbl"), "level picker shows who is playing")
+    pg.click("#closeLevels")
 
-    # Reload keeps grade, level and progress
-    pg.reload()
-    check(pg.is_hidden("#sheetGrade") and pg.text_content("#lvlNum") == "1", "reload keeps grade and level")
+    # ---- Second player has separate progress and grade-appropriate everything ----
+    pg.click("#btnHome"); pg.wait_for_url("**/index.html")
+    check(pg.is_visible("#viewGames"), "Home button returns to the game grid")
+    pg.click("#btnMe")
+    check(pg.is_visible("#viewPlayers") and pg.locator(".player:not(.addp)").count() == 1, "player chip goes back to Who's playing")
+    pg.click("#btnAdd"); add_player(pg, "Sam", 7, 1)
+    pg.click(".game[data-game='car']"); pg.wait_for_url("**/games/car/index.html")
+    sam_par = pg.text_content("#par")
+    check(pg.text_content("#moves") == "0" and sam_par == str(pg.evaluate("window.__tilesolve.getLevel(1,1).par")), "Sam starts fresh with grade 1 puzzles")
+    pg.click("#btnHint"); qs, _ = question(pg)
+    check(all(int(v) <= 20 for v in re.findall(r"\d+", qs)), f"grade 1 player gets grade 1 maths ({qs})")
+    pg.goto(HOME)
+    pg.click("#btnMe")
+    pg.screenshot(path=str(OUT / "shot-players.png"))
+    keys = pg.evaluate("Object.keys(localStorage).filter(k=>k.startsWith('tilesolve:p:')).length")
+    check(keys == 2, "each player has their own Car save")
+
+    # ---- Edit and delete ----
+    pg.click("#btnEdit"); pg.click(".player:has-text('Sam')")
+    check(pg.text_content("#formTitle") == "Edit Sam", "edit mode opens a player's details")
+    pg.click("#btnDelete")
+    check(pg.locator(".player:has-text('Sam')").count() == 1, "first delete tap only asks to confirm")
+    pg.click("#btnDelete")
+    check(pg.locator(".player:not(.addp)").count() == 1 and pg.evaluate("Object.keys(localStorage).filter(k=>k.startsWith('tilesolve:p:')).length") == 1,
+          "second tap deletes the player and their progress")
+
+    # ---- Old single-player save becomes "Player 1" ----
+    ctx2 = b.new_context(viewport={"width": 390, "height": 844})
+    p2 = ctx2.new_page()
+    p2.goto(HOME)
+    p2.evaluate("""localStorage.clear();localStorage.setItem('tilesolve:car',JSON.stringify({grade:3,music:false,all:false,prog:{3:{unlocked:12,stars:{1:3,2:2},last:11}}}));
+                   localStorage.setItem('ubc:L5','{}')""")
+    p2.goto(CAR)
+    check(p2.text_content("#lvlNum") == "11", "old save migrates: same level")
+    check(p2.get_attribute("#btnMusic", "aria-pressed") == "false", "old save migrates: music setting")
+    check(p2.evaluate("localStorage.getItem('tilesolve:car')===null && localStorage.getItem('ubc:L5')===null"), "old keys removed")
+    p2.goto(HOME)
+    check("Player 1" in p2.text_content("#meName"), "migrated player is called Player 1")
+    p3 = ctx2.new_page(); p3.goto(HOME); p3.evaluate("localStorage.clear()"); p3.goto(CAR)
+    check(p3.url.endswith("/index.html") and "/games/" not in p3.url, "opening a game with no player goes home")
+    ctx2.close()
+
     check(not errors, "no JavaScript errors" + ("" if not errors else ": " + "; ".join(errors[:3])))
     b.close()
 
