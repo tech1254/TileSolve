@@ -33,10 +33,10 @@ body{overflow:hidden}
 /* Board (both modes) */
 .stage{flex:1;min-height:0;width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px}
 .frame{padding:8px;background:var(--asphalt);border-radius:16px;box-shadow:0 0 0 3px var(--lane),0 18px 40px rgba(0,0,0,.45)}
-.board{--bw:max(200px,min(calc(100vw - 48px),560px,calc(100dvh - 300px)));--n:3;position:relative;width:var(--bw);height:var(--bw);border-radius:8px;touch-action:none;overflow:hidden;
+.board{--bw:max(200px,min(calc(100vw - 48px),560px,calc(100dvh - 350px)));--n:3;position:relative;width:var(--bw);height:var(--bw);border-radius:8px;touch-action:none;overflow:hidden;
   background-color:#20262d;background-image:linear-gradient(var(--lane) 1px,transparent 1px),linear-gradient(90deg,var(--lane) 1px,transparent 1px);
   background-size:calc(100%/var(--n)) calc(100%/var(--n));background-position:-1px -1px}
-.drop .board{--bw:max(200px,min(calc(100vw - 48px),540px,calc(100dvh - 420px)))}
+.drop .board{--bw:max(200px,min(calc(100vw - 48px),540px,calc(100dvh - 470px)))}
 .ghostimg{position:absolute;inset:0;background:center/cover;opacity:.18;pointer-events:none}
 .cellhi{position:absolute;box-sizing:border-box;border:3px solid var(--paint);border-radius:6px;pointer-events:none}
 .cellhi.bad{border-color:var(--target);animation:ts-shake .35s}
@@ -54,7 +54,7 @@ body{overflow:hidden}
 .fly.home{transition:transform .25s ease,width .25s ease,height .25s ease}
 @media (orientation:landscape) and (min-width:700px){
   .stage.drop{flex-direction:row;gap:18px}
-  .drop .board{--bw:max(200px,min(calc(100dvh - 210px),calc(58vw - 40px),620px))}
+  .drop .board{--bw:max(200px,min(calc(100dvh - 260px),calc(58vw - 40px),620px))}
   .drop .tray{flex:none;width:min(34vw,380px);height:calc(var(--bwpx,400px) + 16px);max-width:none}
   .top,.controls{max-width:min(1000px,100%)}}
 
@@ -68,7 +68,11 @@ body{overflow:hidden}
 .tile.last{opacity:0;transition:opacity .5s}
 .tile.last.in{opacity:1}
 
+.ptools{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.ptools .chip{text-transform:none;letter-spacing:0;font-size:14px;padding:8px 14px}
+.ptools .chip[aria-pressed="true"]{border-color:var(--paint);background:#3d3a24}
 .peek{position:fixed;inset:0;z-index:25;display:grid;place-items:center;background:rgba(8,11,14,.78)}
+.peek{flex-direction:column;gap:14px;cursor:pointer}.peek p{margin:0;color:var(--muted);font-weight:600}
 .peek img{width:min(86vw,72vh);border-radius:16px;box-shadow:0 20px 50px rgba(0,0,0,.6)}
 .controls{width:100%;max-width:560px;display:grid;grid-template-columns:52px 1fr 1fr 1fr 52px;gap:8px}
 .controls button{background:var(--panel);border:1px solid var(--lane);border-radius:12px;padding:13px 0;font-weight:700;font-size:15px;cursor:pointer}
@@ -114,6 +118,10 @@ body{overflow:hidden}
       <button class="thumb" id="btnPeek" type="button" aria-label="Look at the whole picture"></button>
     </div>
   </header>
+  <div class="ptools">
+    <button class="chip" id="btnLook" type="button">👀 See the picture</button>
+    <button class="chip" id="btnGhost" type="button" aria-pressed="false">Faint picture: off</button>
+  </div>
   <main class="stage" id="stage">
     <div class="frame"><div class="board" id="board"></div></div>
     <div class="tray" id="tray" hidden></div>
@@ -128,7 +136,7 @@ body{overflow:hidden}
   <p class="tip" id="tip"></p>
 </div>
 
-<div class="peek" id="peek" hidden><img id="peekImg" alt=""></div>
+<div class="peek" id="peek" hidden><img id="peekImg" alt="The finished picture"><p>Tap anywhere to go back</p></div>
 
 <div class="sheet" id="sheetMode" hidden>
   <div class="card">
@@ -166,7 +174,7 @@ body{overflow:hidden}
 (()=>{
 const PLAYER=TS.requirePlayer(),Music=TS.music,PICS=window.TS_PICTURES,$=id=>document.getElementById(id);
 const GRADE=Math.max(1,Math.min(7,PLAYER.grade|0||3)),LEVELS=40;
-const SAVE=TS.gameSave("picture",{mode:null,drop:{},slide:{},numbers:GRADE<=2,all:false}),save=SAVE.data,persist=SAVE.save;
+const SAVE=TS.gameSave("picture",{mode:null,drop:{},slide:{},numbers:GRADE<=2,ghost:GRADE<=2,all:false}),save=SAVE.data,persist=SAVE.save;
 const prog=(m=mode)=>save[m][GRADE]||(save[m][GRADE]={unlocked:1,stars:{},last:1});
 let mode=save.mode||"drop";
 $("btnMusic").innerHTML=TS.MUSIC_SVG;Music.button($("btnMusic"));
@@ -177,7 +185,7 @@ $("btnMusic").innerHTML=TS.MUSIC_SVG;Music.button($("btnMusic"));
 function spec(m,n){const seed=(m==="drop"?1:2)*100000+GRADE*1000+n;
   const pic=PICS[(n-1+(m==="drop"?0:3))%PICS.length];
   if(m==="drop"){const base={1:2,2:2,3:3,4:3,5:4,6:4,7:4}[GRADE],step=GRADE<=2?10:8,cap=GRADE>=6?7:6;
-    return{m,n,pic,seed,size:Math.min(cap,base+Math.floor((n-1)/step)),rotate:n>=(GRADE<=2?21:GRADE<=4?13:9),ghost:GRADE<=2}}
+    return{m,n,pic,seed,size:Math.min(cap,base+Math.floor((n-1)/step)),rotate:n>=(GRADE<=2?21:GRADE<=4?13:9)}}
   const s3=GRADE<=2?40:GRADE<=4?16:8,s4=GRADE>=5?28:99;
   if(n<=s3){const t=(n-1)/Math.max(1,s3-1),lo=GRADE<=2?4:6,hi=GRADE<=2?20:22;return{m,n,pic,seed,size:3,depth:Math.round(lo+(hi-lo)*t)}}
   const size=n<=s4?4:5,from=size===4?s3+1:s4+1,to=size===4?Math.min(LEVELS,s4):LEVELS,t=(n-from)/Math.max(1,to-from);
@@ -216,6 +224,7 @@ async function load(n){if(TS.gate.pending(prog(),n)){$("sheetWin").hidden=true;T
   board.style.setProperty("--n",L.size);
   $("stage").classList.toggle("drop",mode==="drop");tray.hidden=mode!=="drop";
   if(mode==="drop")startDrop();else await startSlide(my);
+  drawGhost();
   if(my!==token)return;busy=false;hud()}
 
 function win(text,stars){busy=true;Music.fx("win");const pr=prog();
@@ -229,10 +238,10 @@ function startDrop(){const n=L.size,r=TS.rngFrom(L.seed),order=[];
   for(let k=0;k<n*n;k++)order.push(k);
   for(let k=order.length-1;k>0;k--){const j=Math.floor(r()*(k+1));[order[k],order[j]]=[order[j],order[k]]}
   S={placed:0,total:n*n,oops:0,pieces:order.map(k=>({k,rot:L.rotate?[90,180,270][Math.floor(r()*3)]:0,done:false,el:null}))};
-  if(L.ghost){const g=document.createElement("div");g.className="ghostimg";g.style.backgroundImage='url("'+url+'")';board.appendChild(g)}
+  drawGhost();
   sizeTray();S.pieces.forEach(p=>{const t=document.createElement("div");t.className="tp";t.dataset.k=p.k;const i=document.createElement("i");
     bg(i,url,n,Math.floor(p.k/n),p.k%n);i.style.transform="rotate("+p.rot+"deg)";t.appendChild(i);p.el=t;tray.appendChild(t)});
-  tip(L.rotate?"Tap a piece to turn it, then drag it into the picture.":"Drag each piece to where it belongs in the picture.")}
+  tip((L.rotate?"Tap a piece to turn it, then drag it into the picture.":"Drag each piece to where it belongs in the picture.")+" Tap 👀 to see the whole picture.")}
 function sizeTray(){const cell=board.clientWidth/L.size;tray.style.setProperty("--ps",Math.round(Math.max(44,Math.min(cell,76)))+"px");
   document.documentElement.style.setProperty("--bwpx",board.clientWidth+"px")}
 addEventListener("resize",()=>{if(mode==="drop"&&L&&S){sizeTray();S.pieces.forEach(p=>{if(p.done)placeEl(p)})}});
@@ -295,7 +304,7 @@ async function startSlide(my){const n=L.size;let cells;
   S.cells=cells;S.n=n;S.els=[];board.classList.toggle("nonum",!save.numbers);
   for(let v=1;v<n*n;v++){const el=document.createElement("div");el.className="tile";el.dataset.v=v;const i=document.createElement("i");bg(i,url,n,Math.floor((v-1)/n),(v-1)%n);
     const b=document.createElement("b");b.textContent=v;i.appendChild(b);el.appendChild(i);board.appendChild(el);S.els[v]=el}
-  layout();tip("Tap a tile next to the gap to slide it. Put the picture back together!")}
+  layout();tip("Slide tiles into the gap to put the picture back together. Tap 👀 to see how it should look.")}
 const nbrs=(z,n)=>{const r=(z/n)|0,c=z%n,o=[];if(r>0)o.push(z-n);if(r<n-1)o.push(z+n);if(c>0)o.push(z-1);if(c<n-1)o.push(z+1);return o};
 const solved=c=>c.every((v,i)=>i===c.length-1?v===0:v===i+1);
 function layout(){const n=S.n,s=100/n;S.cells.forEach((v,i)=>{if(!v)return;const el=S.els[v];el.style.left=(i%n)*s+"%";el.style.top=((i/n)|0)*s+"%";el.style.width=el.style.height=s+"%"})}
@@ -348,8 +357,14 @@ $("btnNext").onclick=()=>{if(L&&canPlay(L.n+1)&&!busy)load(L.n+1)};
 $("btnReplay").onclick=()=>{$("sheetWin").hidden=true;load(L.n)};
 $("btnWinNext").onclick=()=>{$("sheetWin").hidden=true;load(Math.min(LEVELS,L.n+1))};
 // Peeking at the whole picture is free: tap the thumbnail, it shows for a few seconds (tap again to close).
-let peekT=0;function peek(on){$("peek").hidden=!on;clearTimeout(peekT);if(on)peekT=setTimeout(()=>peek(false),2600)}
-$("btnPeek").onclick=()=>peek(true);$("peek").onclick=()=>peek(false);
+// Looking at the whole picture is free: the 👀 button (or the thumbnail) shows it until you tap again.
+function peek(on){$("peek").hidden=!on}
+$("btnPeek").onclick=()=>peek(true);$("btnLook").onclick=()=>peek(true);$("peek").onclick=()=>peek(false);
+/* Faint picture: a see-through copy of the picture on the board, to match pieces against (Drop-in only). */
+function drawGhost(){const on=!!save.ghost,b=$("btnGhost");b.setAttribute("aria-pressed",String(on));b.textContent="Faint picture: "+(on?"on":"off");
+  b.hidden=mode!=="drop";let g=board.querySelector(".ghostimg");
+  if(on&&mode==="drop"&&url){if(!g){g=document.createElement("div");g.className="ghostimg";board.prepend(g)}g.style.backgroundImage='url("'+url+'")'}else if(g)g.remove()}
+$("btnGhost").onclick=()=>{save.ghost=!save.ghost;persist();drawGhost()};
 
 function openModes(first){document.querySelectorAll(".modes button").forEach(b=>b.classList.toggle("cur",!first&&b.dataset.mode===mode));
   $("closeMode").hidden=!!first;$("sheetMode").hidden=false}
