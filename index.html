@@ -39,6 +39,10 @@ h1{font-family:var(--font-sign);font-weight:400;font-size:clamp(26px,6vw,36px);m
 .player.addp .face{background:transparent;border:3px dashed var(--lane);box-shadow:none;font-size:40px;color:var(--paint);font-family:var(--font-sign)}
 .editing .player:not(.addp)::after{content:"Edit";position:absolute;top:10px;right:12px;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--paint)}
 .foot{display:flex;justify-content:center}
+.phead{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px}
+.phead #btnBack{justify-self:start;grid-row:1}
+.phead .done{justify-self:end;background:var(--paint);color:var(--night);border:0;border-radius:999px;padding:10px 18px;font-weight:700;font-size:16px;cursor:pointer;box-shadow:inset 0 -3px 0 rgba(0,0,0,.18)}
+.phead #btnBack{grid-column:1}.phead h1{grid-column:2;grid-row:1}.phead .done{grid-column:3;grid-row:1}
 .linkbtn{background:none;border:0;color:var(--muted);font-weight:700;cursor:pointer;padding:10px;text-decoration:underline;text-underline-offset:3px}
 
 /* Game grid */
@@ -84,7 +88,12 @@ h1{font-family:var(--font-sign);font-weight:400;font-size:clamp(26px,6vw,36px);m
 
   <section id="viewPlayers" hidden>
     <div style="display:grid;gap:22px">
-      <h1>Who's playing?</h1>
+      <div class="phead">
+        <button class="chip" id="btnBack" type="button" hidden>← Back</button>
+        <h1 id="whoTitle">Who's playing?</h1>
+        <button class="done" id="btnDone" type="button" hidden>✓ Done</button>
+      </div>
+      <p class="sub" id="editNote" hidden>Tap a player to change their name, buddy, colour or grade. Tap ✓ Done when you're finished.</p>
       <div class="players" id="playerGrid"></div>
       <div class="foot"><button class="linkbtn" id="btnEdit" type="button">Edit players</button></div>
     </div>
@@ -132,7 +141,7 @@ const GAMES=[
   {id:"pixels",name:"Picture Logic",desc:"Number clues hide a picture",art:"🖼️",href:"games/pixels/index.html",g:["#7a4fb5","#3c2266"]},
   {id:"boxes",name:"Box Push",desc:"Push crates onto the spots",art:"📦",href:"games/boxes/index.html",g:["#b86b1f","#5e3409"]}];
 
-let editing=false;
+let editing=false,prev=null; // prev: the player whose games we came from, for the Back button
 music.button($("btnMusic"));$("btnMusic").innerHTML=TS.MUSIC_SVG;
 
 function show(){const cur=players.current();
@@ -147,7 +156,10 @@ function drawPlayers(){const g=$("playerGrid");g.innerHTML="";g.classList.toggle
     b.onclick=()=>{if(editing)openForm(p);else{players.use(p.id);music.fx("tap");show()}};g.appendChild(b)});
   const a=document.createElement("button");a.type="button";a.className="player addp";a.id="btnAdd";
   a.innerHTML='<div class="face">+</div><b>Add player</b><span>&nbsp;</span>';a.onclick=()=>openForm(null);g.appendChild(a);
-  $("btnEdit").hidden=!players.list().length;$("btnEdit").textContent=editing?"Done editing":"Edit players"}
+  const back=prev&&players.list().some(p=>p.id===prev);
+  $("whoTitle").textContent=editing?"Edit players":"Who's playing?";$("editNote").hidden=!editing;$("btnDone").hidden=!editing;
+  $("btnBack").hidden=!(editing||back);$("btnBack").textContent=editing?"← Back":"← Back to games";
+  $("btnEdit").hidden=editing||!players.list().length;$("btnEdit").textContent="Edit players"}
 
 function drawGames(){const g=$("gameGrid");g.innerHTML="";
   GAMES.forEach(x=>{const a=document.createElement(x.href?"a":"div");a.className="game"+(x.href?"":" soon");
@@ -181,8 +193,11 @@ $("btnDelete").onclick=()=>{if(!form||!form.id)return;
   if(!delArmed){delArmed=1;$("btnDelete").textContent="Tap again to delete "+form.name+" and all their progress";
     setTimeout(()=>{if(delArmed===1&&form){delArmed=0;$("btnDelete").textContent="Delete player"}},4000);return}
   players.remove(form.id);closeForm();if(!players.list().length)editing=false;show()};
-$("btnEdit").onclick=()=>{editing=!editing;drawPlayers()};
-$("btnMe").onclick=()=>{players.use(null);editing=false;show()};
+$("btnEdit").onclick=()=>{editing=true;drawPlayers()};
+$("btnDone").onclick=()=>{editing=false;drawPlayers()};
+// Back: leave editing; if we came from a player's games, go back to them.
+$("btnBack").onclick=()=>{const wasEditing=editing;editing=false;if(!wasEditing&&prev&&players.list().some(p=>p.id===prev)){players.use(prev);prev=null;show()}else drawPlayers()};
+$("btnMe").onclick=()=>{const c=players.current();prev=c?c.id:null;players.use(null);editing=false;show()};
 $("sheetPlayer").addEventListener("click",e=>{if(e.target===$("sheetPlayer"))closeForm()});
 
 show();

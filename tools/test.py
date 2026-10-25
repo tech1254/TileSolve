@@ -144,6 +144,23 @@ with sync_playwright() as p:
     keys = pg.evaluate("Object.keys(localStorage).filter(k=>k.startsWith('tilesolve:p:')&&k.endsWith(':car')).length")
     check(keys == 2, "each player has their own Car save")
 
+    # ---- Back to games, and getting in and out of editing ----
+    check(pg.is_visible("#btnBack") and "Back to games" in pg.text_content("#btnBack"), "Who's playing has a Back to games button")
+    pg.click("#btnBack")
+    check(pg.is_visible("#viewGames") and "Sam" in pg.text_content("#meName"), "Back returns to the same player's games")
+    pg.click("#btnMe"); pg.click("#btnEdit")
+    check(pg.text_content("#whoTitle") == "Edit players" and pg.is_visible("#btnDone") and pg.is_visible("#editNote") and pg.is_hidden("#btnEdit"),
+          "edit mode is obvious: title, explanation and a Done button at the top")
+    pg.screenshot(path=str(OUT / "shot-editing.png"))
+    pg.click(".player:has-text('Mia')"); pg.fill("#fName", "Mia Rose"); pg.click("#formSave")
+    check(pg.text_content("#whoTitle") == "Edit players" and pg.locator(".player:has-text('Mia Rose')").count() == 1, "saving a change keeps you in edit mode")
+    pg.click("#btnDone")
+    check(pg.text_content("#whoTitle") == "Who's playing?" and pg.is_hidden("#btnDone"), "Done leaves edit mode")
+    pg.click(".player:has-text('Mia Rose')")
+    check(pg.is_visible("#viewGames") and "Mia Rose" in pg.text_content("#meName"), "after Done, tapping a player picks them again")
+    pg.click("#btnMe"); pg.click("#btnEdit"); pg.click("#btnBack")
+    check(pg.text_content("#whoTitle") == "Who's playing?", "Back also leaves edit mode")
+
     # ---- Edit and delete ----
     pg.click("#btnEdit"); pg.click(".player:has-text('Sam')")
     check(pg.text_content("#formTitle") == "Edit Sam", "edit mode opens a player's details")
