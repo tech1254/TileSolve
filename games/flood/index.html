@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#161b21">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box;height:100%}body{margin:0}[hidden]{display:none!important}</style>
+<title>Color Flood · Tile Solve</title>
+<meta name="apple-mobile-web-app-title" content="Tile Solve">
+<link rel="apple-touch-icon" href="../../icon-180.png">
+<link rel="icon" type="image/png" href="../../icon-512.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Barlow:wght@400;600;700&display=swap">
+<link rel="stylesheet" href="../../shared/ts.css?v=f78a34b8">
+<link rel="stylesheet" href="../../shared/game.css?v=f78a34b8">
+<style>
+.fgrid{--bw:max(220px,min(calc(100vw - 52px),520px,calc(100dvh - 330px)));width:var(--bw);height:var(--bw);display:grid;grid-template-columns:repeat(var(--n),1fr);
+  border-radius:10px;overflow:hidden;touch-action:none;cursor:pointer}
+.fc{background:var(--c);transition:background-color .22s ease;position:relative}
+.fc.mine::after{content:"";position:absolute;inset:0;box-shadow:inset 0 0 0 1px rgba(255,255,255,.14)}
+.fc.start::before{content:"★";position:absolute;inset:0;display:grid;place-items:center;color:#fff;font-size:calc(var(--bw)/var(--n)*.55);text-shadow:0 1px 3px rgba(0,0,0,.5);z-index:1}
+@media (prefers-reduced-motion:reduce){.fc{transition:none}}
+</style>
+</head>
+<body>
+<script src="../../shared/ts.js?v=f78a34b8"></script>
+<script src="../../shared/kit.js?v=f78a34b8"></script>
+<script>
+(()=>{
+/* Color Flood: your colour starts at the ★ corner. Pick a colour to flood into every touching tile of that colour.
+   Fill the whole board within the move limit. Par comes from a beam-search solver, so it's always reachable.
+   Boards grow 6x6 → 14x14 and gain colours as levels go on (smaller and slower for grades 1-2). */
+const C=TS_KIT.COLORS;let K,S=null;
+function pick(steps,n){let v=steps[0][1];for(const[from,x]of steps)if(n>=from)v=x;return v}
+function spec(n){const g=K.grade;
+  const size=pick(g<=2?[[1,5],[9,6],[19,8],[31,10]]:g<=4?[[1,6],[7,8],[15,10],[25,12],[35,14]]:[[1,8],[6,10],[16,12],[26,14]],n);
+  const colors=pick(g<=2?[[1,3],[11,4],[25,5]]:g<=4?[[1,3],[5,4],[13,5],[25,6]]:[[1,4],[6,5],[14,6]],n);
+  const slack=g<=2?(n<=10?5:4):g<=4?(n<10?4:n<25?3:2):(n<10?3:2);
+  return{size,colors,slack}}
+
+/* ---------- flood logic ---------- */
+function region(g,n){const c=g[0],seen=new Uint8Array(g.length),q=[0];seen[0]=1;
+  for(let h=0;h<q.length;h++){const i=q[h],r=(i/n)|0,cc=i%n;
+    for(const j of[r>0?i-n:-1,r<n-1?i+n:-1,cc>0?i-1:-1,cc<n-1?i+1:-1])if(j>=0&&!seen[j]&&g[j]===c){seen[j]=1;q.push(j)}}
+  return q}
+function move(g,n,c){const out=g.slice();for(const i of region(g,n))out[i]=c;return out}
+function frontier(g,n){const reg=region(g,n),inR=new Uint8Array(g.length),cs=new Set();reg.forEach(i=>inR[i]=1);
+  for(const i of reg){const r=(i/n)|0,cc=i%n;for(const j of[r>0?i-n:-1,r<n-1?i+n:-1,cc>0?i-1:-1,cc<n-1?i+1:-1])if(j>=0&&!inR[j])cs.add(g[j])}return[...cs]}
+const done=g=>g.every(v=>v===g[0]);
+/* Beam search: keep the best 18 boards each step, scored by colours left on the board, then flooded size. */
+function solve(g0,n,k){if(done(g0))return[];let beam=[{g:g0,path:[]}];
+  for(let depth=0;depth<200;depth++){const next=new Map();
+    for(const b of beam){for(const c of frontier(b.g,n)){const g=move(b.g,n,c),path=b.path.concat(c);if(done(g))return path;
+      const key=g.join("");if(next.has(key))continue;const left=new Set(g).size,size=region(g,n).length;
+      // Bonus for wiping a colour off the board completely.
+      next.set(key,{g,path,score:-left*1000+size})}}
+    beam=[...next.values()].sort((a,b)=>b.score-a.score).slice(0,18)}
+  return null}
+
+function start(n){const sp=spec(n),r=K.rng(n),N=sp.size;let g;
+  // Random board; reject ones that are already almost one colour.
+  for(let t=0;t<20;t++){g=Int8Array.from({length:N*N},()=>Math.floor(r()*sp.colors));if(region(g,N).length<N*N/6)break}
+  const sol=solve(g,N,sp.colors),par=sol.length,limit=par+sp.slack;
+  K.stage.insertAdjacentHTML("beforeend",'<div class="frame"><div class="fgrid" id="fgrid"></div></div><div class="palette" id="pal"></div>');
+  const el=document.getElementById("fgrid");el.style.setProperty("--n",N);
+  S={sp,N,g,par,limit,moves:0,cells:[],el};
+  for(let i=0;i<N*N;i++){const d=document.createElement("div");d.className="fc"+(i===0?" start":"");el.appendChild(d);S.cells.push(d)}
+  const pal=document.getElementById("pal");
+  for(let k=0;k<sp.colors;k++){const b=document.createElement("button");b.type="button";b.style.setProperty("--c",C[k].c);b.textContent=C[k].s;b.dataset.c=k;
+    b.setAttribute("aria-label",C[k].name);b.onclick=()=>choose(k);pal.appendChild(b)}
+  el.addEventListener("pointerup",e=>{const rc=el.getBoundingClientRect(),c=Math.floor((e.clientX-rc.left)/(rc.width/N)),r=Math.floor((e.clientY-rc.top)/(rc.height/N));
+    if(c>=0&&r>=0&&c<N&&r<N)choose(S.g[r*N+c])});
+  draw(null);stats();K.sub("Par "+par);
+  K.tip("Start at the ★. Pick a colour (or tap a tile) to grow your colour. Fill the board in "+limit+" moves!")}
+function stats(){K.stat(S.moves+"/"+S.limit,"Moves")}
+function draw(prev){const reg=new Set(region(S.g,S.N)),N=S.N;
+  // Ripple: newly flooded tiles change in order of distance from the corner.
+  S.cells.forEach((d,i)=>{const was=prev&&prev[i]!==S.g[i];d.style.transitionDelay=was?((((i/N)|0)+i%N)*14)+"ms":"0ms";d.style.setProperty("--c",C[S.g[i]].c);d.classList.toggle("mine",reg.has(i))});
+  document.querySelectorAll("#pal button").forEach(b=>{b.disabled=+b.dataset.c===S.g[0];b.classList.remove("hint")})}
+function choose(c){if(K.busy||!S||c===S.g[0])return;const prev=S.g;S.g=move(S.g,S.N,c);S.moves++;draw(prev);stats();TS.music.fx("tap");
+  if(done(S.g)){const st=S.moves<=S.par?3:S.moves<=S.par+2?2:1;K.win({stars:st,text:S.moves+" moves · par "+S.par+(st===3?" · brilliant!":"")});return}
+  const left=S.limit-S.moves;
+  if(left<=0)K.fail({title:"Out of moves!",text:"So close. Try again. Hint: pick colours that touch lots of tiles at once."});
+  else if(left<=2)K.tip(left===1?"Last move!":"2 moves left!")}
+/* Hint: flash the colour the solver would pick next. */
+function hint(){if(!S||K.busy)return;const sol=solve(S.g,S.N,S.sp.colors);if(!sol||!sol.length)return;
+  const b=document.querySelector('#pal button[data-c="'+sol[0]+'"]');b.classList.add("hint");K.tip("Hint: try "+C[sol[0]].name+" "+C[sol[0]].s+" next.")}
+K=TS_KIT({id:"flood",name:"Color Flood",levels:40,start,hint,label:n=>{const s=spec(n);return s.size+"×"+s.size}});
+window.__game={get S(){return S},K,spec,solve,choose};// for tools/test_games.py
+K.start();
+})();
+</script>
+</body>
+</html>

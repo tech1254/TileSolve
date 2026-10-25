@@ -15,7 +15,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Barlow:wght@400;600;700&display=swap">
-<link rel="stylesheet" href="shared/ts.css?v=74e132a6">
+<link rel="stylesheet" href="shared/ts.css?v=f78a34b8">
 <style>
 body{overflow-y:auto}
 .app{min-height:100%;max-width:760px;margin:0 auto;box-sizing:border-box;display:flex;flex-direction:column;gap:22px;
@@ -110,7 +110,7 @@ h1{font-family:var(--font-sign);font-weight:400;font-size:clamp(26px,6vw,36px);m
   </form>
 </div>
 
-<script src="shared/ts.js?v=74e132a6"></script>
+<script src="shared/ts.js?v=f78a34b8"></script>
 <script>
 (()=>{
 const{players,music}=TS,$=id=>document.getElementById(id);
@@ -120,9 +120,9 @@ const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"
 const GAMES=[
   {id:"car",name:"Unblock the Car",desc:"Slide cars to free the red one",img:"icon-180.png",href:"games/car/index.html",g:["#e2412e","#8a2318"]},
   {id:"picture",name:"Picture Puzzle",desc:"Drop-in and slider pictures",art:"🧩",href:"games/picture/index.html",g:["#3b6fd9","#1d3d85"]},
-  {id:"memory",name:"Memory Match",desc:"Flip cards, find the pairs",art:"🃏",g:["#8f5bd6","#4b2a85"]},
-  {id:"pattern",name:"Copy the Pattern",desc:"Watch, remember, rebuild",art:"🎨",g:["#e06aa6","#8a2f5f"]},
-  {id:"flood",name:"Color Flood",desc:"Fill the board in few moves",art:"🌈",g:["#f08a24","#99500d"]},
+  {id:"memory",name:"Memory Match",desc:"Flip cards, find the pairs",art:"🃏",href:"games/memory/index.html",g:["#8f5bd6","#4b2a85"]},
+  {id:"pattern",name:"Copy the Pattern",desc:"Watch, remember, rebuild",art:"🎨",href:"games/pattern/index.html",g:["#e06aa6","#8a2f5f"]},
+  {id:"flood",name:"Color Flood",desc:"Fill the board in few moves",art:"🌈",href:"games/flood/index.html",g:["#f08a24","#99500d"]},
   {id:"blocks",name:"Block Fit",desc:"Fit the shapes in the outline",art:"🟦",g:["#2a9d8f","#135a52"]},
   {id:"numbers",name:"Number Tiles",desc:"Make the rows add up",art:"➕",g:["#6bb34a","#36651f"]},
   {id:"words",name:"Word Builder",desc:"Unscramble the letter tiles",art:"🔤",g:["#4fb3d9","#1f6585"]},

@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#161b21">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box;height:100%}body{margin:0}[hidden]{display:none!important}</style>
+<title>Memory Match · Tile Solve</title>
+<meta name="apple-mobile-web-app-title" content="Tile Solve">
+<link rel="apple-touch-icon" href="../../icon-180.png">
+<link rel="icon" type="image/png" href="../../icon-512.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Barlow:wght@400;600;700&display=swap">
+<link rel="stylesheet" href="../../shared/ts.css?v=f78a34b8">
+<link rel="stylesheet" href="../../shared/game.css?v=f78a34b8">
+<style>
+.cards{display:grid;gap:var(--gap,10px);grid-template-columns:repeat(var(--cols),var(--cw));grid-auto-rows:var(--cw)}
+.cardbtn{position:relative;border:0;padding:0;background:none;cursor:pointer;perspective:700px;touch-action:manipulation}
+.cardbtn .in{position:absolute;inset:0;transition:transform .32s ease;transform-style:preserve-3d}
+.cardbtn.up .in,.cardbtn.peek .in,.cardbtn.done .in{transform:rotateY(180deg)}
+.cardbtn .face,.cardbtn .back{position:absolute;inset:0;border-radius:14px;backface-visibility:hidden;-webkit-backface-visibility:hidden;display:grid;place-items:center}
+.cardbtn .back{background:repeating-linear-gradient(45deg,#2f5fbf 0 8px,#3b6fd9 8px 16px);box-shadow:inset 0 -5px 0 rgba(0,0,0,.25),0 4px 8px rgba(0,0,0,.35);border:3px solid #6f97ea}
+.cardbtn .back::after{content:"★";font-size:calc(var(--cw)*.36);color:#f2c230;text-shadow:0 2px 0 rgba(0,0,0,.25)}
+.cardbtn .face{transform:rotateY(180deg);background:#fdfbf4;box-shadow:inset 0 -5px 0 rgba(0,0,0,.12),0 4px 8px rgba(0,0,0,.35);font-size:calc(var(--cw)*.56);line-height:1}
+.cardbtn.done .face{background:#e6f6dd;box-shadow:inset 0 0 0 3px var(--good)}
+.cardbtn.done{cursor:default}
+.cardbtn.miss .face{background:#fde3df}
+.cardbtn.peek .face{box-shadow:inset 0 0 0 4px var(--paint)}
+@media (prefers-reduced-motion:reduce){.cardbtn .in{transition:none}}
+</style>
+</head>
+<body>
+<script src="../../shared/ts.js?v=f78a34b8"></script>
+<script src="../../shared/kit.js?v=f78a34b8"></script>
+<script>
+(()=>{
+/* Memory Match: flip two cards at a time and find all the pairs.
+   Boards grow 3x2 → 4x2 → 4x3 → 4x4 → 5x4 → 6x4 → 6x5. Early levels show every card for a moment first;
+   from level 30 the cards are look-alikes (lots of similar fish or smiley faces). */
+const SETS=[
+  ["🐶","🐱","🐭","🐹","🐰","🦊","🐻","🐼","🐨","🐯","🦁","🐮","🐷","🐸","🐵","🐔","🐧","🦄"],
+  ["🚀","🛸","🪐","🌙","⭐","🌍","☄️","👽","🛰️","🌟","🔭","👩‍🚀","🌞","🌈","⚡","🌠"],
+  ["🐙","🐠","🐬","🐳","🦈","🦀","🦞","🐚","🦑","🐡","🐢","🦭","🪼","🐊","🦦","🐸"],
+  ["🍎","🍌","🍇","🍓","🍉","🍒","🍑","🍍","🥝","🥕","🌽","🍕","🍩","🍪","🧁","🍦"]];
+const LOOKALIKE=[["😀","😃","😄","😁","😆","😊","🙂","😉","😍","🥰","😎","🤩","😋","😜","🤗","😺"],
+  ["🐟","🐠","🐡","🦈","🐬","🐳","🐋","🦭","🐙","🦑","🦐","🦞","🦀","🐚","🪼","🐢"]];
+const GRIDS=[[3,2],[4,2],[4,3],[4,4],[5,4],[6,4],[6,5]];
+let K,S=null;
+function spec(n){const g=K.grade,start=g<=2?0:g<=4?1:2,step=g<=2?7:6,ix=Math.min(6,start+Math.floor((n-1)/step)),[c,r]=GRIDS[ix];
+  return{cols:c,rows:r,pairs:c*r/2,preview:n<=(g<=2?14:8)?1800:n<=(g<=2?24:16)?900:0,look:n>=30}}
+function fit(){if(!S)return;const st=K.stage.getBoundingClientRect(),portrait=st.height>st.width;
+  let cols=S.sp.cols,rows=S.sp.rows;if(portrait&&cols>rows)[cols,rows]=[rows,cols];
+  const gap=cols>=6||rows>=6?8:10,cw=Math.floor(Math.min((st.width-24-gap*(cols-1))/cols,(st.height-24-gap*(rows-1))/rows,150));
+  S.el.style.setProperty("--cols",cols);S.el.style.setProperty("--cw",Math.max(40,cw)+"px");S.el.style.setProperty("--gap",gap+"px")}
+addEventListener("resize",fit);
+function stats(){K.stat(S.found+"/"+S.sp.pairs,"Pairs");K.sub("Misses "+S.miss)}
+function start(n){const sp=spec(n),r=K.rng(n),pool=(sp.look?LOOKALIKE[n%2]:SETS[n%SETS.length]).slice();
+  for(let k=pool.length-1;k>0;k--){const j=Math.floor(r()*(k+1));[pool[k],pool[j]]=[pool[j],pool[k]]}
+  const deck=[];pool.slice(0,sp.pairs).forEach(f=>deck.push(f,f));
+  for(let k=deck.length-1;k>0;k--){const j=Math.floor(r()*(k+1));[deck[k],deck[j]]=[deck[j],deck[k]]}
+  const frame=document.createElement("div");frame.className="frame";const el=document.createElement("div");el.className="cards";frame.appendChild(el);K.stage.appendChild(frame);
+  S={sp,deck,el,open:[],done:new Set(),found:0,miss:0,btns:[],lock:false};
+  deck.forEach((f,i)=>{const b=document.createElement("button");b.type="button";b.className="cardbtn";b.dataset.i=i;b.setAttribute("aria-label","Card "+(i+1));
+    b.innerHTML='<div class="in"><div class="back"></div><div class="face">'+f+"</div></div>";b.onclick=()=>flip(i);el.appendChild(b);S.btns.push(b)});
+  fit();stats();
+  if(sp.preview){S.lock=true;K.tip("Look carefully…");setTimeout(()=>S.btns.forEach(b=>b.classList.add("peek")),250);
+    setTimeout(()=>{S.btns.forEach(b=>b.classList.remove("peek"));S.lock=false;K.tip("Flip two cards. Find all the pairs!")},250+sp.preview)}
+  else K.tip("Flip two cards. Find all the pairs!")}
+function flip(i){if(K.busy||S.lock||S.done.has(i)||S.open.includes(i))return;
+  S.btns.forEach(b=>b.classList.remove("peek","miss"));
+  S.btns[i].classList.add("up");S.btns[i].setAttribute("aria-label",S.deck[i]);S.open.push(i);TS.music.fx("tap");
+  if(S.open.length<2)return;
+  const[a,b]=S.open;S.open=[];
+  if(S.deck[a]===S.deck[b]){S.done.add(a);S.done.add(b);S.found++;
+    setTimeout(()=>{S.btns[a].classList.add("done");S.btns[b].classList.add("done")},250);TS.music.fx("good");stats();
+    if(S.found===S.sp.pairs){const p=S.sp.pairs,st=S.miss<=Math.floor(p*.5)?3:S.miss<=Math.ceil(p*1.2)?2:1;
+      K.win({stars:st,text:(S.miss?S.miss+" miss"+(S.miss>1?"es":""):"No misses")+" · "+p+" pairs"+(st===3?" · great memory!":"")})}}
+  else{S.miss++;stats();S.lock=true;S.btns[a].classList.add("miss");S.btns[b].classList.add("miss");
+    setTimeout(()=>{[a,b].forEach(k=>{S.btns[k].classList.remove("up","miss");S.btns[k].setAttribute("aria-label","Card "+(k+1))});S.lock=false},900)}}
+function hint(){if(!S||K.busy)return;const left=[];S.deck.forEach((f,i)=>{if(!S.done.has(i)&&!S.open.includes(i))left.push(i)});if(!left.length)return;
+  const f=S.deck[left[0]],pair=left.filter(i=>S.deck[i]===f);pair.forEach(i=>S.btns[i].classList.add("peek"));K.tip("Here's a pair! Remember where they are.");
+  setTimeout(()=>pair.forEach(i=>S.btns[i].classList.remove("peek")),1500)}
+K=TS_KIT({id:"memory",name:"Memory Match",levels:40,start,hint,label:n=>{const s=spec(n);return s.cols+"×"+s.rows}});
+window.__game={get S(){return S},K,spec};// for tools/test_games.py
+K.start();
+})();
+</script>
+</body>
+</html>

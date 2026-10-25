@@ -40,7 +40,8 @@ console.log(total,'puzzles;',Object.keys(bank).map(p=>p+':'+bank[p].length).join
 const crypto=require('crypto'),h=crypto.createHash('sha1');
 for(const f of fs.readdirSync(path.join(ROOT,'shared')).sort())h.update(fs.readFileSync(path.join(ROOT,'shared',f)));
 const V=h.digest('hex').slice(0,8);
-const PAGES=[['src/home.html','index.html'],['src/car.html','games/car/index.html'],['src/picture.html','games/picture/index.html']];
+const PAGES=[['src/home.html','index.html'],['src/car.html','games/car/index.html'],['src/picture.html','games/picture/index.html'],
+  ['src/memory.html','games/memory/index.html'],['src/pattern.html','games/pattern/index.html'],['src/flood.html','games/flood/index.html']];
 for(const[src,out]of PAGES){
   let html=fs.readFileSync(path.join(ROOT,src),'utf8').replace(/__V__/g,V).replace('"__BANK__"','"'+b64+'"');
   fs.mkdirSync(path.dirname(path.join(ROOT,out)),{recursive:true});fs.writeFileSync(path.join(ROOT,out),html);

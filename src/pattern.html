@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#161b21">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box;height:100%}body{margin:0}[hidden]{display:none!important}</style>
+<title>Copy the Pattern · Tile Solve</title>
+<meta name="apple-mobile-web-app-title" content="Tile Solve">
+<link rel="apple-touch-icon" href="../../icon-180.png">
+<link rel="icon" type="image/png" href="../../icon-512.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Barlow:wght@400;600;700&display=swap">
+<link rel="stylesheet" href="../../shared/ts.css?v=__V__">
+<link rel="stylesheet" href="../../shared/game.css?v=__V__">
+<style>
+.pgrid{--bw:max(220px,min(calc(100vw - 52px),480px,calc(100dvh - 400px)));width:var(--bw);height:var(--bw);display:grid;gap:6px;grid-template-columns:repeat(var(--n),1fr)}
+.pt{border:0;border-radius:10px;background:#2f363e;box-shadow:inset 0 -4px 0 rgba(0,0,0,.25);cursor:pointer;padding:0;position:relative;touch-action:manipulation;
+  display:grid;place-items:center;font-size:calc(var(--bw)/var(--n)*.32);color:rgba(255,255,255,.9);transition:background-color .15s,transform .1s}
+.pt:active{transform:scale(.96)}
+.pt.on{background:var(--c)}
+.pt.show{background:var(--c);box-shadow:0 0 0 3px #fff8 inset}
+.pt.ghost::after{content:"";position:absolute;inset:6px;border-radius:7px;background:var(--gc);opacity:.55}
+.pt.wrong::before{content:"✕";position:absolute;inset:0;display:grid;place-items:center;color:#fff;font-size:calc(var(--bw)/var(--n)*.5);font-weight:700;text-shadow:0 0 6px #000}
+.pt.missing{box-shadow:inset 0 0 0 4px var(--mc)}
+.pgrid.watch .pt{cursor:default}
+.row2{display:flex;gap:12px;align-items:center;justify-content:center;flex-wrap:wrap}
+</style>
+</head>
+<body>
+<script src="../../shared/ts.js?v=__V__"></script>
+<script src="../../shared/kit.js?v=__V__"></script>
+<script>
+(()=>{
+/* Copy the Pattern: watch the coloured tiles, then rebuild the pattern from memory.
+   Grids grow 3x3 → 4x4 → 5x5 (6x6 for older grades), more tiles light up, extra colours join in,
+   and the pattern shows for less time. Up to 2 mistakes still passes (3/2/1 stars). */
+const C=TS_KIT.COLORS;let K,S=null;
+function spec(n){const g=K.grade;
+  const sizes=g<=2?[[1,3],[13,4],[31,5]]:g<=4?[[1,3],[6,4],[16,5]]:[[1,4],[10,5],[25,6]];
+  let si=0;for(let k=0;k<sizes.length;k++)if(n>=sizes[k][0])si=k;const size=sizes[si][1],from=sizes[si][0],to=si+1<sizes.length?sizes[si+1][0]-1:40;
+  const t=(n-from)/Math.max(1,to-from),cells=size*size,count=Math.max(3,Math.round(cells*(.22+.2*t)));
+  const colors=g<=2?(n<21?1:2):g<=4?(n<11?1:n<21?2:3):(n<8?1:n<18?2:3);
+  const show=Math.round(Math.max(1300,(g<=2?3600:3000)-n*40)+count*90);
+  return{size,count,colors,show}}
+function start(n){const sp=spec(n),r=K.rng(n),cells=sp.size*sp.size,idx=[...Array(cells).keys()];
+  for(let k=idx.length-1;k>0;k--){const j=Math.floor(r()*(k+1));[idx[k],idx[j]]=[idx[j],idx[k]]}
+  const target=new Array(cells).fill(-1);idx.slice(0,sp.count).forEach((c,k)=>target[c]=k<sp.colors?k:Math.floor(r()*sp.colors));
+  K.stage.insertAdjacentHTML("beforeend",'<p class="banner" id="banner"></p><div class="frame"><div class="pgrid watch" id="pgrid"></div></div>'+
+    '<div class="palette" id="pal"></div><div class="row2"><button class="bigbtn" id="done" type="button" hidden>Done</button></div>');
+  const grid=document.getElementById("pgrid");grid.style.setProperty("--n",sp.size);
+  S={sp,target,mine:new Array(cells).fill(-1),color:0,phase:"watch",tiles:[]};
+  for(let i=0;i<cells;i++){const b=document.createElement("button");b.type="button";b.className="pt";b.setAttribute("aria-label","Tile "+(i+1));
+    b.onclick=()=>tap(i);grid.appendChild(b);S.tiles.push(b)}
+  const pal=document.getElementById("pal");
+  if(sp.colors>1)for(let k=0;k<sp.colors;k++){const b=document.createElement("button");b.type="button";b.style.setProperty("--c",C[k].c);b.textContent=C[k].s;
+    b.setAttribute("aria-label",C[k].name);b.onclick=()=>{S.color=k;drawPal()};pal.appendChild(b)}
+  drawPal();document.getElementById("done").onclick=check;
+  K.stat(sp.count,"Tiles");watch(sp.show,"Watch!")}
+function drawPal(){document.querySelectorAll("#pal button").forEach((b,k)=>b.classList.toggle("cur",k===S.color))}
+function paint(arr,cls){S.tiles.forEach((t,i)=>{t.classList.remove("on","show");if(arr[i]>=0){t.classList.add(cls);t.style.setProperty("--c",C[arr[i]].c);t.textContent=C[arr[i]].s}else t.textContent=""})}
+function watch(ms,label){const my=S;S.phase="watch";document.getElementById("pgrid").classList.add("watch");document.getElementById("done").hidden=true;
+  document.getElementById("banner").textContent=label;K.tip("Remember where the coloured tiles are"+(S.sp.colors>1?", and their colours.":"."));
+  setTimeout(()=>{if(S!==my)return;paint(S.target,"show")},450);
+  setTimeout(()=>{if(S!==my)return;paint(S.mine,"on");S.phase="build";document.getElementById("pgrid").classList.remove("watch");
+    document.getElementById("banner").textContent="Your turn!";document.getElementById("done").hidden=false;
+    K.tip(S.sp.colors>1?"Pick a colour, then tap tiles. Tap again to clear. Press Done when it matches.":"Tap the tiles that lit up. Tap again to clear. Press Done when it matches.")},450+ms)}
+function tap(i){if(K.busy||!S||S.phase!=="build")return;S.mine[i]=S.mine[i]===S.color?-1:S.color;paint(S.mine,"on");TS.music.fx("tap");
+  K.stat(S.mine.filter(v=>v>=0).length+"/"+S.sp.count,"Tiles")}
+function check(){if(K.busy||S.phase!=="build")return;S.phase="done";let wrong=0;
+  S.tiles.forEach((t,i)=>{const m=S.mine[i],g=S.target[i];if(m===g)return;wrong++;
+    if(m>=0)t.classList.add("wrong");if(g>=0){t.classList.add("missing");t.style.setProperty("--mc",C[g].c)}});
+  document.getElementById("done").hidden=true;
+  if(wrong<=2){document.getElementById("banner").textContent=wrong?"So close!":"Perfect!";const st=3-wrong;
+    K.win({stars:st,text:(wrong?wrong+" mistake"+(wrong>1?"s":""):"No mistakes")+" · "+S.sp.count+" tiles on "+S.sp.size+"×"+S.sp.size})}
+  else{document.getElementById("banner").textContent="Not quite";K.fail({title:"Nearly!",text:wrong+" tiles were different. The ✕ tiles shouldn't be coloured, and outlined tiles were missed. Watch again and have another go!"})}}
+/* Hint: a quick replay of the pattern, then back to what you'd built. */
+function hint(){if(!S||S.phase!=="build")return;watch(1200,"Look again!")}
+K=TS_KIT({id:"pattern",name:"Copy the Pattern",levels:40,start,hint,label:n=>{const s=spec(n);return s.size+"×"+s.size}});
+window.__game={get S(){return S},K,spec};// for tools/test_games.py
+K.start();
+})();
+</script>
+</body>
+</html>

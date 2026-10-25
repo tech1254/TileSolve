@@ -15,12 +15,16 @@ Hints in every game cost a maths question one grade below the player's grade (gr
   - *Drop-in*: drag pieces from the tray into the picture. Pieces get smaller as levels go on, and later levels turn the pieces (tap to turn them back). A wrong drop counts as an "oops".
   - *Slider*: the classic one-gap sliding puzzle. 3×3 puzzles have an exact par; older grades move on to 4×4 and 5×5.
   - Tap the thumbnail to peek at the whole picture. Hints place a piece or flash the next tile to slide.
-- Coming soon: Memory Match, Copy the Pattern, Color Flood, Block Fit, Number Tiles, Word Builder, Sudoku Light, Pipe Connect, Lights Out, Picture Logic, Box Push.
+- **Memory Match** (`games/memory/`): flip two cards at a time to find the pairs. Boards grow from 4×2 to 6×5 (from 3×2 for grades 1–2). Early levels show every card for a moment first, and from level 30 the cards are look-alikes. Hints show one pair.
+- **Copy the Pattern** (`games/pattern/`): watch coloured tiles light up, then rebuild the pattern. Grids grow from 3×3 to 5×5 (6×6 for older grades), with more tiles, more colours and less time to look. Up to 2 mistakes still passes. Hints replay the pattern.
+- **Color Flood** (`games/flood/`): grow your colour from the ★ corner until it fills the board, within the move limit. Boards grow from 6×6 to 14×14 with up to 6 colours. Par comes from a built-in solver, and hints show its next colour. Every colour also has a shape, for colour-blind players.
+- Coming soon: Block Fit, Number Tiles, Word Builder, Sudoku Light, Pipe Connect, Lights Out, Picture Logic, Box Push.
 
 ## Working on it
 
 - `shared/ts.js` and `shared/ts.css`: players, per-player saves, music and the maths-for-a-hint sheet, used by every page.
-- Pages are edited in `src/` (`home.html`, `car.html`, `picture.html`). Run `node tools/build.js` to publish them (`index.html`, `games/car/index.html`, `games/picture/index.html`). The build bakes in the Car puzzle bank and stamps a version on the shared files, so devices pick up updates.
+- `shared/kit.js` and `shared/game.css`: the standard game screen (top bar, level picker, win card, hints, progress). New games only supply their puzzle.
+- Pages are edited in `src/` (`home.html`, and one file per game). Run `node tools/build.js` to publish them (`index.html` and `games/<game>/index.html`). The build bakes in the Car puzzle bank and stamps a version on the shared files, so devices pick up updates.
 - More Car puzzles: `node tools/gen-bank.js SEED SECONDS out.json`, then `node tools/build.js out.json` to merge, verify and rebuild.
 - `shared/pictures.js`: the picture set, drawn in code. Photo entries can be added later.
-- `python3 tools/test.py` and `python3 tools/test_picture.py` run the browser tests (need Playwright).
+- `python3 tools/test.py`, `tools/test_picture.py` and `tools/test_games.py` run the browser tests (need Playwright).
