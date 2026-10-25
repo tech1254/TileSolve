@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#161b21">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box;height:100%}body{margin:0}[hidden]{display:none!important}</style>
+<title>Pipe Connect · Tile Solve</title>
+<meta name="apple-mobile-web-app-title" content="Tile Solve">
+<link rel="apple-touch-icon" href="../../icon-180.png">
+<link rel="icon" type="image/png" href="../../icon-512.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Barlow:wght@400;600;700&display=swap">
+<link rel="stylesheet" href="../../shared/ts.css?v=f78a34b8">
+<link rel="stylesheet" href="../../shared/game.css?v=f78a34b8">
+<style>
+.pgrid{--cs:clamp(40px,min(calc((100vw - 60px)/var(--n)),calc((100dvh - 330px)/var(--n))),96px);display:grid;grid-template-columns:repeat(var(--n),var(--cs));grid-auto-rows:var(--cs);
+  gap:3px;background:#3a2e22;padding:6px;border-radius:14px;box-shadow:inset 0 0 0 3px #5a4632}
+.pc{position:relative;border:0;padding:0;border-radius:8px;background:#6b8f4a;cursor:pointer;touch-action:manipulation;overflow:hidden;
+  background-image:radial-gradient(circle at 30% 30%,rgba(255,255,255,.08) 0 18%,transparent 19%),radial-gradient(circle at 70% 75%,rgba(0,0,0,.08) 0 12%,transparent 13%)}
+.pc svg{position:absolute;inset:0;width:100%;height:100%;transition:transform .16s ease}
+.pc .pipe{stroke:#8a96a3;stroke-width:26;stroke-linecap:round;fill:none}
+.pc .core{stroke:#5d6874;stroke-width:12;stroke-linecap:round;fill:none}
+.pc.wet .pipe{stroke:#7cc8ff}.pc.wet .core{stroke:#2f8de4}
+.pc .tag{position:absolute;inset:0;display:grid;place-items:center;font-size:calc(var(--cs)*.46);line-height:1;pointer-events:none;filter:drop-shadow(0 2px 2px rgba(0,0,0,.35))}
+.pc.flash{animation:pflash .8s ease}
+@keyframes pflash{40%{box-shadow:inset 0 0 0 4px var(--paint)}}
+.pgrid.won .pc.wet .core{animation:flow 1s linear infinite}
+@keyframes flow{50%{stroke:#7fe0ff}}
+@media (prefers-reduced-motion:reduce){.pc svg{transition:none}.pgrid.won .pc.wet .core,.pc.flash{animation:none}}
+</style>
+</head>
+<body>
+<script src="../../shared/ts.js?v=f78a34b8"></script>
+<script src="../../shared/kit.js?v=f78a34b8"></script>
+<script>
+(()=>{
+/* Pipe Connect: tap pipes to turn them until water from the tap 💧 reaches every flower and no pipe end is left open.
+   Boards are made from one connected pipe network, so there's always a way. Boards grow from 3x3 up to 7x7 (8x8 for older grades). */
+const U=1,R=2,D=4,L=8,OPP={1:4,2:8,4:1,8:2};
+const rotm=(m,k)=>{for(let i=0;i<(k&3);i++)m=((m<<1)|(m>>3))&15;return m};
+let K,S=null;
+function pick(steps,n){let v=steps[0][1];for(const[f,x]of steps)if(n>=f)v=x;return v}
+function spec(n){const g=K.grade;
+  const size=pick(g<=2?[[1,3],[11,4],[25,5]]:g<=4?[[1,3],[6,4],[15,5],[25,6],[35,7]]:[[1,4],[6,5],[14,6],[24,7],[32,8]],n);
+  return{size,cross:g>=4&&n>=20}}
+function make(sp,r){const N=sp.size,mask=new Array(N*N).fill(0),src=Math.floor(r()*N*N),inT=new Set([src]),edges=[];
+  const nb=i=>{const rr=(i/N)|0,c=i%N,o=[];if(rr>0)o.push([i-N,U]);if(c<N-1)o.push([i+1,R]);if(rr<N-1)o.push([i+N,D]);if(c>0)o.push([i-1,L]);return o};
+  const deg=i=>[U,R,D,L].filter(b=>mask[i]&b).length;
+  const add=i=>nb(i).forEach(([j,b])=>{if(!inT.has(j))edges.push([i,j,b])});add(src);
+  while(inT.size<N*N){const k=Math.floor(r()*edges.length),[i,j,b]=edges[k];edges.splice(k,1);if(inT.has(j))continue;
+    if(!sp.cross&&deg(i)>=3&&edges.some(([a,bb])=>!inT.has(bb)&&deg(a)<3)){edges.push([i,j,b]);continue} // avoid 4-way crosses for younger players
+    mask[i]|=b;mask[j]|=OPP[b];inT.add(j);add(j)}
+  return{src,sol:mask}}
+function start(n){const sp=spec(n),r=K.rng(n),{src,sol}=make(sp,r),N=sp.size,rot=sol.map(()=>Math.floor(r()*4));
+  // make sure it doesn't start solved
+  const cur=sol.map((m,i)=>rotm(m,rot[i]));if(cur.every((m,i)=>m===sol[i]))rot[0]=(rot[0]+1)%4;
+  // fewest taps: smallest turn that lines each piece up with an answer orientation (straight pieces have two)
+  let par=0;sol.forEach((m,i)=>{const start=rotm(m,rot[i]);for(let k=0;k<4;k++)if(rotm(start,k)===m){par+=k;break}});
+  K.stage.insertAdjacentHTML("beforeend",'<div class="pgrid" id="pg"></div>');
+  S={sp,N,src,sol,base:sol.map((m,i)=>rotm(m,rot[i])),turns:sol.map(()=>0),taps:0,par,el:document.getElementById("pg"),cells:[]};
+  S.el.style.setProperty("--n",N);
+  for(let i=0;i<N*N;i++){const b=document.createElement("button");b.type="button";b.className="pc";b.dataset.i=i;b.setAttribute("aria-label","Pipe");
+    b.innerHTML=svgFor(S.base[i])+'<span class="tag"></span>';b.onclick=()=>tap(i);S.el.appendChild(b);S.cells.push(b)}
+  draw();K.sub("Par "+par);K.tip("Tap pipes to turn them. Get water from the 💧 to every flower, with no open pipe ends.")}
+function svgFor(m){const arm={1:"M50 50V0",2:"M50 50H100",4:"M50 50V100",8:"M50 50H0"};let d="";for(const b of[1,2,4,8])if(m&b)d+=arm[b];
+  const leaf=[1,2,4,8].filter(b=>m&b).length===1;
+  return'<svg viewBox="0 0 100 100" aria-hidden="true"><path class="pipe" d="'+d+'"/>'+(leaf?'<circle class="pipe" cx="50" cy="50" r="6"/>':"")+'<path class="core" d="'+d+'"/></svg>'}
+const cur=i=>rotm(S.base[i],S.turns[i]);
+function flow(){const N=S.N,wet=new Set([S.src]),q=[S.src];let leak=false;
+  for(let h=0;h<q.length;h++){const i=q[h],m=cur(i),rr=(i/N)|0,c=i%N;
+    for(const[b,j,ok]of[[U,i-N,rr>0],[R,i+1,c<N-1],[D,i+N,rr<N-1],[L,i-1,c>0]]){if(!(m&b))continue;
+      if(!ok||!(cur(j)&OPP[b])){leak=true;continue}if(!wet.has(j)){wet.add(j);q.push(j)}}}
+  return{wet,leak}}
+function draw(){const{wet,leak}=flow(),N=S.N;
+  S.cells.forEach((b,i)=>{b.classList.toggle("wet",wet.has(i));b.querySelector("svg").style.transform="rotate("+S.turns[i]*90+"deg)";
+    const isLeaf=[1,2,4,8].filter(x=>S.sol[i]&x).length===1;b.querySelector(".tag").textContent=i===S.src?"💧":isLeaf?(wet.has(i)?"🌷":"🌱"):""});
+  const flowers=S.sol.filter((m,i)=>i!==S.src&&[1,2,4,8].filter(x=>m&x).length===1).length,happy=S.sol.filter((m,i)=>i!==S.src&&wet.has(i)&&[1,2,4,8].filter(x=>m&x).length===1).length;
+  K.stat(happy+"/"+flowers,"Flowers");return{wet,leak}}
+function tap(i){if(K.busy)return;S.turns[i]++;S.taps++;TS.music.fx("tap");const{wet,leak}=draw();K.sub("Taps "+S.taps+" · par "+S.par);
+  if(wet.size===S.N*S.N&&!leak){S.el.classList.add("won");S.cells.forEach(b=>{const t=b.querySelector(".tag");if(t.textContent==="🌷")t.textContent="🌻"});
+    const st=S.taps<=S.par+2?3:S.taps<=S.par*2+4?2:1;K.win({stars:st,text:S.taps+" taps · par "+S.par+(st===3?" · master plumber!":"")})}}
+/* Hint: turn one pipe the right way, starting next to the water. */
+function hint(){if(!S||K.busy)return;const{wet}=flow(),N=S.N,wrong=[];
+  S.sol.forEach((m,i)=>{if(cur(i)!==m)wrong.push(i)});if(!wrong.length)return;
+  const near=wrong.find(i=>wet.has(i)||[i-N,i+1,i+N,i-1].some(j=>wet.has(j)))??wrong[0];
+  while(cur(near)!==S.sol[near])S.turns[near]++;draw();S.cells[near].classList.add("flash");setTimeout(()=>S.cells[near].classList.remove("flash"),900);
+  K.tip("That pipe is turned the right way now.");const{wet:w,leak}=flow();
+  if(w.size===N*N&&!leak){S.el.classList.add("won");const st=S.taps<=S.par+2?3:S.taps<=S.par*2+4?2:1;K.win({stars:st,text:"All flowers watered!"})}}
+K=TS_KIT({id:"pipes",name:"Pipe Connect",levels:40,start,hint,label:n=>{const s=spec(n);return s.size+"×"+s.size}});
+window.__game={get S(){return S},K,spec,cur};// for tools/test_games3.py
+K.start();
+})();
+</script>
+</body>
+</html>
