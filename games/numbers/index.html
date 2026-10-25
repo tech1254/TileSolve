@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#161b21">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box;height:100%}body{margin:0}[hidden]{display:none!important}</style>
+<title>Number Tiles · Tile Solve</title>
+<meta name="apple-mobile-web-app-title" content="Tile Solve">
+<link rel="apple-touch-icon" href="../../icon-180.png">
+<link rel="icon" type="image/png" href="../../icon-512.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Barlow:wght@400;600;700&display=swap">
+<link rel="stylesheet" href="../../shared/ts.css?v=f78a34b8">
+<link rel="stylesheet" href="../../shared/game.css?v=f78a34b8">
+<style>
+.ngrid{--cs:clamp(46px,min(calc((100vw - 90px)/(var(--n) + 1)),calc((100dvh - 430px)/(var(--n) + 1))),88px);display:grid;gap:8px;
+  grid-template-columns:repeat(var(--n),var(--cs)) calc(var(--cs)*.9);grid-auto-rows:var(--cs)}
+.nc{border:0;border-radius:12px;display:grid;place-items:center;font-family:var(--font-sign);font-size:calc(var(--cs)*.42);font-variant-numeric:tabular-nums;padding:0;color:var(--text)}
+.nc.given{background:#2f363e;box-shadow:inset 0 -4px 0 rgba(0,0,0,.25)}
+.nc.blank{background:transparent;border:3px dashed var(--lane);cursor:pointer;touch-action:manipulation}
+.nc.blank.sel{border-color:var(--paint);border-style:solid;background:#2c2a1d}
+.nc.blank.full{border:0;background:var(--paint);color:var(--night);box-shadow:inset 0 -4px 0 rgba(0,0,0,.18)}
+.nc.blank.flash{animation:nflash .8s ease}
+@keyframes nflash{40%{transform:scale(1.1);box-shadow:0 0 0 4px #fff}}
+.sum{display:grid;place-items:center;border-radius:12px;font-family:var(--font-sign);font-size:calc(var(--cs)*.36);background:var(--panel);border:2px solid var(--lane);color:var(--muted)}
+.sum::before{content:"=";font-family:var(--font-body);font-size:.6em;opacity:.7;margin-right:2px}
+.sum.col::before{content:"↓";}
+.sum.good{border-color:var(--good);color:var(--good);background:#1f2e1d}
+.sum.bad{border-color:var(--target);color:#ff8a78;background:#33201e}
+.ntray{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;max-width:560px;min-height:64px}
+.nt{width:58px;height:58px;border:0;border-radius:14px;background:var(--paint);color:var(--night);font-family:var(--font-sign);font-size:24px;cursor:pointer;
+  box-shadow:inset 0 -5px 0 rgba(0,0,0,.18),0 4px 8px rgba(0,0,0,.3);touch-action:manipulation}
+.nt.sel{outline:4px solid #fff;outline-offset:2px;transform:translateY(-4px)}
+@media (prefers-reduced-motion:reduce){.nc.blank.flash{animation:none}}
+</style>
+</head>
+<body>
+<script src="../../shared/ts.js?v=f78a34b8"></script>
+<script src="../../shared/kit.js?v=f78a34b8"></script>
+<script>
+(()=>{
+/* Number Tiles: put the yellow number tiles in the empty squares so every row and every column adds up to its total.
+   Grids grow from 2x2 to 4x4, more squares are empty, and numbers get bigger for older grades. */
+let K,S=null;
+function pick(steps,n){let v=steps[0];for(const s of steps)if(n>=s[0])v=s;return v}
+// [fromLevel, size, biggest number, empty squares at start of band, at end of band]
+const BANDS={1:[[1,2,5,1,2],[11,2,9,2,3],[26,3,9,3,4]],2:[[1,2,9,2,3],[7,3,9,3,5],[26,3,15,4,6]],3:[[1,2,9,2,3],[5,3,9,3,6],[21,3,20,5,7],[33,4,9,6,8]],
+  4:[[1,3,9,3,5],[11,3,20,4,7],[26,4,15,6,9]],5:[[1,3,20,4,6],[9,4,15,6,9],[26,4,30,8,11]],6:[[1,3,30,4,7],[8,4,25,7,10],[24,4,50,9,12]],7:[[1,4,20,6,9],[12,4,50,8,12],[28,5,30,10,14]]};
+function spec(n){const bands=BANDS[K.grade],b=pick(bands,n),i=bands.indexOf(b),to=i+1<bands.length?bands[i+1][0]-1:40,t=(n-b[0])/Math.max(1,to-b[0]);
+  return{size:b[1],max:b[2],blanks:Math.min(b[1]*b[1]-1,Math.round(b[3]+(b[4]-b[3])*t))}}
+function start(n){const sp=spec(n),r=K.rng(n),N=sp.size,sol=Array.from({length:N*N},()=>1+Math.floor(r()*sp.max));
+  const idx=[...Array(N*N).keys()];for(let k=idx.length-1;k>0;k--){const j=Math.floor(r()*(k+1));[idx[k],idx[j]]=[idx[j],idx[k]]}
+  const blanks=new Set(idx.slice(0,sp.blanks)),tiles=[...blanks].map((c,k)=>({id:k,v:sol[c],at:-1}));
+  for(let k=tiles.length-1;k>0;k--){const j=Math.floor(r()*(k+1));[tiles[k],tiles[j]]=[tiles[j],tiles[k]]}
+  K.stage.insertAdjacentHTML("beforeend",'<div class="frame"><div class="ngrid" id="ng"></div></div><div class="ntray" id="nt"></div>');
+  S={sp,N,sol,blanks,tiles,sel:null,selCell:null,placements:0,row:[],col:[]};draw();
+  K.tip("Tap a yellow tile, then an empty square. Every row and column must add up to its total.")}
+const val=i=>{if(!S.blanks.has(i))return S.sol[i];const t=S.tiles.find(t=>t.at===i);return t?t.v:null};
+function draw(){const N=S.N,g=document.getElementById("ng");g.style.setProperty("--n",N);g.innerHTML="";
+  const sumOf=cells=>cells.reduce((a,i)=>a+S.sol[i],0);
+  for(let r=0;r<=N;r++)for(let c=0;c<=N;c++){
+    if(r<N&&c<N){const i=r*N+c,b=document.createElement("button");b.type="button";const v=val(i);
+      if(S.blanks.has(i)){b.className="nc blank"+(v!=null?" full":"")+(S.selCell===i?" sel":"");b.onclick=()=>tapCell(i);b.setAttribute("aria-label",v!=null?String(v):"Empty square")}
+      else{b.className="nc given";b.disabled=true}
+      b.textContent=v==null?"":v;b.dataset.i=i;g.appendChild(b)}
+    else if(r<N&&c===N)g.appendChild(sumEl([...Array(N).keys()].map(k=>r*N+k),false));
+    else if(r===N&&c<N)g.appendChild(sumEl([...Array(N).keys()].map(k=>k*N+c),true));
+    else g.appendChild(document.createElement("span"))}
+  const t=document.getElementById("nt");t.innerHTML="";
+  S.tiles.filter(x=>x.at<0).forEach(x=>{const b=document.createElement("button");b.type="button";b.className="nt"+(S.sel===x.id?" sel":"");b.textContent=x.v;b.dataset.id=x.id;
+    b.onclick=()=>tapTile(x.id);t.appendChild(b)});
+  const left=S.tiles.filter(x=>x.at<0).length;K.stat(left,left===1?"Tile left":"Tiles left")}
+function sumEl(cells,isCol){const d=document.createElement("div"),target=cells.reduce((a,i)=>a+S.sol[i],0),vs=cells.map(val);
+  d.className="sum"+(isCol?" col":"");d.textContent=target;
+  if(vs.every(v=>v!=null))d.classList.add(vs.reduce((a,v)=>a+v,0)===target?"good":"bad");return d}
+function place(id,i){const t=S.tiles.find(x=>x.id===id),cur=S.tiles.find(x=>x.at===i);if(cur)cur.at=-1;t.at=i;S.placements++;S.sel=null;S.selCell=null;TS.music.fx("tap");draw();check()}
+function tapTile(id){if(K.busy)return;if(S.selCell!=null)return place(id,S.selCell);S.sel=S.sel===id?null:id;draw()}
+function tapCell(i){if(K.busy)return;const cur=S.tiles.find(x=>x.at===i);
+  if(S.sel!=null)return place(S.sel,i);
+  if(cur){cur.at=-1;TS.music.fx("tap");S.selCell=i;draw();return}   // tap a filled square: tile goes back, square stays selected
+  S.selCell=S.selCell===i?null:i;draw()}
+function check(){if(S.tiles.some(t=>t.at<0))return;const N=S.N;
+  for(let k=0;k<N;k++){let rs=0,cs=0,rt=0,ct=0;for(let j=0;j<N;j++){rs+=val(k*N+j);rt+=S.sol[k*N+j];cs+=val(j*N+k);ct+=S.sol[j*N+k]}if(rs!==rt||cs!==ct){K.tip("Some totals don't match yet. Swap tiles to fix the red ones.");return}}
+  const b=S.blanks.size,st=S.placements<=b+1?3:S.placements<=b*2+1?2:1;
+  K.win({stars:st,text:b+" tiles placed"+(st===3?" · maths whizz!":"")})}
+/* Hint: puts the right tile in one square. */
+function hint(){if(!S||K.busy)return;const i=[...S.blanks].find(c=>val(c)!==S.sol[c]);if(i==null)return;const want=S.sol[i];
+  let t=S.tiles.find(x=>x.at<0&&x.v===want)||S.tiles.find(x=>x.v===want&&x.at>=0&&S.sol[x.at]!==want);if(!t)return;
+  const cur=S.tiles.find(x=>x.at===i);if(cur)cur.at=-1;t.at=i;S.sel=null;S.selCell=null;draw();
+  const b=document.querySelector('.nc[data-i="'+i+'"]');b&&b.classList.add("flash");K.tip("That square needs a "+want+".");check()}
+K=TS_KIT({id:"numbers",name:"Number Tiles",levels:40,start,hint,label:n=>{const s=spec(n);return s.size+"×"+s.size}});
+window.__game={get S(){return S},K,spec,tapTile,tapCell};// for tools/test_games2.py
+K.start();
+})();
+</script>
+</body>
+</html>

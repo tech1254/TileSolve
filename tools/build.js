@@ -40,9 +40,31 @@ console.log(total,'puzzles;',Object.keys(bank).map(p=>p+':'+bank[p].length).join
 const crypto=require('crypto'),h=crypto.createHash('sha1');
 for(const f of fs.readdirSync(path.join(ROOT,'shared')).sort())h.update(fs.readFileSync(path.join(ROOT,'shared',f)));
 const V=h.digest('hex').slice(0,8);
-const PAGES=[['src/home.html','index.html'],['src/car.html','games/car/index.html'],['src/picture.html','games/picture/index.html'],
-  ['src/memory.html','games/memory/index.html'],['src/pattern.html','games/pattern/index.html'],['src/flood.html','games/flood/index.html']];
+// Pages built with the game kit: every src/<game>.html that isn't listed above becomes games/<game>/index.html.
+const PAGES=[['src/home.html','index.html'],['src/car.html','games/car/index.html'],['src/picture.html','games/picture/index.html']];
+for(const f of fs.readdirSync(path.join(ROOT,'src')).sort()){const g=f.replace(/\.html$/,'');
+  if(f.endsWith('.html')&&!['home','car','picture'].includes(g))PAGES.push(['src/'+f,'games/'+g+'/index.html'])}
+// <!--HEAD:Title--> expands to the standard game-page head; <!--KIT--> to the shared scripts.
+const HEAD=t=>`<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#161b21">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box;height:100%}body{margin:0}[hidden]{display:none!important}</style>
+<title>${t} · Tile Solve</title>
+<meta name="apple-mobile-web-app-title" content="Tile Solve">
+<link rel="apple-touch-icon" href="../../icon-180.png">
+<link rel="icon" type="image/png" href="../../icon-512.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Barlow:wght@400;600;700&display=swap">
+<link rel="stylesheet" href="../../shared/ts.css?v=__V__">
+<link rel="stylesheet" href="../../shared/game.css?v=__V__">`;
+const KIT=`<script src="../../shared/ts.js?v=__V__"></script>
+<script src="../../shared/kit.js?v=__V__"></script>`;
 for(const[src,out]of PAGES){
-  let html=fs.readFileSync(path.join(ROOT,src),'utf8').replace(/__V__/g,V).replace('"__BANK__"','"'+b64+'"');
+  let html=fs.readFileSync(path.join(ROOT,src),'utf8').replace(/<!--HEAD:([^>]*)-->/,(_,t)=>HEAD(t)).replace('<!--KIT-->',KIT)
+    .replace(/__V__/g,V).replace('"__BANK__"','"'+b64+'"');
   fs.mkdirSync(path.dirname(path.join(ROOT,out)),{recursive:true});fs.writeFileSync(path.join(ROOT,out),html);
   console.log(out,(html.length/1024).toFixed(1)+'KB','v='+V)}

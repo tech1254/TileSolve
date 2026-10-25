@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!--HEAD:Word Builder-->
+<style>
+.clue{font-size:clamp(64px,22vw,110px);line-height:1;filter:drop-shadow(0 6px 10px rgba(0,0,0,.4));min-height:1em}
+.slots,.letters{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;max-width:600px}
+.slots{--ls:clamp(38px,calc((100vw - 60px)/var(--len) - 8px),64px)}
+.lt{width:var(--ls,60px);height:var(--ls,60px);border:0;border-radius:12px;font-family:var(--font-sign);font-size:calc(var(--ls,60px)*.48);text-transform:uppercase;
+  display:grid;place-items:center;padding:0;cursor:pointer;touch-action:manipulation}
+.slots .lt{background:transparent;border:3px dashed var(--lane);color:var(--text)}
+.slots .lt.full{border:0;background:#f4efe2;color:#1d1d2b;box-shadow:inset 0 -5px 0 rgba(0,0,0,.15)}
+.slots .lt.fixed{background:#d9f2cc;cursor:default}
+.slots .lt.next{border-color:var(--paint)}
+.slots.bad .lt.full{background:#fde3df;animation:ts-shake .35s}
+.slots.good .lt.full{background:#d9f2cc}
+.letters .lt{background:var(--paint);color:var(--night);box-shadow:inset 0 -5px 0 rgba(0,0,0,.18),0 4px 8px rgba(0,0,0,.3)}
+.letters .lt.gone{visibility:hidden}
+.meaning{margin:0;color:var(--muted);font-weight:600;min-height:1.3em;text-align:center}
+</style>
+</head>
+<body>
+<!--KIT-->
+<script>
+(()=>{
+/* Word Builder: tap the letter tiles in order to spell the picture's word. Tap a placed letter to send it back.
+   Words get longer by grade and level, and later levels mix in extra letters that aren't in the word. */
+const W={
+3:"cat🐱 dog🐶 sun☀️ bus🚌 cow🐮 pig🐷 hat🎩 bee🐝 fox🦊 owl🦉 egg🥚 cup☕ bed🛏️ map🗺️ ant🐜 bat🦇 car🚗 box📦 key🔑 pen🖊️ ice🧊 web🕸️ ram🐏 hen🐔 bug🐛 toy🧸 pie🥧 tea🍵 van🚐 jet✈️ yak🐃 axe🪓",
+4:"frog🐸 fish🐟 bear🐻 lion🦁 duck🦆 cake🎂 star⭐ moon🌙 tree🌳 ball⚽ boat⛵ kite🪁 milk🥛 rain🌧️ ship🚢 bike🚲 drum🥁 bell🔔 corn🌽 crab🦀 deer🦌 goat🐐 leaf🍃 nest🪺 rose🌹 seal🦭 snow❄️ sock🧦 worm🪱 wolf🐺 bird🐦 book📖 door🚪 hand✋ king🤴 ring💍 shoe👟 taco🌮 pear🍐 lamp💡",
+5:"apple🍎 bread🍞 chair🪑 clock🕰️ cloud☁️ crown👑 horse🐴 house🏠 juice🧃 koala🐨 lemon🍋 mouse🐭 panda🐼 pizza🍕 plane🛩️ queen👸 robot🤖 shark🦈 sheep🐑 snail🐌 snake🐍 tiger🐯 train🚆 truck🚚 whale🐳 zebra🦓 grape🍇 heart❤️ ghost👻 candy🍬 earth🌍 piano🎹 tooth🦷 broom🧹 camel🐫 eagle🦅 otter🦦 llama🦙 squid🦑 sloth🦥",
+6:"rocket🚀 turtle🐢 rabbit🐰 monkey🐵 parrot🦜 dragon🐉 castle🏰 carrot🥕 cookie🍪 banana🍌 cheese🧀 flower🌸 guitar🎸 jacket🧥 kitten🐈 magnet🧲 orange🍊 pencil✏️ planet🪐 puzzle🧩 spider🕷️ tomato🍅 lizard🦎 badger🦡 beetle🪲 bridge🌉 camera📷 candle🕯️ helmet⛑️ wizard🧙 ladder🪜 bucket🪣",
+7:"penguin🐧 dolphin🐬 giraffe🦒 octopus🐙 rainbow🌈 unicorn🦄 balloon🎈 cupcake🧁 popcorn🍿 pumpkin🎃 hamster🐹 lobster🦞 peacock🦚 volcano🌋 tractor🚜 trumpet🎺 scooter🛴 diamond💎 snowman⛄ blanket🛌 cricket🦗 mermaid🧜 printer🖨️ teacher🧑‍🏫",
+8:"elephant🐘 dinosaur🦖 kangaroo🦘 flamingo🦩 sandwich🥪 umbrella☂️ broccoli🥦 mushroom🍄 airplane✈️ hedgehog🦔 scorpion🦂 mosquito🦟 butterfly🦋 astronaut👩‍🚀 crocodile🐊 telescope🔭 pineapple🍍 watermelon🍉 strawberry🍓 caterpillar🐛 skateboard🛹 chocolate🍫 lightning⚡ microscope🔬"};
+const LIST={};for(const k in W)LIST[k]=W[k].split(" ").map(s=>{const m=s.match(/^([a-z]+)(.+)$/);return{w:m[1],e:m[2]}});
+let K,S=null;
+function pick(steps,n){let v=steps[0];for(const s of steps)if(n>=s[0])v=s;return v}
+// [fromLevel, word band]; decoy letters from the given levels
+const PLAN={1:{b:[[1,3],[21,4]],d:[30,99]},2:{b:[[1,3],[13,4],[31,5]],d:[24,36]},3:{b:[[1,4],[11,5],[26,6]],d:[16,30]},4:{b:[[1,5],[9,6],[25,7]],d:[12,26]},
+  5:{b:[[1,6],[11,7],[26,8]],d:[8,20]},6:{b:[[1,6],[9,7],[21,8]],d:[6,16]},7:{b:[[1,7],[9,8]],d:[4,12]}};
+function spec(n){const p=PLAN[K.grade],[from,band]=pick(p.b,n),list=LIST[band],r=TS.rngFrom(band*977+K.grade*31),order=[...list.keys()];
+  for(let k=order.length-1;k>0;k--){const j=Math.floor(r()*(k+1));[order[k],order[j]]=[order[j],order[k]]}
+  const word=list[order[(n-from)%list.length]];return{...word,band,decoys:n>=p.d[1]?2:n>=p.d[0]?1:0}}
+function start(n){const sp=spec(n),r=K.rng(n),word=sp.w,alpha="abcdefghijklmnopqrstuvwxyz";let letters=word.split("");
+  for(let k=0;k<sp.decoys;k++){let ch;do ch=alpha[Math.floor(r()*26)];while(word.includes(ch));letters.push(ch)}
+  let tries=0;do{for(let k=letters.length-1;k>0;k--){const j=Math.floor(r()*(k+1));[letters[k],letters[j]]=[letters[j],letters[k]]}}while(letters.slice(0,word.length).join("")===word&&++tries<20);
+  K.stage.insertAdjacentHTML("beforeend",'<div class="clue" aria-hidden="true">'+sp.e+'</div><p class="meaning" id="mn"></p><div class="slots" id="sl" style="--len:'+Math.max(word.length,letters.length/1.4)+'"></div><div class="letters" id="lt"></div>');
+  S={sp,word,tiles:letters.map((ch,i)=>({i,ch,at:-1})),slots:new Array(word.length).fill(-1),fixed:new Set(),oops:0};draw();
+  K.stat(word.length,"Letters");K.tip("Spell the word for the picture. Tap letters in order; tap a placed letter to take it back."+(sp.decoys?" Careful: there "+(sp.decoys>1?"are some extra letters":"is an extra letter")+"!":""))}
+function draw(){const sl=document.getElementById("sl"),lt=document.getElementById("lt");sl.innerHTML="";lt.innerHTML="";sl.className="slots";
+  const next=S.slots.indexOf(-1);
+  S.slots.forEach((t,k)=>{const b=document.createElement("button");b.type="button";b.className="lt"+(t>=0?" full":"")+(S.fixed.has(k)?" fixed":"")+(k===next?" next":"");
+    b.textContent=t>=0?S.tiles[t].ch:"";b.setAttribute("aria-label",t>=0?S.tiles[t].ch:"Empty");b.onclick=()=>unplace(k);sl.appendChild(b)});
+  S.tiles.forEach(t=>{const b=document.createElement("button");b.type="button";b.className="lt"+(t.at>=0?" gone":"");b.textContent=t.ch;b.dataset.t=t.i;
+    b.onclick=()=>placeTile(t.i);lt.appendChild(b)})}
+function placeTile(i){if(K.busy)return;const t=S.tiles[i],k=S.slots.indexOf(-1);if(t.at>=0||k<0)return;t.at=k;S.slots[k]=i;TS.music.fx("tap");draw();
+  if(S.slots.indexOf(-1)<0)check()}
+function unplace(k){if(K.busy||S.fixed.has(k)||S.slots[k]<0)return;S.tiles[S.slots[k]].at=-1;S.slots[k]=-1;TS.music.fx("tap");draw()}
+function check(){const guess=S.slots.map(t=>S.tiles[t].ch).join("");
+  if(guess===S.word){document.getElementById("sl").classList.add("good");document.getElementById("mn").textContent=S.word.toUpperCase()+"!";
+    const st=S.oops===0?3:S.oops===1?2:1;K.win({stars:st,text:"You spelled "+S.word.toUpperCase()+(st===3?" first try!":"")});return}
+  S.oops++;TS.music.fx("bad");document.getElementById("sl").classList.add("bad");K.tip("Not quite! The letters in the right spots stay. Try again.");
+  // keep letters that are already in the right place, send the rest back
+  setTimeout(()=>{S.slots.forEach((t,k)=>{if(t>=0&&S.tiles[t].ch!==S.word[k]){S.tiles[t].at=-1;S.slots[k]=-1}else if(t>=0)S.fixed.add(k)});draw()},700)}
+/* Hint: puts the right letter in the next square that needs it. */
+function hint(){if(!S||K.busy)return;const k=S.slots.findIndex((t,j)=>t<0||S.tiles[t].ch!==S.word[j]);if(k<0)return;
+  if(S.slots[k]>=0){S.tiles[S.slots[k]].at=-1;S.slots[k]=-1}
+  let t=S.tiles.find(x=>x.at<0&&x.ch===S.word[k]);
+  if(!t){const j=S.slots.findIndex((x,m)=>m!==k&&x>=0&&S.tiles[x].ch===S.word[k]&&!S.fixed.has(m));if(j<0)return;t=S.tiles[S.slots[j]];S.slots[j]=-1;t.at=-1}
+  t.at=k;S.slots[k]=t.i;S.fixed.add(k);draw();K.tip("Letter "+(k+1)+" is "+S.word[k].toUpperCase()+".");if(S.slots.indexOf(-1)<0)check()}
+K=TS_KIT({id:"words",name:"Word Builder",levels:40,start,hint,label:n=>{const b=spec(n).band;return(b>=8?"8+":b)+" letters"}});
+window.__game={get S(){return S},K,spec,LIST};// for tools/test_games2.py
+K.start();
+})();
+</script>
+</body>
+</html>

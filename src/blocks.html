@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!--HEAD:Block Fit-->
+<style>
+.bwrap{position:relative;touch-action:none}
+.bslot{position:absolute;box-sizing:border-box;border-radius:6px;background:#20262d;box-shadow:inset 0 0 0 2px #3b444d}
+.bslot.ok{box-shadow:inset 0 0 0 3px var(--paint)}
+.bslot.no{box-shadow:inset 0 0 0 3px var(--target)}
+.pz{position:relative;touch-action:none;cursor:grab;flex:none}
+.pz.on{position:absolute}
+.pz i{position:absolute;width:var(--s);height:var(--s);box-sizing:border-box;padding:2px}
+.pz i::before{content:"";display:block;width:100%;height:100%;border-radius:calc(var(--s)*.18);background:var(--c);
+  box-shadow:inset 0 calc(var(--s)*-.1) 0 rgba(0,0,0,.22),inset 0 calc(var(--s)*.05) 0 rgba(255,255,255,.3)}
+.pz.lift{opacity:.2}
+.pz.flash i::before{animation:bflash .8s ease}
+@keyframes bflash{40%{filter:brightness(1.5);box-shadow:0 0 0 3px var(--paint)}}
+.pz.fly{position:fixed;left:0;top:0;z-index:30;pointer-events:none;filter:drop-shadow(0 10px 14px rgba(0,0,0,.5))}
+.pz.fly.home{transition:transform .22s ease}
+.btray{width:100%;max-width:640px;min-height:120px;box-sizing:border-box;display:flex;flex-wrap:wrap;gap:16px;justify-content:center;align-items:center;align-content:center;
+  padding:14px;background:var(--panel);border:1px solid var(--lane);border-radius:16px;touch-action:none}
+@media (prefers-reduced-motion:reduce){.pz.fly.home{transition:none}.pz.flash i::before{animation:none}}
+</style>
+</head>
+<body>
+<!--KIT-->
+<script>
+(()=>{
+/* Block Fit: drag the blocks into the outline so every square is filled.
+   Puzzles are made by cutting the outline into pieces, so there's always a solution.
+   Outlines grow, odd shapes replace rectangles, and later the pieces arrive turned (tap a piece to turn it). */
+const COLS=["#e2412e","#3b6fd9","#2a9d8f","#f08a24","#8f5bd6","#6bb34a","#e06aa6","#4fb3d9","#d9b37a","#f2c230","#1f6f8b","#b86b1f"];
+let K,S=null;
+function pick(steps,n){let v=steps[0];for(const s of steps)if(n>=s[0])v=s;return v}
+function spec(n){const g=K.grade;
+  const T=g<=2?{steps:[[1,3,2],[6,3,3],[13,4,3],[21,4,4],[31,5,4]],rot:26,shape:31}:g<=4?{steps:[[1,3,3],[6,4,4],[11,5,4],[19,5,5],[29,6,6]],rot:11,shape:19}
+    :{steps:[[1,4,4],[6,5,5],[16,6,5],[26,6,6],[34,7,6]],rot:6,shape:16};
+  const[,w,h]=pick(T.steps,n);return{w,h,rotate:n>=T.rot,shaped:n>=T.shape,maxSize:n<6?3:n<16?4:5}}
+const rot90=cs=>norm(cs.map(([r,c])=>[c,-r]));
+function norm(cs){const mr=Math.min(...cs.map(x=>x[0])),mc=Math.min(...cs.map(x=>x[1]));return cs.map(([r,c])=>[r-mr,c-mc]).sort((a,b)=>a[0]-b[0]||a[1]-b[1])}
+const rotN=(cs,k)=>{for(let i=0;i<k;i++)cs=rot90(cs);return cs};
+/* ---------- make a puzzle: an outline, cut into pieces of 2..maxSize squares ---------- */
+function make(sp,r){const{w,h}=sp;
+  for(let tries=0;tries<200;tries++){
+    let inside=new Set();
+    if(sp.shaped){const want=Math.round(w*h*(.72+r()*.12)),start=Math.floor(h/2)*w+Math.floor(w/2);inside.add(start);
+      while(inside.size<want){const a=[...inside][Math.floor(r()*inside.size)],ar=(a/w)|0,ac=a%w,d=[[1,0],[-1,0],[0,1],[0,-1]][Math.floor(r()*4)],nr=ar+d[0],nc=ac+d[1];
+        if(nr>=0&&nr<h&&nc>=0&&nc<w)inside.add(nr*w+nc)}
+      const rows=new Set([...inside].map(i=>(i/w)|0)),cols=new Set([...inside].map(i=>i%w));if(rows.size<h||cols.size<w)continue}
+    else for(let i=0;i<w*h;i++)inside.add(i);
+    const owner=new Map(),pieces=[],nb=i=>{const rr=(i/w)|0,cc=i%w;return[rr>0?i-w:-1,rr<h-1?i+w:-1,cc>0?i-1:-1,cc<w-1?i+1:-1].filter(j=>j>=0&&inside.has(j))};
+    const free=()=>[...inside].filter(i=>!owner.has(i));let ok=true;
+    while(free().length){const f=free();f.sort((a,b)=>nb(a).filter(j=>!owner.has(j)).length-nb(b).filter(j=>!owner.has(j)).length);
+      const seed=f[0],size=2+Math.floor(r()*(sp.maxSize-1)),cells=[seed];owner.set(seed,pieces.length);
+      while(cells.length<size){const opts=[];cells.forEach(c=>nb(c).forEach(j=>{if(!owner.has(j))opts.push(j)}));if(!opts.length)break;
+        const j=opts[Math.floor(r()*opts.length)];owner.set(j,pieces.length);cells.push(j)}
+      if(cells.length<2){const adj=nb(seed).map(j=>owner.get(j)).filter(p=>p!==undefined&&pieces[p].length<6);
+        if(!adj.length){ok=false;break}const p=adj[0];owner.set(seed,p);pieces[p].push(seed);continue}
+      pieces.push(cells)}
+    if(!ok||pieces.length<2)continue;
+    return{inside,pieces:pieces.map((cells,k)=>{const rc=cells.map(i=>[(i/w)|0,i%w]),r0=Math.min(...rc.map(x=>x[0])),c0=Math.min(...rc.map(x=>x[1]));
+      return{id:k,cells:norm(rc),sol:[r0,c0],col:COLS[k%COLS.length]}})}}
+  return null}
+
+function start(n){const sp=spec(n),r=K.rng(n),pz=make(sp,r);
+  K.stage.insertAdjacentHTML("beforeend",'<div class="frame"><div class="bwrap" id="bw"></div></div><div class="btray" id="tray"></div>');
+  S={sp,inside:pz.inside,pieces:pz.pieces.map(p=>({...p,rot:sp.rotate?1+Math.floor(r()*3):0,at:null,el:null})),oops:0,bw:document.getElementById("bw"),tray:document.getElementById("tray")};
+  // shuffle tray order
+  for(let k=S.pieces.length-1;k>0;k--){const j=Math.floor(r()*(k+1));[S.pieces[k],S.pieces[j]]=[S.pieces[j],S.pieces[k]]}
+  layout();stats();
+  K.tip(sp.rotate?"Tap a block to turn it. Drag blocks into the outline to fill every square.":"Drag the blocks into the outline. Fill every square!")}
+const shape=p=>rotN(p.cells,p.rot);
+function sizes(){const st=K.stage.getBoundingClientRect(),{w,h}=S.sp,trayH=Math.max(130,st.height*.32);
+  const cs=Math.floor(Math.max(30,Math.min((st.width-40)/w,(st.height-trayH-60)/h,80)));return{cs,tc:Math.max(18,Math.min(Math.round(cs*.55),34))}}
+function pieceEl(p,s){const el=document.createElement("div");el.className="pz";el.dataset.id=p.id;const cs=shape(p);
+  const ph=Math.max(...cs.map(x=>x[0]))+1,pw=Math.max(...cs.map(x=>x[1]))+1;el.style.setProperty("--s",s+"px");el.style.setProperty("--c",p.col);
+  el.style.width=pw*s+"px";el.style.height=ph*s+"px";
+  cs.forEach(([r,c])=>{const i=document.createElement("i");i.style.left=c*s+"px";i.style.top=r*s+"px";el.appendChild(i)});return el}
+function layout(){const{cs,tc}=sizes(),{w,h}=S.sp;S.cs=cs;S.tc=tc;const bw=S.bw;bw.innerHTML="";bw.style.width=w*cs+"px";bw.style.height=h*cs+"px";
+  S.inside.forEach(i=>{const d=document.createElement("div");d.className="bslot";d.dataset.i=i;d.style.left=(i%w)*cs+2+"px";d.style.top=((i/w)|0)*cs+2+"px";
+    d.style.width=d.style.height=cs-4+"px";bw.appendChild(d)});
+  S.tray.innerHTML="";
+  S.pieces.forEach(p=>{if(p.at){const el=pieceEl(p,cs);el.classList.add("on");el.style.left=p.at[1]*cs+"px";el.style.top=p.at[0]*cs+"px";bw.appendChild(el);p.el=el}
+    else{const el=pieceEl(p,tc);S.tray.appendChild(el);p.el=el}})}
+addEventListener("resize",()=>{if(S)layout()});
+function stats(){const placed=S.pieces.filter(p=>p.at).length;K.stat(placed+"/"+S.pieces.length,"Blocks");K.sub("Oops "+S.oops)}
+function occupied(except){const m=new Map();S.pieces.forEach(p=>{if(p.at&&p!==except)shape(p).forEach(([r,c])=>m.set((p.at[0]+r)*S.sp.w+p.at[1]+c,p))});return m}
+function fits(p,r0,c0){const{w,h}=S.sp,occ=occupied(p);
+  return shape(p).every(([r,c])=>{const rr=r0+r,cc=c0+c;return rr>=0&&cc>=0&&rr<h&&cc<w&&S.inside.has(rr*w+cc)&&!occ.has(rr*w+cc)})}
+function done(){const occ=occupied(null);return[...S.inside].every(i=>occ.has(i))}
+
+/* ---------- dragging (pointer events, so it works with touch on iPad) ---------- */
+let D=null;
+function down(e){if(K.busy||!S||D)return;const el=e.target.closest(".pz");if(!el||el.classList.contains("fly"))return;e.preventDefault();
+  const p=S.pieces.find(q=>q.id===+el.dataset.id),rc=el.getBoundingClientRect(),s=p.at?S.cs:S.tc;
+  D={p,el,x:e.clientX,y:e.clientY,moved:false,gx:(e.clientX-rc.left)/s,gy:(e.clientY-rc.top)/s,id:e.pointerId};
+  try{el.setPointerCapture(e.pointerId)}catch(_){}}
+function move(e){if(!D||e.pointerId!==D.id)return;
+  if(!D.moved&&Math.hypot(e.clientX-D.x,e.clientY-D.y)>7){D.moved=true;const f=pieceEl(D.p,S.cs);f.classList.add("fly");document.body.appendChild(f);D.fly=f;D.el.classList.add("lift")}
+  if(!D.moved)return;const fx=e.clientX-D.gx*S.cs,fy=e.clientY-D.gy*S.cs;D.fly.style.transform="translate("+fx+"px,"+fy+"px)";D.fx=fx;D.fy=fy;mark()}
+function target(){const b=S.bw.getBoundingClientRect();return[Math.round((D.fy-b.top)/S.cs),Math.round((D.fx-b.left)/S.cs)]}
+function mark(){S.bw.querySelectorAll(".bslot").forEach(s=>s.classList.remove("ok","no"));if(!D||!D.moved)return;const[r0,c0]=target(),{w}=S.sp,good=fits(D.p,r0,c0);
+  shape(D.p).forEach(([r,c])=>{const s=S.bw.querySelector('.bslot[data-i="'+((r0+r)*w+c0+c)+'"]');if(s&&r0+r>=0&&c0+c>=0&&c0+c<w)s.classList.add(good?"ok":"no")})}
+function up(e){if(!D||e.pointerId!==D.id)return;const d=D;D=null;
+  if(!d.moved){if(d.p.at){d.p.at=null;TS.music.fx("tap");layout();stats()}       // tap a placed block: back to the tray
+    else if(S.sp.rotate){d.p.rot=(d.p.rot+1)%4;TS.music.fx("tap");layout()}      // tap a tray block: turn it
+    return}
+  D=d;const[r0,c0]=target();D=null;S.bw.querySelectorAll(".bslot").forEach(s=>s.classList.remove("ok","no"));
+  const b=S.bw.getBoundingClientRect(),over=d.fx+S.cs/2>b.left&&d.fx<b.right&&d.fy+S.cs/2>b.top&&d.fy<b.bottom;
+  if(fits(d.p,r0,c0)){d.p.at=[r0,c0];d.fly.remove();TS.music.fx("tap");layout();stats();check();return}
+  if(over){S.oops++;TS.music.fx("bad");K.tip("That block doesn't fit there. Try another spot"+(S.sp.rotate?" or turn it.":"."))}
+  if(d.p.at&&!over)d.p.at=null;
+  d.fly.remove();layout();stats()}
+document.addEventListener("pointerdown",e=>{if(S&&(e.target.closest("#bw")||e.target.closest("#tray")))down(e)});
+document.addEventListener("pointermove",move);document.addEventListener("pointerup",up);document.addEventListener("pointercancel",up);
+function check(){if(!done())return;const st=S.oops<=1?3:S.oops<=4?2:1;
+  K.win({stars:st,text:S.pieces.length+" blocks · "+(S.oops?S.oops+" oops":"no oops")+(st===3?" · perfect fit!":"")})}
+/* Hint: put one block exactly where it goes, moving any block that's in the way back to the tray. */
+function hint(){if(!S||K.busy)return;const wrong=S.pieces.filter(p=>!(p.at&&p.rot===0&&p.at[0]===p.sol[0]&&p.at[1]===p.sol[1]));if(!wrong.length)return;
+  const p=wrong[0],{w}=S.sp,cells=new Set(p.cells.map(([r,c])=>(p.sol[0]+r)*w+p.sol[1]+c)),occ=occupied(p);
+  cells.forEach(i=>{const q=occ.get(i);if(q)q.at=null});p.rot=0;p.at=p.sol.slice();layout();stats();p.el.classList.add("flash");K.tip("That block goes there!");check()}
+K=TS_KIT({id:"blocks",name:"Block Fit",levels:40,start,hint,label:n=>{const s=spec(n);return s.w+"×"+s.h}});
+window.__game={get S(){return S},K,spec,shape,fits};// for tools/test_games2.py
+K.start();
+})();
+</script>
+</body>
+</html>
