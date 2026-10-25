@@ -60,7 +60,7 @@ with sync_playwright() as p:
     check(pg.is_visible("#sheetPlayer"), "can't save a player without a name")
     add_player(pg, "Mia", 3, 3)
     check(pg.is_visible("#viewGames") and "Hi Mia!" in pg.text_content("#hello"), "saving a player goes to the game grid")
-    check(pg.locator(".game:not(.soon)").count() == 1 and pg.locator(".game.soon").count() >= 10, "Car is playable, the rest say coming soon")
+    check(pg.locator(".game:not(.soon)").count() == 2 and pg.locator(".game.soon").count() >= 10, "Car and Picture Puzzle are playable, the rest say coming soon")
     pg.screenshot(path=str(OUT / "shot-games.png"))
 
     # ---- Car game ----

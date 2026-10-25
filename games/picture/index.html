@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#161b21">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box;height:100%}body{margin:0}[hidden]{display:none!important}</style>
+<title>Picture Puzzle · Tile Solve</title>
+<meta name="apple-mobile-web-app-title" content="Tile Solve">
+<link rel="apple-touch-icon" href="../../icon-180.png">
+<link rel="icon" type="image/png" href="../../icon-512.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Barlow:wght@400;600;700&display=swap">
+<link rel="stylesheet" href="../../shared/ts.css?v=74e132a6">
+<style>
+body{overflow:hidden}
+.app{height:100%;display:flex;flex-direction:column;align-items:center;gap:12px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:12px;box-sizing:border-box}
+.top{width:100%;max-width:560px;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px}
+.left{display:flex;gap:6px;align-items:center}
+.lvl{display:grid;justify-items:center;gap:2px}
+.lvl .row1{display:flex;align-items:baseline;gap:8px}
+.num{font-family:var(--font-sign);font-size:28px;line-height:1;color:var(--paint);font-variant-numeric:tabular-nums}
+.right{display:flex;justify-content:flex-end;align-items:center;gap:10px}
+.stat{display:grid;justify-items:end;gap:2px;font-variant-numeric:tabular-nums}
+.stat b{font-family:var(--font-sign);font-weight:400;font-size:18px;line-height:1}
+.thumb{width:46px;height:46px;border-radius:10px;border:2px solid var(--lane);background:var(--asphalt) center/cover;cursor:pointer;padding:0;flex:none}
+
+/* Board (both modes) */
+.stage{flex:1;min-height:0;width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px}
+.frame{padding:8px;background:var(--asphalt);border-radius:16px;box-shadow:0 0 0 3px var(--lane),0 18px 40px rgba(0,0,0,.45)}
+.board{--bw:max(200px,min(calc(100vw - 48px),560px,calc(100dvh - 300px)));--n:3;position:relative;width:var(--bw);height:var(--bw);border-radius:8px;touch-action:none;overflow:hidden;
+  background-color:#20262d;background-image:linear-gradient(var(--lane) 1px,transparent 1px),linear-gradient(90deg,var(--lane) 1px,transparent 1px);
+  background-size:calc(100%/var(--n)) calc(100%/var(--n));background-position:-1px -1px}
+.drop .board{--bw:max(200px,min(calc(100vw - 48px),540px,calc(100dvh - 420px)))}
+.ghostimg{position:absolute;inset:0;background:center/cover;opacity:.18;pointer-events:none}
+.cellhi{position:absolute;box-sizing:border-box;border:3px solid var(--paint);border-radius:6px;pointer-events:none}
+.cellhi.bad{border-color:var(--target);animation:ts-shake .35s}
+
+/* Drop-in pieces */
+.pc{position:absolute;box-sizing:border-box;padding:1px}
+.pc>i,.tp>i,.fly>i{display:block;width:100%;height:100%;border-radius:4px;background-repeat:no-repeat;transition:transform .18s ease}
+.pc.flash>i{animation:flash .8s ease}
+@keyframes flash{30%{filter:brightness(1.5);box-shadow:0 0 0 4px var(--paint)}}
+.tray{flex:1;min-height:96px;width:100%;max-width:560px;box-sizing:border-box;overflow-y:auto;display:flex;flex-wrap:wrap;gap:8px;justify-content:center;align-content:flex-start;
+  padding:10px;background:var(--panel);border:1px solid var(--lane);border-radius:14px;touch-action:none}
+.tp{width:var(--ps,60px);height:var(--ps,60px);flex:none;border-radius:6px;cursor:grab;box-shadow:0 3px 6px rgba(0,0,0,.35);touch-action:none}
+.tp.lift{opacity:.25}
+.fly{position:fixed;left:0;top:0;z-index:30;pointer-events:none;box-shadow:0 10px 24px rgba(0,0,0,.5);border-radius:6px}
+.fly.home{transition:transform .25s ease,width .25s ease,height .25s ease}
+@media (orientation:landscape) and (min-width:700px){
+  .stage.drop{flex-direction:row;gap:18px}
+  .drop .board{--bw:max(200px,min(calc(100dvh - 210px),calc(58vw - 40px),620px))}
+  .drop .tray{flex:none;width:min(34vw,380px);height:calc(var(--bwpx,400px) + 16px);max-width:none}
+  .top,.controls{max-width:min(1000px,100%)}}
+
+/* Slider tiles */
+.tile{position:absolute;box-sizing:border-box;padding:1px;cursor:pointer;transition:left .13s ease,top .13s ease}
+.tile>i{display:block;width:100%;height:100%;border-radius:5px;background-repeat:no-repeat;position:relative;box-shadow:inset 0 0 0 1px rgba(0,0,0,.25)}
+.tile b{position:absolute;left:5px;top:4px;min-width:18px;height:18px;padding:0 4px;box-sizing:border-box;border-radius:9px;background:rgba(10,14,20,.72);color:#fff;font-size:12px;line-height:18px;text-align:center;font-weight:700}
+.nonum .tile b{display:none}
+.tile.hint>i{animation:flash .7s ease 3}
+.tile.last{opacity:0;transition:opacity .5s}
+.tile.last.in{opacity:1}
+
+.peek{position:fixed;inset:0;z-index:25;display:grid;place-items:center;background:rgba(8,11,14,.78)}
+.peek img{width:min(86vw,72vh);border-radius:16px;box-shadow:0 20px 50px rgba(0,0,0,.6)}
+.controls{width:100%;max-width:560px;display:grid;grid-template-columns:52px 1fr 1fr 1fr 52px;gap:8px}
+.controls button{background:var(--panel);border:1px solid var(--lane);border-radius:12px;padding:13px 0;font-weight:700;font-size:15px;cursor:pointer}
+.controls button:active{transform:translateY(1px)}
+.controls button:disabled{opacity:.35}
+.controls .arrow{font-size:22px;padding:8px 0}
+.tip{margin:0;color:var(--muted);font-size:14px;text-align:center;min-height:1.4em;max-width:40ch}
+
+/* Mode chooser, levels, win */
+.modes{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.modes button{border:0;border-radius:18px;padding:16px 12px;cursor:pointer;display:grid;gap:6px;justify-items:start;text-align:left;color:#fff;
+  background:linear-gradient(160deg,var(--g1),var(--g2));box-shadow:inset 0 -5px 0 rgba(0,0,0,.2)}
+.modes button span{font-size:40px;line-height:1}
+.modes button b{font-family:var(--font-sign);font-weight:400;font-size:19px}
+.modes button small{font-size:13px;font-weight:600;opacity:.9}
+.modes button.cur{outline:3px solid var(--paint);outline-offset:2px}
+.levels{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;overflow-y:auto;min-height:0}
+.levels button{background:var(--asphalt);border:1px solid var(--lane);border-radius:10px;padding:8px 0 6px;cursor:pointer;display:grid;gap:2px;font-variant-numeric:tabular-nums}
+.levels button b{font-size:16px}
+.levels button span{font-size:10px;color:var(--paint);letter-spacing:1px;min-height:12px}
+.levels button.cur{border-color:var(--paint)}
+.levels button:disabled{opacity:.35;cursor:default}
+.stars{font-size:40px;letter-spacing:6px;color:var(--paint);text-align:center;line-height:1}
+.stars .off{color:var(--lane)}
+.winpic{width:150px;height:150px;border-radius:14px;margin:0 auto;background:center/cover;box-shadow:0 8px 20px rgba(0,0,0,.4)}
+.btns{display:grid;grid-template-columns:1fr 1.4fr;gap:10px}
+.btns button{border-radius:12px;padding:14px 0;font-weight:700;cursor:pointer;border:1px solid var(--lane);background:var(--asphalt)}
+.btns .go{background:var(--paint);color:var(--night);border-color:var(--paint)}
+@media (prefers-reduced-motion:reduce){.tile,.pc>i,.tp>i,.fly.home{transition:none}.pc.flash>i,.tile.hint>i{animation:none}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <div class="left">
+      <a class="chip icon" id="btnHome" href="../../index.html" aria-label="Home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg></a>
+      <button class="chip icon" id="btnLevels" type="button" aria-label="Levels"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></button>
+      <button class="chip icon" id="btnMusic" type="button"></button>
+    </div>
+    <div class="lvl"><span class="lbl" id="modeLbl">Drop-in</span><div class="row1"><span class="lbl">Level</span><span class="num" id="lvlNum">1</span></div></div>
+    <div class="right">
+      <div class="stat"><b id="stat1">0</b><span class="lbl" id="stat2">Moves</span></div>
+      <button class="thumb" id="btnPeek" type="button" aria-label="Look at the whole picture"></button>
+    </div>
+  </header>
+  <main class="stage" id="stage">
+    <div class="frame"><div class="board" id="board"></div></div>
+    <div class="tray" id="tray" hidden></div>
+  </main>
+  <nav class="controls">
+    <button class="arrow" id="btnPrev" type="button" aria-label="Previous level">‹</button>
+    <button id="btnMode" type="button">Mode</button>
+    <button id="btnReset" type="button">Restart</button>
+    <button id="btnHint" type="button">Hint</button>
+    <button class="arrow" id="btnNext" type="button" aria-label="Next level">›</button>
+  </nav>
+  <p class="tip" id="tip"></p>
+</div>
+
+<div class="peek" id="peek" hidden><img id="peekImg" alt=""></div>
+
+<div class="sheet" id="sheetMode" hidden>
+  <div class="card">
+    <div class="row"><h2>How do you want to play?</h2><button class="close" id="closeMode" type="button">Close</button></div>
+    <div class="modes">
+      <button type="button" data-mode="drop" style="--g1:#3b6fd9;--g2:#1d3d85"><span>🧩</span><b>Drop-in</b><small>Drag the pieces into the picture</small></button>
+      <button type="button" data-mode="slide" style="--g1:#8f5bd6;--g2:#4b2a85"><span>🔲</span><b>Slider</b><small>Slide tiles into the empty gap</small></button>
+    </div>
+  </div>
+</div>
+
+<div class="sheet" id="sheetLevels" hidden>
+  <div class="card">
+    <div class="row"><h2 id="levelsTitle">Drop-in levels</h2><button class="close" id="closeLevels" type="button">Close</button></div>
+    <span class="toggle">Playing as&nbsp;<b id="whoLbl"></b></span>
+    <div class="levels" id="levelGrid"></div>
+    <label class="toggle" id="numToggle"><input type="checkbox" id="numbers"> Show numbers on slider tiles</label>
+    <label class="toggle"><input type="checkbox" id="unlockAll"> Open every level (for testing)</label>
+  </div>
+</div>
+
+<div class="sheet" id="sheetWin" hidden>
+  <div class="card">
+    <h2 id="winTitle">Level 1 done!</h2>
+    <div class="winpic" id="winPic"></div>
+    <div class="stars" id="winStars"></div>
+    <p class="result" id="winText"></p>
+    <div class="btns"><button id="btnReplay" type="button">Replay</button><button class="go" id="btnWinNext" type="button">Next level</button></div>
+  </div>
+</div>
+
+<script src="../../shared/ts.js?v=74e132a6"></script>
+<script src="../../shared/pictures.js?v=74e132a6"></script>
+<script>
+(()=>{
+const PLAYER=TS.requirePlayer(),Music=TS.music,PICS=window.TS_PICTURES,$=id=>document.getElementById(id);
+const GRADE=Math.max(1,Math.min(7,PLAYER.grade|0||3)),LEVELS=40;
+const SAVE=TS.gameSave("picture",{mode:null,drop:{},slide:{},numbers:GRADE<=2,all:false}),save=SAVE.data,persist=SAVE.save;
+const prog=(m=mode)=>save[m][GRADE]||(save[m][GRADE]={unlocked:1,stars:{},last:1});
+let mode=save.mode||"drop";
+$("btnMusic").innerHTML=TS.MUSIC_SVG;Music.button($("btnMusic"));
+
+/* ---------- levels ----------
+   Drop-in: pieces get smaller every 8 levels (10 for grades 1-2); later levels turn the pieces, tap to turn them back.
+   Slider: 3x3 first (exact shortest-solution par), then 4x4, and 5x5 for older grades. */
+function spec(m,n){const seed=(m==="drop"?1:2)*100000+GRADE*1000+n;
+  const pic=PICS[(n-1+(m==="drop"?0:3))%PICS.length];
+  if(m==="drop"){const base={1:2,2:2,3:3,4:3,5:4,6:4,7:4}[GRADE],step=GRADE<=2?10:8,cap=GRADE>=6?7:6;
+    return{m,n,pic,seed,size:Math.min(cap,base+Math.floor((n-1)/step)),rotate:n>=(GRADE<=2?21:GRADE<=4?13:9),ghost:GRADE<=2}}
+  const s3=GRADE<=2?40:GRADE<=4?16:8,s4=GRADE>=5?28:99;
+  if(n<=s3){const t=(n-1)/Math.max(1,s3-1),lo=GRADE<=2?4:6,hi=GRADE<=2?20:22;return{m,n,pic,seed,size:3,depth:Math.round(lo+(hi-lo)*t)}}
+  const size=n<=s4?4:5,from=size===4?s3+1:s4+1,to=size===4?Math.min(LEVELS,s4):LEVELS,t=(n-from)/Math.max(1,to-from);
+  return{m,n,pic,seed,size,walk:Math.round((size===4?24:40)+(size===4?56:60)*t)}}
+
+/* ---------- picture images (drawn once to a canvas so pieces render fast) ---------- */
+const imgCache=new Map();
+function picURL(p){if(imgCache.has(p.id))return imgCache.get(p.id);
+  const pr=new Promise(res=>{if(p.src)return res(p.src);
+    const raw="data:image/svg+xml;charset=utf-8,"+encodeURIComponent(p.svg),im=new Image();
+    im.onload=()=>{try{const c=document.createElement("canvas");c.width=c.height=1024;c.getContext("2d").drawImage(im,0,0,1024,1024);
+        c.toBlob(b=>res(b?URL.createObjectURL(b):raw),"image/png")}catch(e){res(raw)}};
+    im.onerror=()=>res(raw);im.src=raw});
+  imgCache.set(p.id,pr);return pr}
+const bg=(el,url,n,r,c)=>{el.style.backgroundImage='url("'+url+'")';el.style.backgroundSize=n*100+"% "+n*100+"%";
+  el.style.backgroundPosition=(n>1?c/(n-1)*100:0)+"% "+(n>1?r/(n-1)*100:0)+"%"};
+
+/* ---------- shared game state ---------- */
+const board=$("board"),tray=$("tray");
+let S=null,L=null,url="",busy=false,token=0;
+const tip=t=>$("tip").textContent=t||"";
+function hud(){$("modeLbl").textContent=mode==="drop"?"Drop-in":"Slider";$("lvlNum").textContent=L?L.n:1;
+  $("btnPrev").disabled=!L||L.n<=1;$("btnNext").disabled=!L||!canPlay(L.n+1);
+  if(!S)return;
+  if(mode==="drop"){$("stat1").textContent=S.placed+"/"+S.total;$("stat2").textContent="Oops "+S.oops}
+  else{$("stat1").textContent=S.moves;$("stat2").textContent=S.par?"Par "+S.par:"Moves"}}
+const canPlay=n=>n>=1&&n<=LEVELS&&(save.all||n<=prog().unlocked);
+
+async function load(n){const my=++token;busy=true;closeDrag();
+  L=spec(mode,n);prog().last=n;save.mode=mode;persist();
+  board.innerHTML="";tray.innerHTML="";S=null;hud();tip(mode==="drop"?"":"Getting the tiles ready…");
+  url=await picURL(L.pic);if(my!==token)return;
+  $("btnPeek").style.backgroundImage='url("'+url+'")';$("peekImg").src=url;
+  board.style.setProperty("--n",L.size);
+  $("stage").classList.toggle("drop",mode==="drop");tray.hidden=mode!=="drop";
+  if(mode==="drop")startDrop();else await startSlide(my);
+  if(my!==token)return;busy=false;hud()}
+
+function win(text,stars){busy=true;Music.fx("win");const pr=prog();
+  pr.stars[L.n]=Math.max(pr.stars[L.n]||0,stars);if(L.n+1>pr.unlocked)pr.unlocked=Math.min(LEVELS,L.n+1);persist();
+  setTimeout(()=>{$("winTitle").textContent="You made "+L.pic.name+"!";$("winPic").style.backgroundImage='url("'+url+'")';
+    $("winStars").innerHTML="★".repeat(stars)+'<span class="off">'+"★".repeat(3-stars)+"</span>";$("winText").textContent=text;
+    $("btnWinNext").hidden=L.n>=LEVELS;$("sheetWin").hidden=false;hud()},700)}
+
+/* ================= Drop-in ================= */
+function startDrop(){const n=L.size,r=TS.rngFrom(L.seed),order=[];
+  for(let k=0;k<n*n;k++)order.push(k);
+  for(let k=order.length-1;k>0;k--){const j=Math.floor(r()*(k+1));[order[k],order[j]]=[order[j],order[k]]}
+  S={placed:0,total:n*n,oops:0,pieces:order.map(k=>({k,rot:L.rotate?[90,180,270][Math.floor(r()*3)]:0,done:false,el:null}))};
+  if(L.ghost){const g=document.createElement("div");g.className="ghostimg";g.style.backgroundImage='url("'+url+'")';board.appendChild(g)}
+  sizeTray();S.pieces.forEach(p=>{const t=document.createElement("div");t.className="tp";t.dataset.k=p.k;const i=document.createElement("i");
+    bg(i,url,n,Math.floor(p.k/n),p.k%n);i.style.transform="rotate("+p.rot+"deg)";t.appendChild(i);p.el=t;tray.appendChild(t)});
+  tip(L.rotate?"Tap a piece to turn it, then drag it into the picture.":"Drag each piece to where it belongs in the picture.")}
+function sizeTray(){const cell=board.clientWidth/L.size;tray.style.setProperty("--ps",Math.round(Math.max(44,Math.min(cell,76)))+"px");
+  document.documentElement.style.setProperty("--bwpx",board.clientWidth+"px")}
+addEventListener("resize",()=>{if(mode==="drop"&&L&&S){sizeTray();S.pieces.forEach(p=>{if(p.done)placeEl(p)})}});
+function placeEl(p){const n=L.size,s=100/n,el=p.el;el.style.left=(p.k%n)*s+"%";el.style.top=Math.floor(p.k/n)*s+"%";el.style.width=el.style.height=s+"%"}
+function lock(p){const n=L.size;p.done=true;p.rot=0;p.el.remove();
+  const el=document.createElement("div");el.className="pc flash";const i=document.createElement("i");bg(i,url,n,Math.floor(p.k/n),p.k%n);el.appendChild(i);
+  p.el=el;placeEl(p);board.appendChild(el);S.placed++;Music.fx("tap");hud();
+  if(S.placed===S.total){const st=S.oops<=1?3:S.oops<=L.size?2:1;win((S.oops?S.oops+" oops":"No oops")+" · "+L.size+"×"+L.size+" pieces"+(st===3?" · perfect":""),st)}}
+
+let drag=null;
+function cellAt(x,y){const b=board.getBoundingClientRect();if(x<b.left||y<b.top||x>=b.right||y>=b.bottom)return -1;
+  const n=L.size;return Math.floor((y-b.top)/(b.height/n))*n+Math.floor((x-b.left)/(b.width/n))}
+function hi(cell,bad){let h=board.querySelector(".cellhi");if(cell<0){if(h)h.remove();return}
+  if(!h){h=document.createElement("div");board.appendChild(h)}h.className="cellhi"+(bad?" bad":"");const n=L.size,s=100/n;
+  h.style.left=(cell%n)*s+"%";h.style.top=Math.floor(cell/n)*s+"%";h.style.width=h.style.height=s+"%";if(bad)setTimeout(()=>h.remove(),400)}
+function closeDrag(){if(drag&&drag.fly)drag.fly.remove();drag=null}
+tray.addEventListener("pointerdown",e=>{const t=e.target.closest(".tp");if(!t||busy||drag)return;
+  const p=S.pieces.find(q=>q.k===+t.dataset.k);drag={p,t,x:e.clientX,y:e.clientY,moved:false,fly:null,id:e.pointerId};
+  t.setPointerCapture(e.pointerId);e.preventDefault()});
+tray.addEventListener("pointermove",e=>{if(!drag||e.pointerId!==drag.id)return;
+  if(!drag.moved&&Math.hypot(e.clientX-drag.x,e.clientY-drag.y)>7){drag.moved=true;
+    const f=document.createElement("div"),cs=board.clientWidth/L.size;f.className="fly tp";f.style.width=f.style.height=cs+"px";
+    f.appendChild(drag.t.firstChild.cloneNode());document.body.appendChild(f);drag.fly=f;drag.cs=cs;drag.t.classList.add("lift")}
+  if(drag.moved){drag.fly.style.transform="translate("+(e.clientX-drag.cs/2)+"px,"+(e.clientY-drag.cs/2)+"px)";hi(cellAt(e.clientX,e.clientY))}});
+function endTrayDrag(e){if(!drag||e.pointerId!==drag.id)return;const d=drag;drag=null;hi(-1);
+  if(!d.moved){if(L.rotate){d.p.rot=(d.p.rot+90)%360;d.t.firstChild.style.transform="rotate("+(d.p.rot===0?360:d.p.rot)+"deg)";
+      if(d.p.rot===0)setTimeout(()=>{d.t.firstChild.style.transition="none";d.t.firstChild.style.transform="rotate(0deg)";void d.t.offsetWidth;d.t.firstChild.style.transition=""},200);
+      Music.fx("tap")}return}
+  const cell=cellAt(e.clientX,e.clientY);
+  if(cell===d.p.k&&d.p.rot===0){d.fly.remove();lock(d.p);return}
+  if(cell>=0){S.oops++;hud();hi(cell,true);Music.fx("bad");
+    tip(cell===d.p.k?"Right spot! Tap the piece to turn it the right way first.":"Not there. Look at the picture for clues!")}
+  const r=d.t.getBoundingClientRect();d.fly.classList.add("home");
+  d.fly.style.width=d.fly.style.height=r.width+"px";d.fly.style.transform="translate("+r.left+"px,"+r.top+"px)";
+  setTimeout(()=>{d.fly.remove();d.t.classList.remove("lift")},260)}
+tray.addEventListener("pointerup",endTrayDrag);tray.addEventListener("pointercancel",endTrayDrag);
+function dropHint(){const left=S.pieces.filter(p=>!p.done);if(!left.length)return;
+  const vis=left.filter(p=>{const r=p.el.getBoundingClientRect(),t=tray.getBoundingClientRect();return r.top>=t.top&&r.bottom<=t.bottom}),p=(vis.length?vis:left)[0];
+  const r=p.el.getBoundingClientRect(),b=board.getBoundingClientRect(),cs=b.width/L.size,n=L.size;
+  const f=document.createElement("div");f.className="fly tp home";f.style.width=f.style.height=r.width+"px";f.style.transform="translate("+r.left+"px,"+r.top+"px)";
+  const i=p.el.firstChild.cloneNode();i.style.transform="rotate(0deg)";f.appendChild(i);document.body.appendChild(f);p.el.classList.add("lift");busy=true;
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{f.style.width=f.style.height=cs+"px";f.style.transform="translate("+(b.left+(p.k%n)*cs)+"px,"+(b.top+Math.floor(p.k/n)*cs)+"px)"}));
+  setTimeout(()=>{f.remove();busy=false;lock(p);tip("There's one in place for you!")},330)}
+
+/* ================= Slider ================= */
+// Exact distances for every 3x3 position (181,440 of them), built once when first needed.
+let T3=null;
+function table3(){if(T3)return T3;const goal="123456780",dist=new Map([[goal,0]]),q=[goal],layer=[0];
+  for(let h=0;h<q.length;h++){const s=q[h],d=dist.get(s),z=s.indexOf("0"),zr=(z/3)|0,zc=z%3;if(layer.length<=d+1)layer[d+1]=q.length;
+    for(const[dr,dc]of[[1,0],[-1,0],[0,1],[0,-1]]){const r=zr+dr,c=zc+dc;if(r<0||r>2||c<0||c>2)continue;const t=r*3+c,a=s.split("");a[z]=a[t];a[t]="0";const ns=a.join("");
+      if(!dist.has(ns)){dist.set(ns,d+1);q.push(ns)}}}
+  layer.push(q.length);return T3={dist,q,layer}}
+async function startSlide(my){const n=L.size;let cells;
+  if(n===3){await new Promise(r=>setTimeout(r,20));if(my!==token)return;const T=table3(),d=Math.min(L.depth,T.layer.length-3),from=T.layer[d],to=T.layer[d+1],r=TS.rngFrom(L.seed);
+    const s=T.q[from+Math.floor(r()*(to-from))];cells=s.split("").map(Number);S={moves:0,par:d}}
+  else{const r=TS.rngFrom(L.seed);cells=[];for(let k=1;k<n*n;k++)cells.push(k);cells.push(0);let z=n*n-1,prev=-1;
+    for(let k=0;k<L.walk;k++){const opts=nbrs(z,n).filter(t=>t!==prev),t=opts[Math.floor(r()*opts.length)];cells[z]=cells[t];cells[t]=0;prev=z;z=t}
+    if(solved(cells)){[cells[0],cells[1]]=[cells[1],cells[0]];[cells[2],cells[3]]=[cells[3],cells[2]]} // two swaps keep it solvable
+    S={moves:0,par:L.walk}}
+  S.cells=cells;S.n=n;S.els=[];board.classList.toggle("nonum",!save.numbers);
+  for(let v=1;v<n*n;v++){const el=document.createElement("div");el.className="tile";el.dataset.v=v;const i=document.createElement("i");bg(i,url,n,Math.floor((v-1)/n),(v-1)%n);
+    const b=document.createElement("b");b.textContent=v;i.appendChild(b);el.appendChild(i);board.appendChild(el);S.els[v]=el}
+  layout();tip("Tap a tile next to the gap to slide it. Put the picture back together!")}
+const nbrs=(z,n)=>{const r=(z/n)|0,c=z%n,o=[];if(r>0)o.push(z-n);if(r<n-1)o.push(z+n);if(c>0)o.push(z-1);if(c<n-1)o.push(z+1);return o};
+const solved=c=>c.every((v,i)=>i===c.length-1?v===0:v===i+1);
+function layout(){const n=S.n,s=100/n;S.cells.forEach((v,i)=>{if(!v)return;const el=S.els[v];el.style.left=(i%n)*s+"%";el.style.top=((i/n)|0)*s+"%";el.style.width=el.style.height=s+"%"})}
+function slideFrom(i){const n=S.n,z=S.cells.indexOf(0),zr=(z/n)|0,zc=z%n,r=(i/n)|0,c=i%n;
+  if(i===z||(r!==zr&&c!==zc))return 0;const step=r===zr?(c<zc?-1:1):(r<zr?-n:n);let cur=z,k=0;
+  while(cur!==i){const nx=cur+step;S.cells[cur]=S.cells[nx];S.cells[nx]=0;cur=nx;k++}return k}
+board.addEventListener("click",e=>{if(mode!=="slide"||busy||!S||!S.cells)return;const t=e.target.closest(".tile");if(!t)return;
+  clearSlideHint();const k=slideFrom(S.cells.indexOf(+t.dataset.v));if(!k)return;S.moves+=k;layout();Music.fx("tap");hud();
+  if(solved(S.cells)){busy=true;const n=S.n,el=document.createElement("div");el.className="tile last";const i=document.createElement("i");bg(i,url,n,n-1,n-1);el.appendChild(i);
+    el.style.left=el.style.top=(n-1)*100/n+"%";el.style.width=el.style.height=100/n+"%";board.appendChild(el);requestAnimationFrame(()=>el.classList.add("in"));
+    const st=S.moves<=S.par?3:S.moves<=S.par*2?2:1;win(S.moves+" moves"+(n===3?" · par "+S.par:"")+(st===3?" · perfect":""),st)}});
+function clearSlideHint(){board.querySelectorAll(".tile.hint").forEach(e=>e.classList.remove("hint"))}
+/* Next best move. 3x3: exact table. Bigger boards: IDA* with Manhattan distance, with a node budget. */
+function nextMove(){const n=S.n,c=S.cells,z=c.indexOf(0);
+  if(n===3){const T=table3(),s=c.join(""),d=T.dist.get(s);for(const t of nbrs(z,3)){const a=c.slice();a[z]=a[t];a[t]=0;if(T.dist.get(a.join(""))===d-1)return t}return -1}
+  const md=a=>{let h=0;for(let i=0;i<a.length;i++){const v=a[i];if(v){const g=v-1;h+=Math.abs(((g/n)|0)-((i/n)|0))+Math.abs(g%n-i%n)}}return h};
+  const a=c.slice();let nodes=0,first=-1;const BUDGET=400000;
+  function dfs(z,g,bound,prev,path){const h=md(a),f=g+h;if(f>bound)return f;if(h===0)return -1;let min=1e9;
+    for(const t of nbrs(z,n)){if(t===prev)continue;if(++nodes>BUDGET)return 1e9;a[z]=a[t];a[t]=0;if(g===0)path.t=t;
+      const r=dfs(t,g+1,bound,z,path);a[t]=a[z];a[z]=0;if(r===-1){if(g===0)first=t;return -1}if(r<min)min=r}return min}
+  let bound=md(a);const path={};for(let it=0;it<80&&nodes<=BUDGET;it++){const r=dfs(z,0,bound,-1,path);if(r===-1)return first;if(r>=1e9)break;bound=r}
+  // Out of budget: fall back to the neighbour that most lowers the distance.
+  let best=-1,bh=1e9;for(const t of nbrs(z,n)){a[z]=a[t];a[t]=0;const h=md(a);a[t]=a[z];a[z]=0;if(h<bh){bh=h;best=t}}return best}
+function slideHint(){const t=nextMove();if(t<0)return;const v=S.cells[t];S.els[v].classList.add("hint");tip("Hint: slide the flashing tile"+(save.numbers?" ("+v+")":"")+" into the gap.")}
+
+/* ---------- controls ---------- */
+$("btnHint").onclick=()=>{if(busy||!S)return;TS.math.open(()=>mode==="drop"?dropHint():slideHint())};
+$("btnReset").onclick=()=>{if(L&&!busy)load(L.n)};
+$("btnPrev").onclick=()=>{if(L&&L.n>1&&!busy)load(L.n-1)};
+$("btnNext").onclick=()=>{if(L&&canPlay(L.n+1)&&!busy)load(L.n+1)};
+$("btnReplay").onclick=()=>{$("sheetWin").hidden=true;load(L.n)};
+$("btnWinNext").onclick=()=>{$("sheetWin").hidden=true;load(Math.min(LEVELS,L.n+1))};
+// Peeking at the whole picture is free: tap the thumbnail, it shows for a few seconds (tap again to close).
+let peekT=0;function peek(on){$("peek").hidden=!on;clearTimeout(peekT);if(on)peekT=setTimeout(()=>peek(false),2600)}
+$("btnPeek").onclick=()=>peek(true);$("peek").onclick=()=>peek(false);
+
+function openModes(first){document.querySelectorAll(".modes button").forEach(b=>b.classList.toggle("cur",!first&&b.dataset.mode===mode));
+  $("closeMode").hidden=!!first;$("sheetMode").hidden=false}
+document.querySelectorAll(".modes button").forEach(b=>b.onclick=()=>{$("sheetMode").hidden=true;mode=b.dataset.mode;save.mode=mode;persist();
+  load(Math.min(Math.max(1,prog().last|0),LEVELS))});
+$("btnMode").onclick=()=>{if(!busy||!S)openModes(false)};$("closeMode").onclick=()=>{$("sheetMode").hidden=true};
+
+function drawPicker(){const lg=$("levelGrid"),pr=prog();lg.innerHTML="";$("levelsTitle").textContent=(mode==="drop"?"Drop-in":"Slider")+" levels";
+  for(let n=1;n<=LEVELS;n++){const b=document.createElement("button");b.type="button";const st=pr.stars[n]||0,sp=spec(mode,n);
+    b.innerHTML="<b>"+n+"</b><span>"+(st?"★".repeat(st):canPlay(n)?sp.size+"×"+sp.size:"🔒")+"</span>";
+    if(L&&n===L.n)b.className="cur";b.disabled=!canPlay(n);b.onclick=()=>{$("sheetLevels").hidden=true;load(n)};lg.appendChild(b)}
+  $("unlockAll").checked=!!save.all;$("numbers").checked=!!save.numbers;$("numToggle").hidden=mode!=="slide";
+  $("whoLbl").textContent=PLAYER.avatar+" "+PLAYER.name+" · "+TS.players.gradeName(GRADE)}
+$("btnLevels").onclick=()=>{drawPicker();$("sheetLevels").hidden=false};
+$("closeLevels").onclick=()=>{$("sheetLevels").hidden=true};
+$("unlockAll").onchange=e=>{save.all=e.target.checked;persist();drawPicker();hud()};
+$("numbers").onchange=e=>{save.numbers=e.target.checked;persist();board.classList.toggle("nonum",!save.numbers)};
+$("sheetLevels").addEventListener("click",e=>{if(e.target===$("sheetLevels"))$("sheetLevels").hidden=true});
+$("sheetMode").addEventListener("click",e=>{if(e.target===$("sheetMode")&&save.mode)$("sheetMode").hidden=true});
+
+window.__picture={get S(){return S},get L(){return L},get busy(){return busy},spec,nextMove,lock:p=>lock(p)};// for tools/test.py
+if(save.mode)load(Math.min(Math.max(1,prog().last|0),LEVELS));else{hud();openModes(true)}
+})();
+</script>
+</body>
+</html>
