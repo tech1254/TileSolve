@@ -6,7 +6,10 @@ from tsutil import *
 OUT = pathlib.Path(sys.argv[1]) if len(sys.argv) > 1 else pathlib.Path(".")
 check = Checker(); errors = []
 # game -> grade range shown on the home screen
-EXPLORE = {"maketen": (1, 4), "times": (3, 7), "fractions": (2, 7), "money": (3, 7), "clock": (2, 7), "numberline": (1, 6), "patterns": (0, 7)}
+EXPLORE = {"maketen": (1, 4), "times": (3, 7), "fractions": (2, 7), "money": (3, 7), "clock": (2, 7), "numberline": (1, 6), "patterns": (0, 7),
+           "sentence": (1, 5), "spelling": (1, 7), "rhyme": (0, 3)}
+LITTLE = {"rhyme"}  # in the Little learners section, not Learn & explore
+HOME_EXPLORE = dict(EXPLORE, crossword=(2, 7))
 
 def player(grade, pid="ex"):
     seen = json.dumps({g: 1 for g in list(EXPLORE) + GAMES})
@@ -20,8 +23,9 @@ VALIDATE = """((lo,hi)=>{const bad=[];let rounds=0;
     if(R.type==='pick'){const ks=R.options.map(o=>String(o.key));if(new Set(ks).size!==ks.length)bad.push(id+' dup options '+ks);
       if(!ks.includes(String(R.answer)))bad.push(id+' answer missing '+R.answer+' in '+ks);if(ks.length<2)bad.push(id+' too few');
       if(R.options.some(o=>/NaN|undefined/.test(o.html)))bad.push(id+' bad option html')}
-    else if(R.type==='order'){const ks=R.tiles.map(t=>String(t.val!==undefined?t.val:t.key));if(ks.slice().sort().join()!==R.answer.map(String).sort().join())bad.push(id+' answer not tiles');
-      if(ks.length>1&&ks.join()===R.answer.join())bad.push(id+' already in order')}
+    else if(R.type==='order'){const ks=R.tiles.map(t=>String(t.val!==undefined?t.val:t.key));const left=ks.slice();for(const v of R.answer.map(String)){const j=left.indexOf(v);if(j<0){bad.push(id+' answer not in tiles '+v);break}left.splice(j,1)}
+      if(new Set(R.tiles.map(t=>t.key)).size!==R.tiles.length)bad.push(id+' dup keys');
+      if(ks.length>1&&ks.slice(0,R.answer.length).join()===R.answer.join())bad.push(id+' already in order')}
     else if(R.type==='combo'){const s=R.solution.reduce((t,k)=>t+R.cells[k].v,0);if(s!==R.target)bad.push(id+' solution '+s+' != '+R.target);
       if(R.cells.some(c=>!(c.v>0)))bad.push(id+' bad cell');if(R.solution.length<2)bad.push(id+' trivial')}
     else bad.push(id+' unexpected type')}}
@@ -84,7 +88,7 @@ with sync_playwright() as p:
         cg = b.new_context(viewport={"width": 390, "height": 844}); cg.add_init_script(player(grade, f"h{grade}"))
         hp = watch_errors(cg.new_page(), errors); hp.goto(HOME_URL); hp.wait_for_timeout(300)
         got = sorted(hp.evaluate("[...document.querySelectorAll(\".games[data-group='explore'] .game\")].map(e=>e.dataset.game)"))
-        want = sorted(g for g, (a, z) in EXPLORE.items() if a <= grade <= z)
+        want = sorted(g for g, (a, z) in HOME_EXPLORE.items() if a <= grade <= z and g not in LITTLE)
         check(got == want, f"grade {grade}: Learn & explore shows {want}")
         if grade in (1, 5): hp.screenshot(path=str(OUT / f"home-explore-g{grade}.png"), full_page=True)
         cg.close()

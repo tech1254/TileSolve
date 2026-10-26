@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#161b21">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box;height:100%}body{margin:0}[hidden]{display:none!important}</style>
+<title>Picture Crossword · Tile Solve</title>
+<meta name="apple-mobile-web-app-title" content="Tile Solve">
+<link rel="apple-touch-icon" href="../../icon-180.png">
+<link rel="icon" type="image/png" href="../../icon-512.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Barlow:wght@400;600;700&display=swap">
+<link rel="stylesheet" href="../../shared/ts.css?v=28bd9fe8">
+<link rel="stylesheet" href="../../shared/game.css?v=28bd9fe8">
+<style>
+.cw-grid{display:grid;grid-template-columns:repeat(var(--cols),var(--cs));grid-auto-rows:var(--cs);gap:3px;justify-content:center;
+  --cs:clamp(26px,calc((min(100vw,620px) - 40px)/var(--cols) - 3px),58px)}
+.cw-c{position:relative;border:0;padding:0;border-radius:7px;background:#f4efe2;color:#1d1d2b;font-family:var(--font-sign);font-size:calc(var(--cs)*.5);
+  display:grid;place-items:center;cursor:pointer;touch-action:manipulation;box-shadow:inset 0 -3px 0 rgba(0,0,0,.14)}
+.cw-c.no{visibility:hidden;pointer-events:none}
+.cw-c i{position:absolute;left:3px;top:1px;font-style:normal;font-family:var(--font-body);font-weight:800;font-size:max(9px,calc(var(--cs)*.24));color:#6a6458;line-height:1}
+.cw-c.in{background:#ffe7a3}
+.cw-c.cur{background:var(--paint);outline:3px solid #fff;outline-offset:-3px}
+.cw-c.ok{background:#bfe6ab}
+.cw-c.bad{background:#fbc9c1;animation:ts-shake .35s}
+.cw-clues{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;max-width:620px}
+.cw-q{border:0;border-radius:12px;padding:4px 10px 4px 6px;background:var(--panel,#262b36);color:var(--text);font:700 15px var(--font-body);display:flex;align-items:center;gap:4px;
+  cursor:pointer;touch-action:manipulation}
+.cw-q b{font-size:26px;line-height:1.1}
+.cw-q small{color:var(--muted);font-weight:700}
+.cw-q.sel{background:var(--paint);color:var(--night)}
+.cw-q.sel small{color:var(--night)}
+.cw-q.done{opacity:.45}
+.cw-big{display:flex;align-items:center;gap:10px;font:700 17px var(--font-body);min-height:52px}
+.cw-big b{font-size:44px;line-height:1}
+.cw-keys{display:flex;flex-direction:column;gap:6px;align-items:center;width:100%;max-width:620px}
+.cw-keys div{display:flex;gap:5px;justify-content:center;width:100%}
+.cw-keys button{flex:1;max-width:52px;height:clamp(40px,11vw,54px);border:0;border-radius:9px;background:#f4efe2;color:#1d1d2b;font-family:var(--font-sign);font-size:clamp(16px,4.6vw,22px);
+  padding:0;cursor:pointer;touch-action:manipulation;box-shadow:inset 0 -4px 0 rgba(0,0,0,.15)}
+.cw-keys button.del{max-width:72px;flex:1.5;background:#d6d0c2}
+</style>
+</head>
+<body>
+<script src="../../shared/ts.js?v=28bd9fe8"></script>
+<script src="../../shared/kit.js?v=28bd9fe8"></script>
+<script>
+(()=>{
+/* Picture Crossword: every clue is a picture. Pick a clue (or tap a square), then type the word on the letter keys.
+   A word that's all right turns green; a wrong one shakes and keeps only the letters that fit. Bigger grids and longer words by grade and level. */
+const W={
+3:"cat🐱 dog🐶 sun☀️ bus🚌 cow🐮 pig🐷 hat🎩 bee🐝 fox🦊 owl🦉 egg🥚 cup☕ bed🛏️ map🗺️ ant🐜 bat🦇 car🚗 box📦 key🔑 pen🖊️ web🕸️ hen🐔 bug🐛 pie🥧 van🚐 jet✈️ axe🪓 ear👂 eye👁️ leg🦵 saw🪚 mop🧹 rat🐀 yak🐃",
+4:"frog🐸 fish🐟 bear🐻 lion🦁 duck🦆 cake🎂 star⭐ moon🌙 tree🌳 ball⚽ boat⛵ kite🪁 milk🥛 rain🌧️ ship🚢 bike🚲 drum🥁 bell🔔 corn🌽 crab🦀 deer🦌 goat🐐 leaf🍃 nest🪺 rose🌹 seal🦭 snow❄️ sock🧦 worm🪱 wolf🐺 bird🐦 book📖 door🚪 hand✋ king🤴 ring💍 shoe👟 taco🌮 pear🍐 lamp💡 nose👃",
+5:"apple🍎 bread🍞 chair🪑 clock🕰️ cloud☁️ crown👑 horse🐴 house🏠 juice🧃 koala🐨 lemon🍋 mouse🐭 panda🐼 pizza🍕 plane🛩️ queen👸 robot🤖 shark🦈 sheep🐑 snail🐌 snake🐍 tiger🐯 train🚆 truck🚚 whale🐳 zebra🦓 grape🍇 heart❤️ ghost👻 candy🍬 earth🌍 piano🎹 tooth🦷 camel🐫 eagle🦅 otter🦦 llama🦙 squid🦑 sloth🦥",
+6:"rocket🚀 turtle🐢 rabbit🐰 monkey🐵 parrot🦜 dragon🐉 castle🏰 carrot🥕 cookie🍪 banana🍌 cheese🧀 flower🌸 guitar🎸 jacket🧥 magnet🧲 orange🍊 pencil✏️ planet🪐 puzzle🧩 spider🕷️ tomato🍅 lizard🦎 beetle🪲 bridge🌉 camera📷 candle🕯️ wizard🧙 ladder🪜 bucket🪣",
+7:"penguin🐧 dolphin🐬 giraffe🦒 octopus🐙 rainbow🌈 unicorn🦄 balloon🎈 cupcake🧁 popcorn🍿 pumpkin🎃 hamster🐹 lobster🦞 peacock🦚 volcano🌋 tractor🚜 trumpet🎺 scooter🛴 diamond💎 snowman⛄ cricket🦗 mermaid🧜"};
+const LIST={};for(const k in W){const seen=new Set();LIST[k]=W[k].split(" ").map(s=>{const m=s.match(/^([a-z]+)(.+)$/);return{w:m[1],e:m[2]}}).filter(x=>!seen.has(x.w)&&seen.add(x.w))}
+// per grade: [fromLevel, number of words, shortest, longest]
+const PLAN={1:[[1,3,3,3],[11,4,3,4],[26,5,3,4]],2:[[1,3,3,4],[9,4,3,4],[21,5,3,5]],3:[[1,4,3,5],[11,5,3,5],[24,6,4,5]],4:[[1,4,4,5],[9,5,4,6],[21,6,4,6]],
+  5:[[1,5,4,6],[11,6,4,7],[24,7,4,7]],6:[[1,5,4,7],[9,6,4,7],[21,7,5,7]],7:[[1,6,4,7],[9,7,4,7],[21,8,4,7]]};
+const MAXC=9,MAXR=10;
+let K,S=null;
+function spec(n){let v=PLAN[K.grade][0];for(const p of PLAN[K.grade])if(n>=p[0])v=p;return{count:v[1],lo:v[2],hi:v[3]}}
+const key=(r,c)=>r+","+c;
+/* Builds a crossword: every word crosses one already placed; no two words touch side by side. */
+function build(n){const sp=spec(n);
+  for(let attempt=0;attempt<60;attempt++){const r=K.rng(n*101+attempt),pool=[];
+    for(let L=sp.lo;L<=sp.hi;L++)pool.push(...LIST[L]);
+    for(let k=pool.length-1;k>0;k--){const j=Math.floor(r()*(k+1));[pool[k],pool[j]]=[pool[j],pool[k]]}
+    const g=new Map(),words=[];
+    const fits=(w,r0,c0,d)=>{const dr=d?1:0,dc=d?0:1;let cross=0;
+      if(g.has(key(r0-dr,c0-dc))||g.has(key(r0+dr*w.length,c0+dc*w.length)))return-1;
+      for(let k=0;k<w.length;k++){const rr=r0+dr*k,cc=c0+dc*k,ch=g.get(key(rr,cc));
+        if(ch!==undefined){if(ch.ch!==w[k]||ch.d.includes(d))return-1;cross++}
+        else if(g.has(key(rr+dc,cc+dr))||g.has(key(rr-dc,cc-dr)))return-1}
+      return cross};
+    const box=()=>{let a=1e9,b=-1e9,c=1e9,d=-1e9;for(const k of g.keys()){const[rr,cc]=k.split(",").map(Number);a=Math.min(a,rr);b=Math.max(b,rr);c=Math.min(c,cc);d=Math.max(d,cc)}return[a,b,c,d]};
+    const put=(x,r0,c0,d)=>{const cells=[];for(let k=0;k<x.w.length;k++){const kk=key(r0+(d?k:0),c0+(d?0:k));const o=g.get(kk);if(o)o.d.push(d);else g.set(kk,{ch:x.w[k],d:[d]});cells.push(kk)}
+      words.push({...x,r:r0,c:c0,d,cells})};
+    put(pool[0],0,0,0);
+    for(const x of pool.slice(1)){if(words.length>=sp.count)break;const w=x.w;if(words.some(y=>y.w===w))continue;const opts=[];
+      for(const[kk,cell]of g){if(cell.d.length>1)continue;const[rr,cc]=kk.split(",").map(Number),d=cell.d[0]?0:1;
+        for(let j=0;j<w.length;j++)if(w[j]===cell.ch){const r0=d?rr-j:rr,c0=d?cc:cc-j;if(fits(w,r0,c0,d)<1)continue;
+          // keep the grid small enough for a phone
+          const[a,b,c,e]=box(),A=Math.min(a,r0),B=Math.max(b,r0+(d?w.length-1:0)),C=Math.min(c,c0),E=Math.max(e,c0+(d?0:w.length-1));
+          if(B-A+1>MAXR||E-C+1>MAXC)continue;opts.push([r0,c0,d,(B-A)+(E-C)+r()*2])}}
+      if(opts.length){opts.sort((p,q)=>p[3]-q[3]);const o=opts[Math.floor(r()*Math.min(3,opts.length))];put(x,o[0],o[1],o[2])}}
+    if(words.length<sp.count)continue;
+    // move to 0,0 and number the starts like a real crossword
+    const[a,b,c,e]=box(),cells=new Map();for(const[kk,v]of g){const[rr,cc]=kk.split(",").map(Number);cells.set(key(rr-a,cc-c),v.ch)}
+    words.forEach(x=>{x.r-=a;x.c-=c;x.cells=x.w.split("").map((_,k)=>key(x.r+(x.d?k:0),x.c+(x.d?0:k)))});
+    const starts=[...new Set(words.map(x=>key(x.r,x.c)))].sort((p,q)=>{const[p1,p2]=p.split(",").map(Number),[q1,q2]=q.split(",").map(Number);return p1-q1||p2-q2});
+    words.forEach(x=>x.num=starts.indexOf(key(x.r,x.c))+1);words.sort((p,q)=>p.num-q.num||p.d-q.d);
+    return{rows:b-a+1,cols:e-c+1,cells,words}}
+  return null}
+function start(n){const P=build(n);
+  S={...P,fill:new Map(),lock:new Set(),done:new Set(),sel:0,oops:0,n};
+  K.stage.insertAdjacentHTML("beforeend",'<div class="cw-big" id="cwBig"></div><div class="cw-grid" id="cwG" style="--cols:'+P.cols+'"></div><div class="cw-clues" id="cwQ"></div><div class="cw-keys" id="cwK"></div>');
+  const G=document.getElementById("cwG");
+  for(let rr=0;rr<P.rows;rr++)for(let cc=0;cc<P.cols;cc++){const kk=key(rr,cc),b=document.createElement("button");b.type="button";b.dataset.k=kk;
+    if(!P.cells.has(kk)){b.className="cw-c no";b.tabIndex=-1;b.setAttribute("aria-hidden","true")}
+    else{b.className="cw-c";const st=P.words.find(x=>x.r===rr&&x.c===cc);b.innerHTML=(st?"<i>"+st.num+"</i>":"")+"<span></span>";b.onclick=()=>tapCell(kk)}
+    G.appendChild(b)}
+  const Q=document.getElementById("cwQ");
+  P.words.forEach((x,i)=>{const b=document.createElement("button");b.type="button";b.className="cw-q";b.dataset.i=i;
+    b.innerHTML=x.num+(x.d?"↓":"→")+"<b>"+x.e+"</b><small>"+x.w.length+"</small>";b.setAttribute("aria-label",x.num+(x.d?" down":" across")+", "+x.w.length+" letters");
+    b.onclick=()=>select(i,true);Q.appendChild(b)});
+  const KB=document.getElementById("cwK");
+  ["qwertyuiop","asdfghjkl","zxcvbnm⌫"].forEach(row=>{const d=document.createElement("div");
+    for(const ch of row){const b=document.createElement("button");b.type="button";b.textContent=ch==="⌫"?"⌫":ch.toUpperCase();b.dataset.ch=ch;
+      if(ch==="⌫"){b.className="del";b.setAttribute("aria-label","Delete")}b.onclick=()=>ch==="⌫"?del():type(ch);d.appendChild(b)}KB.appendChild(d)});
+  K.stat(P.words.length,"Words");K.sub();select(0,false);
+  K.tip("Each picture is a word. Pick one, then tap the letters. → goes across, ↓ goes down.")}
+function word(){return S.words[S.sel]}
+function select(i,talk){if(K.busy&&talk)return;S.sel=i;draw();if(talk)TS.say(word().w)}
+function tapCell(kk){const ws=S.words.map((x,i)=>i).filter(i=>S.words[i].cells.includes(kk));if(!ws.length)return;
+  const open=ws.filter(i=>!S.done.has(i)),cand=open.length?open:ws;const i=cand.includes(S.sel)&&cand.length>1?cand[(cand.indexOf(S.sel)+1)%cand.length]:cand.includes(S.sel)?S.sel:cand[0];select(i,true)}
+function draw(){const x=word(),cur=x.cells.find(k=>!S.fill.has(k));
+  document.querySelectorAll(".cw-c:not(.no)").forEach(b=>{const kk=b.dataset.k;b.querySelector("span").textContent=(S.fill.get(kk)||"").toUpperCase();
+    b.classList.toggle("ok",S.lock.has(kk));b.classList.toggle("in",x.cells.includes(kk)&&!S.lock.has(kk));b.classList.toggle("cur",kk===cur&&!S.done.has(S.sel));
+    b.setAttribute("aria-label",(S.fill.get(kk)||"empty"))});
+  document.querySelectorAll(".cw-q").forEach(b=>{const i=+b.dataset.i;b.classList.toggle("sel",i===S.sel);b.classList.toggle("done",S.done.has(i))});
+  document.getElementById("cwBig").innerHTML="<b>"+x.e+"</b>"+x.num+(x.d?" down":" across")+" · "+x.w.length+" letters"+(S.done.has(S.sel)?" ✅":"")}
+function type(ch){if(K.busy||!S)return;const x=word();if(S.done.has(S.sel))return nextOpen();const k=x.cells.find(kk=>!S.fill.has(kk));if(!k)return;
+  S.fill.set(k,ch);TS.music.fx("tap");draw();if(x.cells.every(kk=>S.fill.has(kk)))check()}
+function del(){if(K.busy||!S)return;const x=word();const k=[...x.cells].reverse().find(kk=>S.fill.has(kk)&&!S.lock.has(kk));if(!k)return;S.fill.delete(k);TS.music.fx("tap");draw()}
+function check(){const x=word(),guess=x.cells.map(k=>S.fill.get(k)).join("");
+  if(guess===x.w){finishWord(S.sel);TS.say(x.w);
+    // a crossing word may now be complete too
+    S.words.forEach((y,i)=>{if(!S.done.has(i)&&y.cells.every(k=>S.fill.has(k))&&y.cells.map(k=>S.fill.get(k)).join("")===y.w)finishWord(i)});
+    if(S.done.size===S.words.length){const st=S.oops===0?3:S.oops<=2?2:1;draw();K.win({stars:st,text:"All "+S.words.length+" words"+(st===3?" with no mistakes!":"!")});return}
+    TS.music.fx("good");nextOpen();return}
+  S.oops++;K.sub("Oops "+S.oops);TS.music.fx("bad");K.tip("Not quite! Letters that fit stay. Try again.");
+  const bad=x.cells.filter((k,j)=>S.fill.get(k)!==x.w[j]&&!S.lock.has(k));bad.forEach(k=>document.querySelector('.cw-c[data-k="'+k+'"]').classList.add("bad"));
+  setTimeout(()=>{bad.forEach(k=>{S.fill.delete(k);document.querySelector('.cw-c[data-k="'+k+'"]').classList.remove("bad")});draw()},600)}
+function finishWord(i){S.done.add(i);S.words[i].cells.forEach(k=>S.lock.add(k))}
+function nextOpen(){for(let k=1;k<=S.words.length;k++){const i=(S.sel+k)%S.words.length;if(!S.done.has(i))return select(i,false)}draw()}
+/* Hint: the next letter of the chosen word. */
+function hint(){if(!S||K.busy)return;if(S.done.has(S.sel))nextOpen();const x=word();
+  const j=x.cells.findIndex((k,m)=>!S.lock.has(k)&&S.fill.get(k)!==x.w[m]);if(j<0)return;
+  x.cells.forEach((k,m)=>{if(m>=j&&!S.lock.has(k))S.fill.delete(k)});S.fill.set(x.cells[j],x.w[j]);S.lock.add(x.cells[j]);
+  K.tip("Letter "+(j+1)+" of "+x.num+(x.d?" down":" across")+" is "+x.w[j].toUpperCase()+".");draw();if(x.cells.every(k=>S.fill.has(k)))check()}
+K=TS_KIT({id:"crossword",name:"Picture Crossword",levels:40,start,hint,
+  howto:[["🖼️","Each picture is a word in the crossword."],["👆","Tap a picture or a square to pick a word."],["⌨️","Tap the letters to fill it in. → across, ↓ down."],["✅","Right words turn green. Letters that fit stay when you're wrong."]],
+  point:()=>document.querySelector('.cw-keys button[data-ch="'+word().w[0]+'"]'),
+  label:n=>{const s=spec(n);return s.count+" words"}});
+window.__game={get S(){return S},K,build,spec,LIST,type,solveWord(){const x=word();x.cells.forEach((k,m)=>{if(!S.lock.has(k))S.fill.delete(k)});for(const k of x.cells)if(!S.fill.has(k))type(x.w[x.cells.indexOf(k)])}};
+K.start();
+})();
+</script>
+</body>
+</html>

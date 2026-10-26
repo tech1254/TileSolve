@@ -151,7 +151,9 @@ TS_LEARN.util=(()=>{
   const shuffle=(r,a)=>{a=a.slice();for(let k=a.length-1;k>0;k--){const j=Math.floor(r()*(k+1));[a[k],a[j]]=[a[j],a[k]]}return a};
   const sample=(r,a,k)=>shuffle(r,a).slice(0,k);
   // shuffle that is never the same as the original order (when possible)
-  const mix=(r,a)=>{if(a.length<2)return a.slice();let b;do b=shuffle(r,a);while(b.every((v,i)=>v===a[i]));return b};
+  // shuffle so the result isn't already in order (tiles compare by what they show, so two "e" tiles count as the same); n = how much of the front must differ
+  const mix=(r,a,n)=>{if(a.length<2)return a.slice();const sv=x=>x&&typeof x==="object"&&("val" in x||"key" in x)?String(x.val!==undefined?x.val:x.key):x;n=Math.min(n||a.length,a.length);let b,t=0;
+    do b=shuffle(r,a);while(b.slice(0,n).every((v,i)=>sv(v)===sv(a[i]))&&++t<50);return b};
   const ramp=(n,from,to,a,b)=>Math.round(a+(b-a)*Math.max(0,Math.min(1,(n-from)/Math.max(1,to-from))));
   // numeric options around an answer, all different, within [lo,hi]
   function near(r,ans,count,lo,hi,spread){const s=new Set([ans]);let guard=0;

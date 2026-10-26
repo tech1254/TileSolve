@@ -46,6 +46,11 @@ Each game here has a grade range and only shows for players in it. Content again
 - **Clock & Calendar** (grades 2–7): days and months in order, then which takes longer and units of time, then reading analog clocks, then quarter past/to and minutes between times.
 - **Number Line Jump** (grades 1–6): where does the frog land? Within 10, 20, tens to 100, hundreds to 1,000, then tenths.
 - **Pattern Next** (Kindergarten–grade 7): repeating picture patterns, then counting up or down, ×2 and ÷2, then squares, triangle numbers and Fibonacci.
+- **Sentence Builder** (grades 1–5): tap mixed-up words in order. Short sentences first, then questions and longer sentences with commas.
+- **Spelling Bee** (grades 1–7): hear a word and see it in a sentence, then spell it. Sight words, then digraphs and long vowels, silent letters, and tricky words with Canadian spelling (colour, favourite, neighbour). Extra letters mixed in.
+- **Picture Crossword** (grades 2–7): every clue is a picture. Tap a clue or a square and type on the letter keys. More and longer words by grade and level; every grid fits on a phone.
+
+**Rhyme Time** (Little learners): tap the word that rhymes, with pictures for younger players and "which one does not rhyme?" rounds later.
 
 ## Puzzle games
 

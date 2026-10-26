@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#161b21">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box;height:100%}body{margin:0}[hidden]{display:none!important}</style>
+<title>Sentence Builder · Tile Solve</title>
+<meta name="apple-mobile-web-app-title" content="Tile Solve">
+<link rel="apple-touch-icon" href="../../icon-180.png">
+<link rel="icon" type="image/png" href="../../icon-512.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Barlow:wght@400;600;700&display=swap">
+<link rel="stylesheet" href="../../shared/ts.css?v=28bd9fe8">
+<link rel="stylesheet" href="../../shared/game.css?v=28bd9fe8">
+</head>
+<body>
+<script src="../../shared/ts.js?v=28bd9fe8"></script>
+<script src="../../shared/kit.js?v=28bd9fe8"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&display=swap">
+<link rel="stylesheet" href="../../shared/learn.css?v=28bd9fe8">
+<script src="../../shared/learn.js?v=28bd9fe8"></script>
+<script>
+(()=>{const U=TS_LEARN.util;
+TS_LEARN({id:"sentence",name:"Sentence Builder",howto:[["📝", "The words got mixed up!"], ["👆", "Tap the words in order to make a sentence."], ["🔠", "Sentences start with a capital letter and end with . ? or !"], ["🔊", "Tap the speaker to hear the sentence."]],
+make(n,i,r,a){
+  const B=[ // [emoji, sentence]; each has only one sensible order
+    [["🐱","I see a cat."],["🐶","The dog can run."],["☀️","Look at the sun."],["🚗","I like my car."],["🐸","The frog is green."],["🍎","I can eat it."],["🎈","We see a red ball."],["🏠","This is my home."],
+     ["🐝","Look at the bee."],["🐟","The fish can swim."],["🦆","The duck is wet."],["🚌","We go on the bus."]],                                                                    // K content
+    [["🐸","The frog jumps in the pond."],["🌧️","It is raining on my hat."],["🐶","My dog likes to play ball."],["🍪","Can I have a cookie?"],["🚲","She rides her bike to school."],
+     ["🐻","The bear is in the cave."],["🌳","A bird sat in the tree."],["🍕","We had pizza for lunch."],["⛄","Look at the big snowman!"],["🐢","The turtle is very slow."],["🎂","Today is my birthday!"],["📖","Will you read me a book?"]], // grade 1
+    [["🦊","The little fox ran into the forest."],["🧁","My sister made cupcakes for the party."],["🚀","The rocket flew up to the moon."],["🐧","Where do penguins like to swim?"],
+     ["🏒","We play hockey on the frozen pond."],["🦋","A butterfly landed on my nose!"],["🍁","The leaves turn orange in the fall."],["🐳","Did you see the giant whale?"],
+     ["🧤","Wear your mittens when it is cold."],["🚂","The long train went over the bridge."]],                                                                                  // grade 2
+    [["🌋","The volcano rumbled and smoke filled the sky."],["🐿️","After school, we watched a squirrel hide acorns."],["🏕️","When it got dark, we told stories by the campfire."],
+     ["🦉","Why do owls stay awake all night long?"],["🎨","My brother painted a beautiful picture of the mountains."],["🏔️","Our family drove to Banff to see the mountains."],
+     ["⛸️","On Saturday, my friends and I went skating."],["📚","The library has thousands of books to borrow."],["🦖","Dinosaurs lived on Earth millions of years ago."],["🌦️","If it rains tomorrow, we will play inside."]]]; // grade 3+
+  const lv=Math.max(0,Math.min(3,a));let pool=B[lv];if(a>=1&&n<=8)pool=B[lv-1].concat(pool);
+  const[e,s]=U.pick(r,pool),words=s.split(" "),tiles=words.map((w,k)=>({key:"w"+k,val:w,html:w,say:w.replace(/[.?!,]/g,"")}));
+  return{type:"order",wide:true,say:"Make a sentence: "+s,text:"Tap the words in order. Start with the capital letter!",
+    prompt:'<span class="ask">Put the words in order</span><span class="lr-emo">'+e+"</span>",tiles:U.mix(r,tiles),answer:words}}});
+})();
+</script>
+</body>
+</html>

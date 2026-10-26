@@ -152,7 +152,7 @@ with sync_playwright() as p:
         cg = b.new_context(viewport={"width": 390, "height": 844}); cg.add_init_script(player(grade, f"h{grade}"))
         hp = watch_errors(cg.new_page(), errors); hp.goto(HOME_URL); hp.wait_for_timeout(300)
         n = hp.locator(".games[data-group='little'] .game").count()
-        check((n == 14) == shows and hp.locator(".games[data-group='puzzles'] .game").count() == 14,
+        check((n == 15) == shows and hp.locator(".games[data-group='puzzles'] .game").count() == 14,
               f"grade {grade}: Little learners {'shown' if shows else 'hidden'} ({n}), puzzles shown")
         cg.close()
 
@@ -161,7 +161,7 @@ with sync_playwright() as p:
     hp.fill("#fName", "Lily"); hp.click("#fGrades button:nth-child(1)"); hp.click("#formSave"); hp.wait_for_timeout(300)
     check(hp.evaluate("JSON.parse(localStorage.getItem('tilesolve:players')).list[0].grade") == 0, "Kindergarten can be picked for a player")
     heads = hp.locator(".gsec h2").all_text_contents()
-    check(heads[0].startswith("Little learners") and hp.locator(".games[data-group='little'] .game").count() == 14, "a Kindergarten player sees Little learners first (14 games)")
+    check(heads[0].startswith("Little learners") and hp.locator(".games[data-group='little'] .game").count() == 15, "a Kindergarten player sees Little learners first (15 games)")
     hp.screenshot(path=str(OUT / "home-little.png"), full_page=True)
     hp.click("#btnMe"); hp.click("#btnEdit")
     check("Kindergarten" in hp.text_content(".player"), "player card says Kindergarten")

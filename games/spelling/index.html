@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#161b21">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box;height:100%}body{margin:0}[hidden]{display:none!important}</style>
+<title>Spelling Bee · Tile Solve</title>
+<meta name="apple-mobile-web-app-title" content="Tile Solve">
+<link rel="apple-touch-icon" href="../../icon-180.png">
+<link rel="icon" type="image/png" href="../../icon-512.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Barlow:wght@400;600;700&display=swap">
+<link rel="stylesheet" href="../../shared/ts.css?v=28bd9fe8">
+<link rel="stylesheet" href="../../shared/game.css?v=28bd9fe8">
+</head>
+<body>
+<script src="../../shared/ts.js?v=28bd9fe8"></script>
+<script src="../../shared/kit.js?v=28bd9fe8"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&display=swap">
+<link rel="stylesheet" href="../../shared/learn.css?v=28bd9fe8">
+<script src="../../shared/learn.js?v=28bd9fe8"></script>
+<script>
+(()=>{const U=TS_LEARN.util;
+TS_LEARN({id:"spelling",name:"Spelling Bee",howto:[["🐝", "Listen to the word."], ["📝", "The sentence shows how it's used."], ["👆", "Tap the letters in order to spell it."], ["⚠️", "Some letters are extra. Tap 🔊 to hear the word again."]],
+rounds:()=>5,
+make(n,i,r,a){
+  const L=[ // [word, sentence with ___] from each grade's high-frequency and phonics words (Canadian spelling)
+    [["see","I ___ a bird."],["can","I ___ jump."],["the","Look at ___ cat."],["and","Mom ___ Dad."],["big","A ___ dog."],["red","A ___ apple."],["up","Go ___ the hill."],["go","Let's ___ home."],
+     ["me","Come with ___."],["we","___ like to play."],["run","I can ___ fast."],["sun","The ___ is hot."],["yes","___, please!"],["not","It is ___ cold."],["look","___ at me!"],["my","This is ___ hat."]],
+    [["ship","A ___ on the sea."],["fish","The ___ can swim."],["chin","Food on my ___."],["that","Is ___ your cat?"],["this","___ is my bike."],["with","Come ___ me."],["they","___ are my friends."],
+     ["said","Mom ___ yes."],["have","I ___ a dog."],["like","I ___ pizza."],["make","Let's ___ a cake."],["home","Time to go ___."],["play","Can you ___ outside?"],["went","We ___ to the park."],
+     ["from","A card ___ Grandma."],["what","___ is your name?"],["when","___ is lunch?"],["much","Thank you very ___."]],
+    [["green","Grass is ___."],["train","The ___ goes choo choo."],["light","Turn on the ___."],["night","Stars come out at ___."],["know","I ___ the answer."],["write","I can ___ my name."],
+     ["friend","She is my best ___."],["school","We learn at ___."],["could","___ you help me?"],["would","I ___ like that."],["there","Put it over ___."],["where","___ is my hat?"],
+     ["after","We play ___ lunch."],["again","Read it ___!"],["every","I brush my teeth ___ day."],["because","I smiled ___ I was happy."],["snake","The ___ says hiss."],["knee","I fell and hurt my ___."]],
+    [["beautiful","What a ___ sunset!"],["different","Every snowflake is ___."],["favourite","Blue is my ___ colour."],["colour","What ___ is the sky?"],["neighbour","Our ___ has a dog."],
+     ["through","We walked ___ the forest."],["answer","I know the ___!"],["believe","I ___ in you."],["enough","Do we have ___ cookies?"],["special","Today is a ___ day."],
+     ["surprise","The party was a ___!"],["library","We borrow books at the ___."],["question","Can I ask a ___?"],["important","Sleep is ___."],["remember","I ___ your birthday."],["laugh","Jokes make me ___."]],
+    [["necessary","Is that really ___?"],["separate","Keep the colours ___."],["rhythm","Clap to the ___."],["knowledge","Books give us ___."],["temperature","The ___ dropped below zero."],
+     ["restaurant","We ate at a ___."],["exercise","___ keeps you healthy."],["definitely","I will ___ be there."],["environment","Take care of the ___."],["calendar","Mark it on the ___."],
+     ["government","The ___ makes laws."],["Wednesday","Art class is on ___."],["February","My birthday is in ___."],["vacuum","Please ___ the rug."],["mischief","The kitten got into ___."]]];
+  const lv=Math.max(0,Math.min(4,a));let pool=L[lv];if(lv>0&&n<=6)pool=L[lv-1].concat(pool);
+  const[w,s]=U.pick(r,pool.filter(x=>x[0].length<=(lv>=3?11:8))),letters=w.split(""),dec=lv===0?(n>15?1:0):lv===1?1:lv===2?2:3;
+  const alpha="abcdefghijklmnopqrstuvwxyz",extra=[];while(extra.length<dec){const c=U.pick(r,alpha.split(""));if(!w.toLowerCase().includes(c)&&!extra.includes(c))extra.push(c)}
+  const tiles=letters.concat(extra).map((c,k)=>({key:"l"+k,val:c,html:c,say:null}));
+  return{type:"order",say:"Spell "+w+". "+s.replace("___",w)+" Spell "+w+".",text:"Listen, then spell the word. Tap 🔊 to hear it again.",
+    prompt:'<span class="ask">🐝 Spell the word</span><span class="lr-sent">'+s.replace("___",'<u>'+"&nbsp;".repeat(Math.max(4,w.length))+"</u>")+"</span>",
+    tiles:U.mix(r,tiles,letters.length),answer:letters}}});
+})();
+</script>
+</body>
+</html>
