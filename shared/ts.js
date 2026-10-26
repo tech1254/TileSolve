@@ -48,7 +48,7 @@ function gameSave(game,def){const p=players.current(),key="tilesolve:p:"+(p?p.id
 
 /* ---------- music & sounds (generated live with Web Audio; nothing to download) ---------- */
 const music=(()=>{
-  let ctx=null,master=null,bus=null,timer=null,next=0,step=0,mel=[];
+  let ctx=null,master=null,bus=null,timer=null,next=0,step=0,mel=[],held=false;
   const rng=rngFrom(20261025),E=60/84/2; // 84 bpm, eighth notes
   const CH=[[48,52,55],[45,48,52],[41,45,48],[43,47,50],[48,52,55],[40,43,47],[41,45,48],[43,47,50]]; // C Am F G C Em F G
   const PENT=[69,72,74,76,79,81,84,86]; // C major pentatonic, A4..D6
@@ -77,11 +77,13 @@ const music=(()=>{
       next+=E;step++}}
   const api={
     get on(){return data.music!==false},
-    start(){if(!api.on)return;if(!ctx&&!init())return;if(ctx.state==="suspended")ctx.resume();if(timer)return;
+    start(){if(!api.on||held)return;if(!ctx&&!init())return;if(ctx.state==="suspended")ctx.resume();if(timer)return;
       next=ctx.currentTime+.08;master.gain.cancelScheduledValues(ctx.currentTime);master.gain.setTargetAtTime(.55,ctx.currentTime,.8);
       timer=setInterval(tick,60);tick()},
     stop(){if(!timer)return;clearInterval(timer);timer=null;master.gain.cancelScheduledValues(ctx.currentTime);master.gain.setTargetAtTime(0,ctx.currentTime,.12)},
     set(v){data.music=v;persist();v?api.start():api.stop()},
+    /* A game that makes its own music (Tile Tunes) holds the background tune off while it plays. */
+    hold(v){held=!!v;v?api.stop():api.start()},
     fx(kind){if(!api.on||!ctx||ctx.state!=="running")return;const t=ctx.currentTime+.02;
       if(timer===null){master.gain.cancelScheduledValues(t);master.gain.setValueAtTime(.55,t)}
       if(kind==="win")[72,76,79,84].forEach((m,i)=>tone(m,t+i*.11,.55,"triangle",.1,.005));
@@ -178,7 +180,7 @@ const math=(()=>{
     if(M.q.slot==="n")talk.say("How many are there?")}
   function close(){if(el)el.hidden=true}
   function check(){if(M.lock||!M.entry)return;
-    if(+M.entry===M.q.ans){M.lock=true;M.mark="good";render();fb(kind==="check"?"Correct! On to the next level.":"Correct! Here's your hint.","good");music.fx("good");
+    if(+M.entry===M.q.ans){M.lock=true;notes.addMath();M.mark="good";render();fb(kind==="check"?"Correct! On to the next level.":"Correct! Here's your hint.","good");music.fx("good");
       const m=M;setTimeout(()=>{m.q=null;m.lock=false;close();m.done&&m.done()},900);return}
     M.tries--;music.fx("bad");
     if(M.tries>0){M.mark="bad";render();M.entry="";M.mark="";
@@ -253,4 +255,13 @@ function point(target){unpoint();if(!target)return;const r=target.getBoundingCli
 function unpoint(){if(finger){finger.remove();finger=null}}
 addEventListener("resize",unpoint);
 
-return{HOME,rngFrom,store,players,requirePlayer,gameSave,music,MUSIC_SVG,math,problem,gate,howto,point,talk,say:t=>talk.say(t)}})();
+/* ---------- 🎵 music notes: earned by finishing levels and answering maths, spent... well, counted, to open Tile Tunes songs ---------- */
+const notes={
+  addMath(){const p=players.current();if(!p)return;const k="tilesolve:p:"+p.id+":notes",d=store.get(k,{math:0});d.math=(d.math||0)+1;store.set(k,d)},
+  /* one per level finished (any grade) in every game except Tile Tunes, plus one per maths question answered right */
+  count(){const p=players.current();if(!p)return 0;const pre="tilesolve:p:"+p.id+":";let n=(store.get(pre+"notes",{math:0}).math)||0;
+    try{for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(!k||!k.startsWith(pre))continue;const g=k.slice(pre.length);
+      if(/^(tunes|tunes-options|notes|seen)$/.test(g))continue;const d=store.get(k,null);
+      if(d&&d.grades)for(const a in d.grades){const st=d.grades[a]&&d.grades[a].stars;if(st)n+=Object.keys(st).length}}}catch(e){}
+    return n}};
+return{HOME,rngFrom,store,players,requirePlayer,gameSave,music,notes,MUSIC_SVG,math,problem,gate,howto,point,talk,say:t=>talk.say(t)}})();

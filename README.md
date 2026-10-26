@@ -59,6 +59,12 @@ Each game here has a grade range and only shows for players in it. Content again
 
 **Rhyme Time** (Little learners): tap the word that rhymes, with pictures for younger players and "which one does not rhyme?" rounds later.
 
+## Tile Tunes (a reward)
+
+Coloured tiles slide down four lanes; tapping each one plays the next note of a song on a built-in Web Audio piano. There are no recordings: the 20 songs are public-domain melodies (traditional tunes, Beethoven, Mozart, Brahms, Grieg, Joplin and others) written out note by note in `src/tunes.html`. Each note name has its own colour, and note names can be shown on the tiles. A wrong lane or a missed tile costs a heart. "🐢 Wait for me" (on by default for Kindergarten and grade 1) stops each tile at the line until it's tapped. Speed is set by grade.
+
+Songs are earned: the first is free, then each song needs 5 more 🎵. Players earn a 🎵 for every level finished in any other game and for every maths question answered right (`TS.notes`).
+
 ## Puzzle games
 
 - **Unblock the Car** (`games/car/`): slide cars until the red one can drive out. 1,000 levels from a bank of pre-generated, verified puzzles; the par is each puzzle's exact shortest solution. Difficulty ramps by grade: for grade 3, it's properly challenging by about level 30.

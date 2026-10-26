@@ -4,7 +4,7 @@ cd "$(dirname "$0")/.." && node tools/build.js > /dev/null || exit 1
 cd tools
 OUT=${1:-.}
 fail=0
-for t in test test_picture test_games test_games2 test_games3 test_games4 test_games5 test_learn test_explore test_crossword test_robot test_checkpoint test_howto; do
+for t in test test_picture test_games test_games2 test_games3 test_games4 test_games5 test_learn test_explore test_crossword test_robot test_tunes test_checkpoint test_howto; do
   res=$(timeout 900 python3 $t.py "$OUT" 2>&1)
   passed=$(printf "%s\n" "$res" | grep -c "^PASS")
   last=$(printf "%s\n" "$res" | tail -1)
