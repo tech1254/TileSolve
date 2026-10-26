@@ -50,6 +50,13 @@ Each game here has a grade range and only shows for players in it. Content again
 - **Spelling Bee** (grades 1–7): hear a word and see it in a sentence, then spell it. Sight words, then digraphs and long vowels, silent letters, and tricky words with Canadian spelling (colour, favourite, neighbour). Extra letters mixed in.
 - **Picture Crossword** (grades 2–7): every clue is a picture. Tap a clue or a square and type on the letter keys. More and longer words by grade and level; every grid fits on a phone.
 
+- **Animal Sort** (Kindergarten–grade 5): drag animals into their homes. Land or water, then land/water/sky, fur/feathers/scales, mammal/bird/fish/insect/reptile/amphibian, and plant or meat eaters.
+- **Odd One Out** (Kindergarten–grade 5): which one doesn't belong? Pictures, then close categories (fruit vs vegetables), numbers (even, 5s, 10s, 3s) and words.
+- **Planet Order** (grades 2–7): tap the planets in order from the Sun (or smallest to biggest), plus space questions (day and night, a year, gravity).
+- **Food Chain** (grades 2–7): build the chain from the plant up, "what does it eat?", and producer or consumer.
+- **Flags & Places** (grades 2–7): Canada's symbols, provinces, territories and capitals, Alberta geography, then world flags and continents.
+- **Code the Robot** (grades 1–7): build a program and press Go. Arrows for grades 1–3; Forward / Turn left / Turn right for grade 4+. Later levels add rocks and gems. Every puzzle is checked with a shortest-path search, and the hint adds the next good move to the program.
+
 **Rhyme Time** (Little learners): tap the word that rhymes, with pictures for younger players and "which one does not rhyme?" rounds later.
 
 ## Puzzle games

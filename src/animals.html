@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!--HEAD:Animal Sort-->
+</head>
+<body>
+<!--KIT-->
+<!--LEARN-->
+<script>
+(()=>{const U=TS_LEARN.util;
+TS_LEARN({id:"animals",name:"Animal Sort",howto:[["🐾", "Every animal belongs in one home."], ["👆", "Drag an animal to its home, or tap it and then tap the home."], ["🐳", "Careful: some are tricky! A whale is not a fish."], ["🔊", "Tap the speaker to hear it again."]],
+make(n,i,r,a){
+  // emoji, name, where (land/water/sky), covering, group, food
+  const A=[["🐶","dog","land","fur","mammal","both"],["🐱","cat","land","fur","mammal","meat"],["🐮","cow","land","fur","mammal","plant"],["🐴","horse","land","fur","mammal","plant"],
+    ["🐰","rabbit","land","fur","mammal","plant"],["🐻","bear","land","fur","mammal","both"],["🦁","lion","land","fur","mammal","meat"],["🐺","wolf","land","fur","mammal","meat"],
+    ["🦌","deer","land","fur","mammal","plant"],["🐭","mouse","land","fur","mammal","both"],["🐳","whale","water","skin","mammal","meat"],["🐬","dolphin","water","skin","mammal","meat"],
+    ["🦅","eagle","sky","feathers","bird","meat"],["🦉","owl","sky","feathers","bird","meat"],["🦜","parrot","sky","feathers","bird","plant"],["🐔","chicken","land","feathers","bird","both"],
+    ["🐧","penguin","water","feathers","bird","meat"],["🦆","duck","water","feathers","bird","both"],["🐟","fish","water","scales","fish","both"],["🦈","shark","water","scales","fish","meat"],
+    ["🐠","clownfish","water","scales","fish","both"],["🐍","snake","land","scales","reptile","meat"],["🐢","turtle","water","scales","reptile","both"],["🦎","lizard","land","scales","reptile","meat"],
+    ["🐊","crocodile","water","scales","reptile","meat"],["🐸","frog","water","skin","amphibian","meat"],["🐝","bee","sky","none","insect","plant"],["🦋","butterfly","sky","none","insect","plant"],
+    ["🐞","ladybug","sky","none","insect","meat"],["🐜","ant","land","none","insect","both"],["🦗","cricket","land","none","insect","both"]];
+  const BIN={land:["🌳","Land"],water:["🌊","Water"],sky:["☁️","Sky"],fur:["🧶","Fur"],feathers:["🪶","Feathers"],scales:["🐉","Scales"],mammal:["🍼","Mammal"],bird:["🥚","Bird"],
+    fish:["🫧","Fish"],insect:["6️⃣","Insect (6 legs)"],reptile:["☀️","Reptile"],amphibian:["💧","Amphibian"],plant:["🥬","Plant eater"],meat:["🍖","Meat eater"],both:["🍽️","Eats both"]};
+  let f,bins,count,say;
+  if(a<0){f=2;bins=["land","water"];count=4;say="Does it live on land or in water?"}
+  else if(a===0){f=2;bins=["land","water","sky"];count=5;say="Where does it live: land, water or sky? Sky is for animals that fly."}
+  else if(a===1){f=3;bins=["fur","feathers","scales"];count=6;say="What covers its body: fur, feathers or scales?"}
+  else if(a===2||i%2===0){f=4;bins=a===2?["mammal","bird","fish","insect"]:U.sample(r,["mammal","bird","fish","insect","reptile","amphibian"],4);count=6;say="Sort the animals into their groups."}
+  else{f=5;bins=["plant","meat","both"];count=6;say="What does it eat: plants, meat, or both?"}
+  const tricky=a<=0?["duck","frog","crocodile","turtle","penguin"]:f===3?["turtle"]:[],pool=A.filter(x=>bins.includes(x[f])&&!tricky.includes(x[1])),items=[];
+  // at least one in every home, then fill up
+  for(const bk of U.shuffle(r,bins))items.push(U.pick(r,pool.filter(x=>x[f]===bk&&!items.includes(x))));
+  for(const x of U.shuffle(r,pool))if(items.length<count&&!items.includes(x))items.push(x);
+  return{type:"sort",say,prompt:'<span class="ask">'+say.split("?")[0]+(say.includes("?")?"?":"")+"</span>",
+    bins:bins.map(k=>({key:k,html:BIN[k][0],label:BIN[k][1]})),items:U.shuffle(r,items).map(x=>({key:x[f],html:'<span class="lr-em">'+x[0]+"</span>",aria:x[1]}))}}});
+})();
+</script>
+</body>
+</html>

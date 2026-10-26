@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!--HEAD:Code the Robot-->
+<style>
+.rb-grid{display:grid;grid-template-columns:repeat(var(--cols),var(--cs));grid-auto-rows:var(--cs);gap:4px;justify-content:center;
+  --cs:clamp(40px,calc((min(100vw,560px) - 50px)/var(--cols) - 4px),76px)}
+.rb-c{border-radius:10px;background:#2c3442;display:grid;place-items:center;font-size:calc(var(--cs)*.62);line-height:1;position:relative}
+.rb-c.wall{background:#4a4036}
+.rb-c.path{background:#36506b}
+.rb-c .bot{display:grid;place-items:center;transition:transform .2s}
+.rb-c .dir{position:absolute;font-size:calc(var(--cs)*.32);color:var(--paint);font-weight:900}
+.rb-c.bump{animation:ts-shake .35s}
+.rb-prog{display:flex;flex-wrap:wrap;gap:5px;justify-content:center;align-content:flex-start;min-height:54px;max-width:560px;width:100%;padding:6px;border:3px dashed var(--lane);border-radius:14px}
+.rb-prog:empty::before{content:"Your program goes here";color:var(--muted);font-weight:700;align-self:center}
+.rb-chip{border:0;border-radius:9px;min-width:42px;height:42px;padding:0 6px;background:#f4efe2;color:#1d1d2b;font:800 20px var(--font-body);cursor:pointer;touch-action:manipulation;
+  box-shadow:inset 0 -3px 0 rgba(0,0,0,.15)}
+.rb-chip.now{background:var(--paint);transform:scale(1.12)}
+.rb-chip.badc{background:#fbc9c1}
+.rb-cmds{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;max-width:560px}
+.rb-cmds button{border:0;border-radius:14px;min-width:62px;height:62px;padding:0 10px;font:800 28px var(--font-body);background:var(--paint);color:var(--night);cursor:pointer;touch-action:manipulation;
+  box-shadow:inset 0 -5px 0 rgba(0,0,0,.18),0 4px 8px rgba(0,0,0,.3)}
+.rb-cmds button small{display:block;font-size:12px;margin-top:-4px}
+.rb-cmds .go{background:#43a047;color:#fff;min-width:90px}
+.rb-cmds .ed{background:#d6d0c2;font-size:22px}
+</style>
+</head>
+<body>
+<!--KIT-->
+<script>
+(()=>{
+/* Code the Robot: build a program of moves, then press Go. The robot follows it exactly.
+   Grades 1-3 use arrows (up, down, left, right). Grades 4+ use Forward / Turn left / Turn right, like real robot code.
+   Later levels add rocks to go around and gems to collect before the star. Every puzzle is checked solvable with a shortest-path search. */
+let K,S=null;
+const D=[[-1,0],[0,1],[1,0],[0,-1]],ARROW=["⬆️","➡️","⬇️","⬅️"],POINT=["↑","→","↓","←"];
+// per grade: [fromLevel, cols, rows, rocks, gems, shortest program from, to]
+const PLAN={1:[[1,4,4,0,0,2,3],[6,4,4,2,0,3,5],[16,5,4,3,1,4,6],[28,5,5,5,1,5,8]],2:[[1,4,4,1,0,3,4],[6,5,4,3,0,4,6],[16,5,5,4,1,5,8],[28,5,5,6,2,7,10]],
+  3:[[1,5,4,2,0,3,5],[6,5,5,4,1,5,7],[16,5,5,6,2,7,10],[28,6,6,8,2,9,13]],4:[[1,4,4,0,0,3,4],[6,5,4,2,0,4,6],[16,5,5,4,1,6,9],[28,6,5,6,1,8,12]],
+  5:[[1,5,4,1,0,4,6],[6,5,5,3,1,6,8],[16,6,5,5,1,8,11],[28,6,6,7,2,10,14]],6:[[1,5,5,2,0,5,7],[6,5,5,4,1,7,10],[16,6,6,6,2,9,13],[28,6,6,8,2,12,16]],
+  7:[[1,5,5,3,1,6,8],[6,6,5,5,1,8,11],[16,6,6,7,2,10,14],[28,6,6,9,3,12,18]]};
+const turnMode=()=>K.grade>=4;
+function spec(n){let v=PLAN[K.grade][0];for(const p of PLAN[K.grade])if(n>=p[0])v=p;return{cols:v[1],rows:v[2],rocks:v[3],gems:v[4],lo:v[5],hi:v[6]}}
+/* Shortest program from a state to the goal (all gems, then the star). Returns a list of commands or null. */
+function bfs(L,from){const key=s=>s.r+","+s.c+","+s.d+","+s.g,seen=new Map([[key(from),null]]),q=[from];
+  const cmds=turnMode()?["F","L","R"]:[0,1,2,3],all=(1<<L.gems.length)-1;
+  while(q.length){const s=q.shift();if(s.g===all&&s.r===L.goal[0]&&s.c===L.goal[1]){const out=[];let k=key(s);while(seen.get(k)){const[p,cm]=seen.get(k);out.push(cm);k=p}return out.reverse()}
+    for(const cm of cmds){const t=step(L,s,cm);if(!t||t.crash)continue;const k=key(t);if(!seen.has(k)){seen.set(k,[key(s),cm]);q.push(t)}}}
+  return null}
+/* One command. Returns the new state, or {crash:true} for hitting a rock or the edge. */
+function step(L,s,cm){let d=s.d,r=s.r,c=s.c;
+  if(cm==="L")return{...s,d:(d+3)%4};if(cm==="R")return{...s,d:(d+1)%4};
+  const dir=cm==="F"?d:cm;r+=D[dir][0];c+=D[dir][1];
+  if(r<0||c<0||r>=L.rows||c>=L.cols||L.rock.has(r+","+c))return{crash:true,r:s.r,c:s.c};
+  let g=s.g;L.gems.forEach((p,k)=>{if(p[0]===r&&p[1]===c)g|=1<<k});return{r,c,d:cm==="F"?d:dir,g}}
+function build(n){const sp=spec(n);
+  for(let t=0;t<400;t++){const rng=K.rng(n*131+t),ri=(a,b)=>a+Math.floor(rng()*(b-a+1)),free=[];
+    for(let r=0;r<sp.rows;r++)for(let c=0;c<sp.cols;c++)free.push(r+","+c);
+    for(let k=free.length-1;k>0;k--){const j=Math.floor(rng()*(k+1));[free[k],free[j]]=[free[j],free[k]]}
+    const P=x=>x.split(",").map(Number),start=P(free[0]),goal=P(free[1]),gems=free.slice(2,2+sp.gems).map(P),rock=new Set(free.slice(2+sp.gems,2+sp.gems+sp.rocks));
+    const L={rows:sp.rows,cols:sp.cols,start,goal,gems,rock,d0:ri(0,3)};
+    const sol=bfs(L,{r:start[0],c:start[1],d:L.d0,g:0});
+    if(sol&&sol.length>=sp.lo&&sol.length<=sp.hi){L.par=sol.length;return L}}
+  return null}
+function start(n){const L=build(n);
+  S={L,prog:[],state:null,oops:0,running:false};reset();
+  K.stage.insertAdjacentHTML("beforeend",'<div class="rb-grid" id="rbG" style="--cols:'+L.cols+'"></div><div class="rb-prog" id="rbP" aria-label="Program"></div><div class="rb-cmds" id="rbC"></div>');
+  const C=document.getElementById("rbC"),add=(html,fn,cls,aria)=>{const b=document.createElement("button");b.type="button";b.innerHTML=html;if(cls)b.className=cls;b.setAttribute("aria-label",aria);b.onclick=fn;C.appendChild(b);return b};
+  if(turnMode()){add("⬆️<small>Forward</small>",()=>push("F"),"","Forward").dataset.cmd="F";add("↺<small>Turn left</small>",()=>push("L"),"","Turn left").dataset.cmd="L";add("↻<small>Turn right</small>",()=>push("R"),"","Turn right").dataset.cmd="R"}
+  else[3,0,2,1].forEach(k=>add(ARROW[k],()=>push(k),"",["Up","Right","Down","Left"][k]).dataset.cmd=k);
+  add("⌫",()=>{if(!S.running){S.prog.pop();drawProg()}},"ed","Delete last");add("🗑️",()=>{if(!S.running){S.prog=[];drawProg()}},"ed","Clear");
+  add("▶ Go",run,"go","Go").id="rbGo";
+  draw();drawProg();K.stat(L.par,"Moves");K.sub();
+  K.tip((turnMode()?"Forward moves the way the robot faces. Turns change where it faces. ":"Tap arrows to build a program, then press Go. ")+(L.gems.length?"Pick up every 💎, then get to the ⭐.":"Get the robot to the ⭐."))}
+function reset(){const L=S.L;S.state={r:L.start[0],c:L.start[1],d:L.d0,g:0}}
+function push(cm){if(S.running||K.busy)return;if(S.prog.length>=30)return;S.prog.push(cm);TS.music.fx("tap");drawProg()}
+const label=cm=>cm==="F"?"⬆️":cm==="L"?"↺":cm==="R"?"↻":ARROW[cm];
+function drawProg(now,bad){const P=document.getElementById("rbP");P.innerHTML="";
+  S.prog.forEach((cm,k)=>{const b=document.createElement("button");b.type="button";b.className="rb-chip"+(k===now?" now":"")+(k===bad?" badc":"");b.textContent=label(cm);
+    b.setAttribute("aria-label","Step "+(k+1)+", tap to remove");b.onclick=()=>{if(S.running)return;S.prog.splice(k,1);drawProg()};P.appendChild(b)})}
+function draw(trail,bump){const L=S.L,G=document.getElementById("rbG"),s=S.state;G.innerHTML="";
+  for(let r=0;r<L.rows;r++)for(let c=0;c<L.cols;c++){const d=document.createElement("div"),k=r+","+c;d.className="rb-c"+(L.rock.has(k)?" wall":"")+(trail&&trail.has(k)?" path":"")+(bump&&bump===k?" bump":"");d.dataset.k=k;
+    const gi=L.gems.findIndex(p=>p[0]===r&&p[1]===c);
+    if(s.r===r&&s.c===c)d.innerHTML='<span class="bot">🤖</span>'+(turnMode()?'<span class="dir" style="'+["top:0","right:2px","bottom:0","left:2px"][s.d]+'">'+POINT[s.d]+"</span>":"");
+    else if(L.rock.has(k))d.textContent="🪨";else if(gi>=0&&!(s.g&1<<gi))d.textContent="💎";else if(L.goal[0]===r&&L.goal[1]===c)d.textContent="⭐";
+    G.appendChild(d)}}
+function run(){if(S.running||K.busy||!S.prog.length)return;S.running=true;reset();const trail=new Set([S.state.r+","+S.state.c]);let k=0;
+  const tick=()=>{if(k>=S.prog.length)return finish(trail);const t=step(S.L,S.state,S.prog[k]);
+    if(t.crash){const L=S.L,dir=S.prog[k]==="F"?S.state.d:S.prog[k],rr=S.state.r+D[dir][0],cc=S.state.c+D[dir][1];
+      draw(trail,(rr>=0&&cc>=0&&rr<L.rows&&cc<L.cols)?rr+","+cc:S.state.r+","+S.state.c);drawProg(-1,k);fail("Bonk! Step "+(k+1)+" bumps into "+(L.rock.has(rr+","+cc)?"a rock":"the edge")+". Fix it and press Go again.");return}
+    S.state=t;trail.add(t.r+","+t.c);TS.music.fx("tap");draw(trail);drawProg(k);k++;setTimeout(tick,330)};
+  drawProg(0);setTimeout(tick,250)}
+function finish(trail){const L=S.L,s=S.state,all=(1<<L.gems.length)-1;
+  if(s.r===L.goal[0]&&s.c===L.goal[1]&&s.g===all){S.running=false;const st=S.oops===0?3:S.oops<=2?2:1,extra=S.prog.length-L.par;
+    K.win({stars:st,text:"The robot made it in "+S.prog.length+" moves"+(extra<=0?" — the shortest program!":" (it can be done in "+L.par+")")});return}
+  fail(s.r===L.goal[0]&&s.c===L.goal[1]?"Almost! Pick up every 💎 first.":"The robot stopped before the ⭐. Add more steps.")}
+function fail(msg){S.oops++;K.sub("Oops "+S.oops);TS.music.fx("bad");K.tip(msg);
+  setTimeout(()=>{S.running=false;reset();draw();drawProg()},1100)}
+/* Hint: keeps the part of the program that works and adds the next good move. */
+function hint(){if(!S||S.running||K.busy)return;const L=S.L;reset();let s=S.state,ok=0;
+  for(const cm of S.prog){const t=step(L,s,cm);if(t.crash)break;s=t;ok++}
+  let keep=ok,path=bfs(L,s);
+  while(!path&&keep>0){keep--;s={...S.state};for(let j=0;j<keep;j++)s=step(L,s,S.prog[j]);path=bfs(L,s)}
+  S.prog=S.prog.slice(0,keep);if(path&&path.length)S.prog.push(path[0]);drawProg();
+  K.tip(path&&path.length?"Next move: "+label(path[0])+(path.length>1?" ("+(path.length-1)+" more after that)":" — now press Go!"):"Your program works! Press Go.")}
+K=TS_KIT({id:"robot",name:"Code the Robot",levels:40,start,hint,
+  howto:[["🤖","Plan the robot's moves before it starts."],["👆","Tap the move buttons to build a program."],["▶️","Press Go. The robot does every step in order."],["💎","Later: grab every gem, then reach the ⭐. Grade 4+ uses Forward and Turn."]],
+  point:()=>{const sol=bfs(S.L,{r:S.L.start[0],c:S.L.start[1],d:S.L.d0,g:0});return document.querySelector('.rb-cmds [data-cmd="'+sol[0]+'"]')},
+  label:n=>{const s=spec(n);return s.cols+"×"+s.rows+(s.gems?" 💎":"")}});
+window.__game={get S(){return S},K,build,bfs,spec,step,run,solve(){S.prog=bfs(S.L,{r:S.L.start[0],c:S.L.start[1],d:S.L.d0,g:0});drawProg();run()}};
+K.start();
+})();
+</script>
+</body>
+</html>

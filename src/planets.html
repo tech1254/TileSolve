@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!--HEAD:Planet Order-->
+</head>
+<body>
+<!--KIT-->
+<!--LEARN-->
+<script>
+(()=>{const U=TS_LEARN.util;
+TS_LEARN({id:"planets",name:"Planet Order",howto:[["☀️", "Eight planets travel around the Sun."], ["👆", "Tap the planets in order: closest to the Sun first."], ["❓", "Some rounds ask a question about space."], ["🔊", "Tap the speaker to hear it again."]],
+make(n,i,r,a){
+  const P=[["Mercury","#a8a29a",8],["Venus","#e3bb6f",12],["Earth","#3f86d9",12.5],["Mars","#d1583a",10],["Jupiter","#d6a06a",24],["Saturn","#e6cb83",21],["Uranus","#93dbe3",16],["Neptune","#4466e0",15.5]];
+  const pic=(p,big)=>{const[nm,c,s]=p,R=big?s:Math.max(8,s*.9);let x='<circle cx="30" cy="30" r="'+R+'" fill="'+c+'"/>';
+    if(nm==="Earth")x+='<path d="M22 22q6-4 10 1t-2 9q-6 2-8-4zM34 36q5-2 7 3t-5 5q-4-3-2-8z" fill="#5bb04a"/>';
+    if(nm==="Jupiter")x+='<path d="M7 26h46M8 33h44M11 40h38" stroke="#a8683a" stroke-width="3" opacity=".7"/><circle cx="38" cy="36" r="3" fill="#b9512d"/>';
+    if(nm==="Saturn")x='<ellipse cx="30" cy="30" rx="29" ry="8" fill="none" stroke="#b9a165" stroke-width="3"/>'+x+'<path d="M2 30a28 8 0 0 0 56 0" fill="none" stroke="#b9a165" stroke-width="3"/>';
+    return'<span class="lr-planet"><svg viewBox="0 0 60 60" aria-hidden="true">'+x+"</svg><small>"+nm+"</small></span>"};
+  const tile=p=>({key:p[0],html:pic(p,true),say:p[0],aria:p[0]});
+  const facts=[ // [question, answer, wrong answers, from content grade]
+    ["Which planet do we live on?","Earth",["Mars","Jupiter","Venus"],-1],["Which planet has big rings?","Saturn",["Earth","Mars","Mercury"],-1],
+    ["Which is the red planet?","Mars",["Neptune","Earth","Uranus"],0],["Which is the biggest planet?","Jupiter",["Mercury","Earth","Mars"],0],
+    ["Which planet is closest to the Sun?","Mercury",["Neptune","Earth","Saturn"],1],["Which planet is the farthest from the Sun?","Neptune",["Mercury","Mars","Earth"],1],
+    ["Which planet is the hottest? Its thick clouds trap the heat.","Venus",["Mercury","Earth","Jupiter"],2],["Which planet is closest to Earth's size?","Venus",["Jupiter","Saturn","Mercury"],3],
+    ["Which planet spins on its side?","Uranus",["Earth","Mars","Venus"],3]];
+  const words=[["What is the Sun?","a star",["a planet","a moon","a cloud"],-1],["What goes around the Earth?","the Moon",["the Sun","Mars","Jupiter"],0],
+    ["What makes day and night?","Earth spinning",["clouds","the Moon","Earth stopping"],1],["How long does Earth take to go around the Sun?","1 year",["1 day","1 week","1 month"],1],
+    ["How long does Earth take to spin around once?","1 day",["1 year","1 hour","1 month"],2],["What keeps the planets going around the Sun?","gravity",["wind","magnets","rockets"],2]];
+  if(i%3===2){const all=facts.filter(f=>f[3]<=a).map(f=>[f,1]).concat(words.filter(f=>f[3]<=a).map(f=>[f,0])),[[q,ans,wr],isP]=U.pick(r,all),k=a<1?3:4;
+    const opts=U.shuffle(r,[ans].concat(U.sample(r,wr,k-1)));
+    return{type:"pick",cols:2,say:q,prompt:'<span class="ask">'+q+"</span>",
+      options:opts.map(x=>isP?{key:x,html:pic(P.find(p=>p[0]===x),true),say:x,aria:x}:{key:x,html:'<span style="font-size:22px">'+x+"</span>"}),answer:ans}}
+  // order from the Sun: a few neighbours at first, all eight later
+  if(a>=3&&i%3===1){const set=U.sample(r,[0,3,2,6,5,4],Math.min(6,3+Math.floor(n/10))).sort((x,y)=>P[x][2]-P[y][2]).map(k=>P[k]);
+    return{type:"order",say:"Put the planets in order from smallest to biggest.",prompt:'<span class="ask">Smallest to biggest</span>',tiles:U.mix(r,set.map(tile)),answer:set.map(p=>p[0])}}
+  const len=Math.min(8,(a<=0?3:a===1?4:5)+Math.floor(n/12)),s=U.ri(r,0,8-len),set=P.slice(s,s+len);
+  return{type:"order",say:"Put the planets in order, starting closest to the Sun.",prompt:'<span class="ask">☀️ Closest to the Sun first</span>',tiles:U.mix(r,set.map(tile)),answer:set.map(p=>p[0])}}});
+})();
+</script>
+</body>
+</html>

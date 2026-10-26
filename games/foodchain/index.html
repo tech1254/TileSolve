@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#161b21">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box;height:100%}body{margin:0}[hidden]{display:none!important}</style>
+<title>Food Chain · Tile Solve</title>
+<meta name="apple-mobile-web-app-title" content="Tile Solve">
+<link rel="apple-touch-icon" href="../../icon-180.png">
+<link rel="icon" type="image/png" href="../../icon-512.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Barlow:wght@400;600;700&display=swap">
+<link rel="stylesheet" href="../../shared/ts.css?v=04c7eb09">
+<link rel="stylesheet" href="../../shared/game.css?v=04c7eb09">
+</head>
+<body>
+<script src="../../shared/ts.js?v=04c7eb09"></script>
+<script src="../../shared/kit.js?v=04c7eb09"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&display=swap">
+<link rel="stylesheet" href="../../shared/learn.css?v=04c7eb09">
+<script src="../../shared/learn.js?v=04c7eb09"></script>
+<script>
+(()=>{const U=TS_LEARN.util;
+TS_LEARN({id:"foodchain",name:"Food Chain",howto:[["🌱", "Every food chain starts with a plant."], ["➡️", "Then comes the animal that eats it, then the animal that eats that."], ["👆", "Tap them in order, plant first."], ["🔊", "Tap the speaker to hear it again."]],
+make(n,i,r,a){
+  const C=[[["🌱","grass"],["🐛","caterpillar"],["🐦","bird"],["🦅","eagle"]],[["🌾","grain"],["🐭","mouse"],["🐍","snake"],["🦅","eagle"]],[["🥕","carrot"],["🐰","rabbit"],["🦊","fox"]],
+    [["🍃","leaves"],["🦗","grasshopper"],["🐸","frog"],["🐍","snake"]],[["🌿","plants"],["🦌","deer"],["🐺","wolf"]],[["🌰","acorn"],["🐿️","squirrel"],["🦉","owl"]],
+    [["🦠","plankton"],["🐟","fish"],["🦭","seal"],["🐻‍❄️","polar bear"]],[["🌸","flower"],["🐝","bee"],["🐦","bird"]],[["🍓","berries"],["🐭","mouse"],["🦉","owl"]],
+    [["🌿","seaweed"],["🐟","fish"],["🦈","shark"]],[["🍂","leaves"],["🪱","worm"],["🐦","robin"],["🦊","fox"]],[["🌾","grass"],["🦗","cricket"],["🦎","lizard"],["🦅","hawk"]]];
+  const tile=x=>({key:x[1],html:'<span class="lr-word"><b>'+x[0]+"</b>"+x[1]+"</span>",say:x[1],aria:x[1]});
+  if(a>=3&&i%3===2){ // producers and consumers
+    const plants=[...new Map(C.map(c=>c[0]).map(x=>[x[1],x])).values()],eaters=[...new Map(C.flatMap(c=>c.slice(1)).map(x=>[x[1],x])).values()];
+    const items=U.sample(r,plants,3).concat(U.sample(r,eaters,3));
+    return{type:"sort",say:"Producers make their own food from sunlight. Consumers eat other living things. Sort them!",prompt:'<span class="ask">Producer or consumer?</span>',
+      bins:[{key:"p",html:"☀️",label:"Producer"},{key:"c",html:"🍽️",label:"Consumer"}],items:U.shuffle(r,items.map(x=>({key:plants.includes(x)?"p":"c",html:'<span class="lr-em">'+x[0]+"</span>",aria:x[1]})))}}
+  if(i%3===1){ // what does it eat?
+    const c=U.pick(r,C),k=U.ri(r,1,c.length-1),eater=c[k],food=c[k-1];
+    // wrong answers can't be something it really eats: plant eaters get animals, meat eaters get plants
+    const wrong=U.shuffle(r,(k===1?C.flatMap(d=>d.slice(1)):C.map(d=>d[0])).filter(x=>x[1]!==eater[1]&&!C.some(d=>d.some((y,j)=>y[1]===eater[1]&&j>0&&d[j-1][1]===x[1]))));
+    const opts=[food];for(const x of wrong)if(opts.length<(a<1?3:4)&&!opts.some(o=>o[1]===x[1]))opts.push(x);
+    return{type:"pick",cols:2,say:"What does the "+eater[1]+" eat?",prompt:'<span class="ask">What does it eat?</span><span class="lr-word big1"><b>'+eater[0]+"</b>"+eater[1]+"</span>",
+      options:U.shuffle(r,opts).map(tile),answer:food[1]}}
+  const c=U.pick(r,C.filter(c=>a>=2||c.length===3||n>15)),chain=a<=1&&c.length>3?c.slice(0,3):c;
+  return{type:"order",wide:true,say:"Make the food chain. Start with the plant!",prompt:'<span class="ask">🌱 Plant first, then who eats it</span>',
+    tiles:U.mix(r,chain.map(tile)),answer:chain.map(x=>x[1])}}});
+})();
+</script>
+</body>
+</html>

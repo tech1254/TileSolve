@@ -7,9 +7,10 @@ OUT = pathlib.Path(sys.argv[1]) if len(sys.argv) > 1 else pathlib.Path(".")
 check = Checker(); errors = []
 # game -> grade range shown on the home screen
 EXPLORE = {"maketen": (1, 4), "times": (3, 7), "fractions": (2, 7), "money": (3, 7), "clock": (2, 7), "numberline": (1, 6), "patterns": (0, 7),
-           "sentence": (1, 5), "spelling": (1, 7), "rhyme": (0, 3)}
+           "sentence": (1, 5), "spelling": (1, 7), "rhyme": (0, 3),
+           "animals": (0, 5), "oddone": (0, 5), "planets": (2, 7), "foodchain": (2, 7), "places": (2, 7)}
 LITTLE = {"rhyme"}  # in the Little learners section, not Learn & explore
-HOME_EXPLORE = dict(EXPLORE, crossword=(2, 7))
+HOME_EXPLORE = dict(EXPLORE, crossword=(2, 7), robot=(1, 7))
 
 def player(grade, pid="ex"):
     seen = json.dumps({g: 1 for g in list(EXPLORE) + GAMES})
@@ -28,6 +29,8 @@ VALIDATE = """((lo,hi)=>{const bad=[];let rounds=0;
       if(ks.length>1&&ks.slice(0,R.answer.length).join()===R.answer.join())bad.push(id+' already in order')}
     else if(R.type==='combo'){const s=R.solution.reduce((t,k)=>t+R.cells[k].v,0);if(s!==R.target)bad.push(id+' solution '+s+' != '+R.target);
       if(R.cells.some(c=>!(c.v>0)))bad.push(id+' bad cell');if(R.solution.length<2)bad.push(id+' trivial')}
+    else if(R.type==='sort'){const bk=R.bins.map(b=>b.key);if(R.items.some(x=>!bk.includes(x.key)))bad.push(id+' item without bin');if(R.items.length<2)bad.push(id+' few items');
+      if(bk.some(k=>!R.items.some(x=>x.key===k)))bad.push(id+' empty bin');if(R.items.some(x=>!x||!x.html))bad.push(id+' bad item')}
     else bad.push(id+' unexpected type')}}
   return{bad:bad.slice(0,6),n:bad.length,rounds}})"""
 

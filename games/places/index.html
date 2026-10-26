@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#161b21">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box;height:100%}body{margin:0}[hidden]{display:none!important}</style>
+<title>Flags & Places · Tile Solve</title>
+<meta name="apple-mobile-web-app-title" content="Tile Solve">
+<link rel="apple-touch-icon" href="../../icon-180.png">
+<link rel="icon" type="image/png" href="../../icon-512.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Barlow:wght@400;600;700&display=swap">
+<link rel="stylesheet" href="../../shared/ts.css?v=04c7eb09">
+<link rel="stylesheet" href="../../shared/game.css?v=04c7eb09">
+</head>
+<body>
+<script src="../../shared/ts.js?v=04c7eb09"></script>
+<script src="../../shared/kit.js?v=04c7eb09"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&display=swap">
+<link rel="stylesheet" href="../../shared/learn.css?v=04c7eb09">
+<script src="../../shared/learn.js?v=04c7eb09"></script>
+<script>
+(()=>{const U=TS_LEARN.util;
+TS_LEARN({id:"places",name:"Flags & Places",howto:[["🇨🇦", "Questions about Canada, Alberta and the world."], ["👀", "Look at the flag, map word or picture."], ["👆", "Tap the right answer."], ["🔊", "Tap the speaker to hear it again."]],
+make(n,i,r,a){const opt=x=>({key:x,html:/^\p{RI}/u.test(x)?'<span style="font-size:52px;line-height:1">'+x+"</span>":'<span style="font-size:20px">'+x+"</span>",aria:x});
+  const Q=[ // [question, extra picture, answer, wrong answers, from content grade]
+    ["Which is Canada's flag?","","🇨🇦",["🇺🇸","🇲🇽","🇬🇧"],-1],["Which leaf is on Canada's flag?","🇨🇦","maple leaf",["clover","palm leaf","oak leaf"],-1],
+    ["Which animal is a symbol of Canada?","","beaver 🦫",["kangaroo 🦘","panda 🐼","lion 🦁"],-1],["What colours are on Canada's flag?","","red and white",["blue and white","green and yellow","red and blue"],-1],
+    ["Which coin has a loon on it?","","loonie",["dime","nickel","quarter"],0],["What is Canada's capital city?","","Ottawa",["Calgary","Toronto","New York"],0],
+    ["Which country is Canada's neighbour?","","United States",["Australia","Japan","Brazil"],0],["Which one is a province of Canada?","","Alberta",["Texas","Paris","China"],0],
+    ["Which ocean is NOT next to Canada?","","Indian Ocean",["Pacific Ocean","Atlantic Ocean","Arctic Ocean"],1],["What are Canada's two official languages?","","English and French",["English and Spanish","French and German","English and Chinese"],1],
+    ["Which mountains are in Alberta?","🏔️","Rocky Mountains",["Andes","Alps","Himalayas"],1],["What is the capital city of Alberta?","","Edmonton",["Calgary","Red Deer","Banff"],2],
+    ["Which city is in Alberta?","","Red Deer",["Regina","Vancouver","Winnipeg"],2],["Which province is west of Alberta?","","British Columbia",["Saskatchewan","Manitoba","Ontario"],2],
+    ["Which province is east of Alberta?","","Saskatchewan",["British Columbia","Quebec","Nova Scotia"],2],["What is Alberta's flower?","🌹","wild rose",["tulip","sunflower","daisy"],2],
+    ["Which national park is in Alberta?","","Banff",["Yellowstone","Gros Morne","Pacific Rim"],2],["How many provinces does Canada have?","","10",["3","5","13"],3],["How many territories does Canada have?","","3",["1","10","5"],3],
+    ["Which one is a territory?","","Yukon",["Alberta","Manitoba","Ontario"],3]];
+  const CAP=[["British Columbia","Victoria"],["Alberta","Edmonton"],["Saskatchewan","Regina"],["Manitoba","Winnipeg"],["Ontario","Toronto"],["Quebec","Quebec City"],["New Brunswick","Fredericton"],
+    ["Nova Scotia","Halifax"],["Prince Edward Island","Charlottetown"],["Newfoundland and Labrador","St. John's"],["Yukon","Whitehorse"],["Northwest Territories","Yellowknife"],["Nunavut","Iqaluit"]];
+  const FL=[["🇨🇦","Canada","North America"],["🇺🇸","United States","North America"],["🇲🇽","Mexico","North America"],["🇬🇧","United Kingdom","Europe"],["🇫🇷","France","Europe"],["🇩🇪","Germany","Europe"],
+    ["🇮🇹","Italy","Europe"],["🇺🇦","Ukraine","Europe"],["🇯🇵","Japan","Asia"],["🇨🇳","China","Asia"],["🇮🇳","India","Asia"],["🇵🇭","Philippines","Asia"],["🇧🇷","Brazil","South America"],
+    ["🇦🇷","Argentina","South America"],["🇰🇪","Kenya","Africa"],["🇪🇬","Egypt","Africa"],["🇿🇦","South Africa","Africa"],["🇦🇺","Australia","Oceania"],["🇳🇿","New Zealand","Oceania"]];
+  const kind=a>=4?i%3:a>=3?(i%2?0:3):0;
+  if(kind===1){const[c,ans]=U.pick(r,CAP),o=new Set([ans]);while(o.size<4)o.add(U.pick(r,CAP)[1]);
+    return{type:"pick",cols:2,say:"What is the capital city of "+c+"?",prompt:'<span class="ask">Capital city of</span><span class="lr-sent">'+c+"</span>",options:U.shuffle(r,[...o]).map(opt),answer:ans}}
+  if(kind===2){const f=U.pick(r,FL),byFlag=i%2===0,o=new Set([byFlag?f[1]:f[2]]);
+    while(o.size<4)o.add(byFlag?U.pick(r,FL)[1]:U.pick(r,["North America","South America","Europe","Asia","Africa","Oceania"]));
+    return byFlag?{type:"pick",cols:2,say:"Which country has this flag?",prompt:'<span class="ask">Which country has this flag?</span><span class="lr-emo">'+f[0]+"</span>",options:U.shuffle(r,[...o]).map(opt),answer:f[1]}
+      :{type:"pick",cols:2,say:"Which continent is "+f[1]+" in?",prompt:'<span class="ask">Which continent is '+f[1]+" in?</span><span class=\"lr-emo\">"+f[0]+"</span>",options:U.shuffle(r,[...o]).map(opt),answer:f[2]}}
+  if(kind===3){const f=U.pick(r,FL.slice(0,10)),o=new Set([f[0]]);while(o.size<4)o.add(U.pick(r,FL.slice(0,12))[0]);
+    return{type:"pick",cols:2,say:"Which flag belongs to "+f[1]+"?",prompt:'<span class="ask">Which is the flag of '+f[1]+"?</span>",options:U.shuffle(r,[...o]).map(opt),answer:f[0]}}
+  const pool=Q.filter(q=>q[4]<=a&&q[4]>=Math.min(a,3)-2),[q,pic,ans,wr]=U.pick(r,pool),k=a<1?3:4;
+  return{type:"pick",cols:2,say:q.replace("NOT","not"),prompt:'<span class="ask">'+q+"</span>"+(pic?'<span class="lr-emo">'+pic+"</span>":""),
+    options:U.shuffle(r,[ans].concat(U.sample(r,wr,k-1))).map(opt),answer:ans}}});
+})();
+</script>
+</body>
+</html>

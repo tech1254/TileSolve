@@ -15,7 +15,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Barlow:wght@400;600;700&display=swap">
-<link rel="stylesheet" href="shared/ts.css?v=28bd9fe8">
+<link rel="stylesheet" href="shared/ts.css?v=04c7eb09">
 <style>
 body{overflow-y:auto}
 .app{min-height:100%;max-width:760px;margin:0 auto;box-sizing:border-box;display:flex;flex-direction:column;gap:22px;
@@ -122,7 +122,7 @@ h1{font-family:var(--font-sign);font-weight:400;font-size:clamp(26px,6vw,36px);m
   </form>
 </div>
 
-<script src="shared/ts.js?v=28bd9fe8"></script>
+<script src="shared/ts.js?v=04c7eb09"></script>
 <script>
 (()=>{
 const{players,music}=TS,$=id=>document.getElementById(id);
@@ -168,7 +168,13 @@ const GAMES=[
   {id:"patterns",name:"Pattern Next",desc:"What comes next?",art:"🔁",href:"games/patterns/index.html",g:["#8f5bd6","#4b2a85"],group:"explore",grades:[0,7]},
   {id:"sentence",name:"Sentence Builder",desc:"Put the words in order",art:"📝",href:"games/sentence/index.html",g:["#e06aa6","#8a2f5f"],group:"explore",grades:[1,5]},
   {id:"spelling",name:"Spelling Bee",desc:"Hear it, spell it",art:"🐝",href:"games/spelling/index.html",g:["#f2b705","#7a5c00"],group:"explore",grades:[1,7]},
-  {id:"crossword",name:"Picture Crossword",desc:"Pictures are the clues",art:"✏️",href:"games/crossword/index.html",g:["#4fb3d9","#1f6585"],group:"explore",grades:[2,7]}];
+  {id:"crossword",name:"Picture Crossword",desc:"Pictures are the clues",art:"✏️",href:"games/crossword/index.html",g:["#4fb3d9","#1f6585"],group:"explore",grades:[2,7]},
+  {id:"animals",name:"Animal Sort",desc:"Land, water, fur or feathers?",art:"🐾",href:"games/animals/index.html",g:["#6bb34a","#36651f"],group:"explore",grades:[0,5]},
+  {id:"oddone",name:"Odd One Out",desc:"Which one doesn't belong?",art:"🔍",href:"games/oddone/index.html",g:["#c2255c","#6b1131"],group:"explore",grades:[0,5]},
+  {id:"planets",name:"Planet Order",desc:"Planets and space",art:"🪐",href:"games/planets/index.html",g:["#1f2a6b","#0b1033"],group:"explore",grades:[2,7]},
+  {id:"foodchain",name:"Food Chain",desc:"Who eats what?",art:"🦊",href:"games/foodchain/index.html",g:["#b86b1f","#5e3409"],group:"explore",grades:[2,7]},
+  {id:"places",name:"Flags & Places",desc:"Canada, Alberta and the world",art:"🇨🇦",href:"games/places/index.html",g:["#e2412e","#8a2318"],group:"explore",grades:[2,7]},
+  {id:"robot",name:"Code the Robot",desc:"Plan the moves, press Go",art:"🤖",href:"games/robot/index.html",g:["#3b6fd9","#1d3d85"],group:"explore",grades:[1,7]}];
 
 let editing=false,prev=null; // prev: the player whose games we came from, for the Back button
 music.button($("btnMusic"));$("btnMusic").innerHTML=TS.MUSIC_SVG;
