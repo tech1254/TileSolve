@@ -15,20 +15,21 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Barlow:wght@400;600;700&display=swap">
-<link rel="stylesheet" href="../../shared/ts.css?v=cb83ca14">
-<link rel="stylesheet" href="../../shared/game.css?v=cb83ca14">
+<link rel="stylesheet" href="../../shared/ts.css?v=dcda29ed">
+<link rel="stylesheet" href="../../shared/game.css?v=dcda29ed">
 </head>
 <body>
-<script src="../../shared/ts.js?v=cb83ca14"></script>
-<script src="../../shared/kit.js?v=cb83ca14"></script>
-<link rel="stylesheet" href="../../shared/learn.css?v=cb83ca14">
-<script src="../../shared/learn.js?v=cb83ca14"></script>
+<script src="../../shared/ts.js?v=dcda29ed"></script>
+<script src="../../shared/kit.js?v=dcda29ed"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&display=swap">
+<link rel="stylesheet" href="../../shared/learn.css?v=dcda29ed">
+<script src="../../shared/learn.js?v=dcda29ed"></script>
 <script>
 (()=>{const U=TS_LEARN.util;
 TS_LEARN({id:"case",name:"Big & Little",howto:[["🅰️", "Every big letter has a little letter."], ["👀", "Look at the letter at the top."], ["👆", "Tap its matching big or little letter."], ["🔊", "Tap the speaker to hear it again."]],
 make(n,i,r,a){const AB="abcdefghijklmnopqrstuvwxyz",EASY="cosuvwxzpk";
   const CONF={b:"dpq",d:"bpq",p:"qbd",q:"pdb",m:"nwu",n:"mhu",u:"nvw",w:"mvu",i:"ljt",l:"ijt",j:"igy",f:"tl",t:"fl",h:"nk",a:"oed",e:"aoc",c:"oe",o:"ce",g:"qy",y:"gv",v:"wy",s:"z",z:"s",k:"hx",r:"nm",x:"kz"};
-  const l=U.pick(r,(a<=0&&n<=10?EASY:AB).split("")),toLower=a<=0?(n<=20||i%2===0):i%2===0,count=a<=0?3:a===1?4:5,opts=new Set([l]);
+  const l=U.pick(r,(a<0||(a===0&&n<=10)?EASY:AB).split("")),toLower=a<0?true:a===0?(n<=20||i%2===0):i%2===0,count=a<0?(n<=15?2:3):a===0?3:a===1?4:5,opts=new Set([l]);
   if(a>=2||n>25)for(const c of U.shuffle(r,(CONF[l]||"").split("")))if(opts.size<count)opts.add(c);
   while(opts.size<count)opts.add(U.pick(r,AB.split("")));
   const show=toLower?l.toUpperCase():l,f=x=>toLower?x:x.toUpperCase();

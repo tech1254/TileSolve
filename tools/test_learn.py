@@ -13,7 +13,7 @@ def player(grade, pid="kk"):
             f"localStorage.setItem('tilesolve:p:{pid}:seen',{json.dumps(seen)})")
 
 VALIDATE = """(()=>{const bad=[],TR=TS_LEARN.TRACE;let rounds=0;
-  for(const a of [0,1,2,3])for(let n=1;n<=40;n++){const r=TS.rngFrom(n*977+a*31+7);for(let i=0;i<6;i++){let R;
+  for(const a of [-1,0,1,2,3])for(let n=1;n<=40;n++){const r=TS.rngFrom(n*977+a*31+7);for(let i=0;i<6;i++){let R;
     try{R=__learn.make(n,i,r,a)}catch(e){bad.push(a+':'+n+':'+i+' threw '+e.message);continue}rounds++;const id=a+':'+n+':'+i+' '+R.type;
     if(!R.say)bad.push(id+' no say');
     if(R.type==='pick'){const ks=R.options.map(o=>o.key);if(new Set(ks).size!==ks.length)bad.push(id+' dup options '+ks);if(!ks.includes(R.answer))bad.push(id+' answer missing');if(ks.length<2)bad.push(id+' too few')}
@@ -38,8 +38,10 @@ with sync_playwright() as p:
     for g in LEARN:
         pg = watch_errors(ctx.new_page(), errors); pg.goto(URL(g)); pg.wait_for_function("window.__learn && __learn.R", timeout=10000)
         v = pg.evaluate(VALIDATE)
-        check(v["n"] == 0, f"{g}: all {v['rounds']} rounds (K-3, 40 levels) are well formed {v['bad']}")
+        check(v["n"] == 0, f"{g}: all {v['rounds']} rounds (pre-K to grade 3 content, 40 levels) are well formed {v['bad']}")
         pg.screenshot(path=str(OUT / f"learn-{g}.png"))
+        shown = pg.evaluate("({p:document.getElementById('lrPrompt').textContent.trim().length,d:document.querySelectorAll('#lrDots i').length,t:document.getElementById('kTip').textContent.length})")
+        check(shown["p"] > 0 and shown["d"] >= 3 and shown["t"] > 0, f"{g}: question, progress dots and tip are shown {shown}")
         R = pg.evaluate("({type:__learn.R.type,options:(__learn.R.options||[]).map(o=>o.key),answer:__learn.R.answer})")
         if R["type"] == "pick":
             wrong = next(k for k in R["options"] if k != R["answer"])
@@ -55,6 +57,21 @@ with sync_playwright() as p:
             pg = watch_errors(c.new_page(), errors); pg.goto(URL(g)); pg.wait_for_function("window.__learn && __learn.R", timeout=10000)
             check(win_level(pg), f"grade {grade} {g}: level 1 can be won"); pg.close()
         c.close()
+
+    # Maths questions match the PREVIOUS grade's Alberta outcomes
+    pg = watch_errors(ctx.new_page(), errors); pg.goto(URL("count")); pg.wait_for_timeout(300)
+    res = pg.evaluate("""(()=>{const out={};const num=x=>typeof x==='number'?x:parseFloat(x);
+      const rules={'-1':q=>q.slot==='n',0:q=>q.slot!=='n'&&!/[×÷%]/.test(q.op)&&Math.max(num(q.a),num(q.b||0),num(q.c||0),q.ans)<=10,
+        1:q=>!/[×÷%]/.test(q.op)&&Math.max(num(q.a),num(q.b||0),num(q.c||0),q.ans)<=20,
+        2:q=>!/[×÷%]/.test(q.op)&&Math.max(num(q.a),num(q.b||0),num(q.c||0),q.ans)<=100,
+        3:q=>(q.op==='×'?num(q.a)<=10&&num(q.b)<=10:q.op==='÷'?num(q.b)<=10&&q.ans<=10:true)&&Math.max(num(q.a),num(q.b||0),num(q.c||0),q.ans)<=1000,
+        4:q=>(q.op==='÷'?num(q.b)<=12&&q.ans<=12:true)&&Math.max(num(q.a),num(q.b||0),num(q.c||0),q.ans)<=10000};
+      for(const L of [-1,0,1,2,3,4])for(const easy of [false,true]){let bad=0,ex='';for(let k=0;k<3000;k++){const q=TS.problem(L,easy);
+        if(easy&&L===-1&&q.n>5)bad++;else if(!easy&&L===-1&&q.n>8)bad++;else if(!rules[L](q)){bad++;ex=JSON.stringify(q)}}out[L+(easy?' checkpoint':' hint')]=[bad,ex]}
+      return out})()""")
+    for k, (bad, ex) in res.items():
+        check(bad == 0, f"Alberta maths for content grade {k}: 3000 questions in range {ex}")
+    pg.close()
 
     # Hints, pointer, talking
     pg = watch_errors(ctx.new_page(), errors)
@@ -117,7 +134,28 @@ with sync_playwright() as p:
     check(tp.evaluate("__learn.S.i") == 1, "touch: filling the ten frame finishes the round")
     tctx.close()
 
-    # ---------- Kindergarten on the home screen and in older games ----------
+    # ---------- lowercase letters really look lowercase; voice chooser; grade filter ----------
+    c3 = b.new_context(viewport={"width": 390, "height": 844}); c3.add_init_script(player(3, "g3"))
+    c3.add_init_script("window.__said=[];const S=window.speechSynthesis;if(S){S.speak=u=>window.__said.push(u.text);S.cancel=()=>{}}")
+    pg = watch_errors(c3.new_page(), errors); pg.goto(URL("case")); pg.wait_for_function("window.__learn && __learn.R", timeout=10000)
+    fam = pg.evaluate("getComputedStyle(document.querySelector('.lr-opt')).fontFamily")
+    texts = pg.evaluate("[...document.querySelectorAll('.lr-opt'),document.querySelector('.lr-prompt .big')].map(e=>e.textContent)")
+    check("Andika" in fam and "Bungee" not in fam, f"letter tiles use a font with real lowercase ({fam.split(',')[0]})")
+    check(any(t.islower() for t in texts) and any(t.isupper() for t in texts), f"Big & Little shows both big and little letters {texts}")
+    pg.screenshot(path=str(OUT / "learn-case-font.png"))
+    pg.click("#kLevels")
+    check(pg.locator("#lrVoice").is_visible() and pg.locator("#lrTest").is_visible(), "Levels menu has a voice chooser and Test button")
+    pg.click("#lrTest"); pg.wait_for_timeout(100)
+    check(any("read the questions" in x for x in pg.evaluate("window.__said")), "Test reads a sample sentence")
+    pg.close(); c3.close()
+    for grade, shows in ((3, True), (4, False), (7, False)):
+        cg = b.new_context(viewport={"width": 390, "height": 844}); cg.add_init_script(player(grade, f"h{grade}"))
+        hp = watch_errors(cg.new_page(), errors); hp.goto(HOME_URL); hp.wait_for_timeout(300)
+        n = hp.locator(".games[data-group='little'] .game").count()
+        check((n == 14) == shows and hp.locator(".games[data-group='puzzles'] .game").count() == 14,
+              f"grade {grade}: Little learners {'shown' if shows else 'hidden'} ({n}), puzzles shown")
+        cg.close()
+
     hc = b.new_context(viewport={"width": 390, "height": 844})
     hp = watch_errors(hc.new_page(), errors); hp.goto(HOME_URL); hp.wait_for_timeout(300)
     hp.fill("#fName", "Lily"); hp.click("#fGrades button:nth-child(1)"); hp.click("#formSave"); hp.wait_for_timeout(300)

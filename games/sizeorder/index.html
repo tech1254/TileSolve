@@ -15,19 +15,20 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Barlow:wght@400;600;700&display=swap">
-<link rel="stylesheet" href="../../shared/ts.css?v=cb83ca14">
-<link rel="stylesheet" href="../../shared/game.css?v=cb83ca14">
+<link rel="stylesheet" href="../../shared/ts.css?v=dcda29ed">
+<link rel="stylesheet" href="../../shared/game.css?v=dcda29ed">
 </head>
 <body>
-<script src="../../shared/ts.js?v=cb83ca14"></script>
-<script src="../../shared/kit.js?v=cb83ca14"></script>
-<link rel="stylesheet" href="../../shared/learn.css?v=cb83ca14">
-<script src="../../shared/learn.js?v=cb83ca14"></script>
+<script src="../../shared/ts.js?v=dcda29ed"></script>
+<script src="../../shared/kit.js?v=dcda29ed"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&display=swap">
+<link rel="stylesheet" href="../../shared/learn.css?v=dcda29ed">
+<script src="../../shared/learn.js?v=dcda29ed"></script>
 <script>
 (()=>{const U=TS_LEARN.util;
 TS_LEARN({id:"sizeorder",name:"Size Order",howto:[["📏", "The pictures are different sizes."], ["👂", "Listen: smallest first, or biggest first?"], ["👆", "Tap them in that order."], ["🔊", "Tap the speaker to hear it again."]],
-make(n,i,r,a){const k=a<=0?(n<=20?3:4):a===1?(n<=15?4:5):(n<=15?5:6),desc=((a<=0&&n>25)||(a>=1&&n>10))&&i%2===1;
-  const step=a<=0?.22:a===1?.13:.09,grid=[];for(let v=.3;v<=1.0001;v+=step)grid.push(+v.toFixed(3));
+make(n,i,r,a){const k=a<0?(n<=15?2:3):a===0?(n<=20?3:4):a===1?(n<=15?4:5):(n<=15?5:6),desc=((a<=0&&n>25)||(a>=1&&n>10))&&i%2===1;
+  const step=a<0?.32:a===0?.22:a===1?.13:.09,grid=[];for(let v=.3;v<=1.0001;v+=step)grid.push(+v.toFixed(3));
   const vals=U.sample(r,grid,Math.min(k,grid.length)),mode=a<=0?"emoji":a===1?(i%2===0?"emoji":"bar"):(i%2===0?"bar":"vbar");
   const em=U.pick(r,["🐘","🍎","⭐","🐻","🌳","🎈","🐟","🏠"]),col=U.pick(r,U.SHAPE_COLS);
   const html=v=>mode==="emoji"?'<span class="sz" style="font-size:calc(var(--ts) * '+(v*.78).toFixed(2)+')">'+em+"</span>":mode==="bar"?'<span class="sz"><i class="bar" style="width:'+Math.round(v*92)+"%;--c:"+col+'"></i></span>':

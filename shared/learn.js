@@ -1,5 +1,7 @@
 /* Tile Solve "Little learners" engine (Kindergarten to grade 2), built on the game kit (shared/kit.js).
-   Each level is a short run of rounds. A game supplies make(level, roundIndex, rng, age) that returns one round:
+   Each level is a short run of rounds. A game supplies make(level, roundIndex, rng, a) that returns one round.
+   "a" is the CONTENT grade: the grade before the player's grade, matched to Alberta's K-6 outcomes
+   (-1 = pre-K for Kindergarten players, 0 = Kindergarten for grade 1 players, 1 = grade 1 for grade 2 players...):
      pick  {type:"pick", say, prompt, options:[{key,html,aria?,say?}], answer, cols?}      tap the right answer
      order {type:"order", say, prompt, tiles:[{key,html,aria?,say?}], answer:[keys], size?} tap tiles in order
      sort  {type:"sort", say, prompt, bins:[{key,html,label?}], items:[{key,html,aria?}]}   item.key = its bin
@@ -18,7 +20,8 @@ window.TS_LEARN=function(o){
   function next(){if(!S)return;
     if(S.i>=S.total){const st=S.miss<=1?3:S.miss<=3?2:1;
       K.win({stars:st,text:S.total+" rounds · "+(S.miss?S.miss+" oops":"no oops")+(st===3?" · superstar!":"")});TS.say(st===3?"Great job, superstar!":"Well done!");return}
-    R=o.make(S.n,S.i,S.rng,K.age);R.done=false;dots();$("lrPrompt").innerHTML=R.prompt||"";K.tip(R.text||R.say||"");
+    // content comes from the grade BEFORE the player's grade (Kindergarten -> pre-K = -1)
+    R=o.make(S.n,S.i,S.rng,K.age-1);R.done=false;dots();$("lrPrompt").innerHTML=R.prompt||"";K.tip(R.text||R.say||"");
     const b=$("lrBody");b.innerHTML="";b.className="lr-body lr-"+R.type;b.removeAttribute("style");TYPES[R.type].draw(b);TS.say(R.say);stats()}
   function dots(){$("lrDots").innerHTML=Array.from({length:S.total},(_,k)=>'<i class="'+(k<S.i?"done":k===S.i?"cur":"")+'"></i>').join("")}
   function stats(){K.stat(Math.min(S.i+1,S.total)+"/"+S.total,"Round");K.sub("Oops "+S.miss)}
@@ -116,8 +119,15 @@ window.TS_LEARN=function(o){
   K=TS_KIT({id:o.id,name:o.name,levels:40,howto:o.howto,start,hint,label:o.label||(()=>""),point:()=>R&&TYPES[R.type].target(body())});
   // Talking on/off lives in the Levels menu.
   const all=document.getElementById("kAll").closest("label");
-  all.insertAdjacentHTML("beforebegin",'<label class="toggle"><input type="checkbox" id="lrTalk"> 🗣️ Read things out loud</label>');
+  all.insertAdjacentHTML("beforebegin",'<label class="toggle"><input type="checkbox" id="lrTalk"> 🗣️ Read things out loud</label>'+
+    '<div class="lr-voice"><label for="lrVoice">Voice</label><select id="lrVoice"></select><button class="chip" type="button" id="lrTest">▶ Test</button></div>'+
+    '<p class="lr-vtip">Voices come from this device. For a more natural voice: on iPad/iPhone, Settings › Accessibility › Spoken Content › Voices › English, and download an \"Enhanced\" or \"Premium\" voice. On Android, Settings › Text-to-speech › Google, and install voice data.</p>');
   const tk=document.getElementById("lrTalk");tk.checked=TS.talk.on;tk.onchange=()=>{TS.talk.set(tk.checked)};
+  const vs=document.getElementById("lrVoice");
+  function fillVoices(){const list=TS.talk.voices(),cur=TS.talk.voice;vs.innerHTML=list.length?list.map((v,k)=>'<option value="'+v.uri.replace(/"/g,"&quot;")+'"'+(v.uri===cur?" selected":"")+">"+(k===0?"⭐ ":"")+v.name+" ("+v.lang+")</option>").join(""):"<option>No voices on this device</option>"}
+  fillVoices();try{speechSynthesis.addEventListener("voiceschanged",fillVoices)}catch(e){}
+  document.getElementById("kLevels").addEventListener("click",fillVoices);
+  vs.onchange=()=>{TS.talk.setVoice(vs.value);TS.talk.test()};document.getElementById("lrTest").onclick=()=>TS.talk.test();
   window.__learn={get R(){return R},get S(){return S},K,make:o.make,solve(){TYPES[R.type].solve(body())},target:()=>TYPES[R.type].target(body())};// for tools/test_learn.py
   K.start();return K};
 

@@ -1,3 +1,6 @@
+/* Letters and numbers use Andika, a font made for children learning to read, with true lowercase letters
+   (the pack's display font is capitals only, so a little "a" would look like "A"). */
+:root{--font-kid:"Andika","Verdana","Trebuchet MS",sans-serif}
 /* Little learners (K-2) round layouts. Big, bright, easy to tap. */
 .lr-dots{display:flex;gap:7px;justify-content:center}
 .lr-dots i{width:13px;height:13px;border-radius:50%;background:var(--lane);transition:transform .2s}
@@ -5,18 +8,18 @@
 .lr-dots i.cur{background:var(--paint);transform:scale(1.25)}
 .lr-head{display:flex;align-items:center;gap:12px;justify-content:center;width:100%;max-width:680px}
 .lr-say{flex:none;width:54px;height:54px;border-radius:50%;border:2px solid var(--lane);background:var(--panel);font-size:26px;cursor:pointer;touch-action:manipulation}
-.lr-prompt{flex:1;min-width:0;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:8px;font-family:var(--font-sign);font-size:clamp(26px,7.5vw,44px);
+.lr-prompt{flex:1;min-width:0;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:8px;font-family:var(--font-kid);font-weight:700;font-size:clamp(26px,7.5vw,44px);
   text-align:center;min-height:58px;line-height:1.15}
 .lr-prompt .ask{font-family:var(--font-body);font-weight:700;font-size:clamp(17px,4.6vw,22px);flex-basis:100%}
 .lr-prompt .big{font-size:clamp(60px,20vw,110px);line-height:1;font-family:var(--font-body)}
 .lr-prompt .seq{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
-.lr-prompt .seq b{min-width:1.35em;padding:2px 6px;border-radius:12px;background:#f6f1e3;color:#1d2230;font-weight:400}
+.lr-prompt .seq b{min-width:1.35em;padding:2px 6px;border-radius:12px;background:#f6f1e3;color:#1d2230;font-weight:700}
 .lr-prompt .seq b.q{background:transparent;border:3px dashed var(--paint);color:var(--paint)}
 .lr-prompt .word{font-family:var(--font-body);font-weight:700;letter-spacing:.06em}
 .lr-body{width:100%;max-width:700px;display:flex;flex-direction:column;align-items:center;gap:16px}
 /* pick */
 .lr-body.lr-pick{display:grid;grid-template-columns:repeat(var(--cols),minmax(0,1fr));gap:12px;max-width:560px}
-.lr-opt{min-height:86px;border-radius:20px;border:3px solid #d8cfb9;background:#f6f1e3;color:#1d2230;font-family:var(--font-sign);font-size:clamp(30px,9vw,50px);
+.lr-opt{min-height:86px;border-radius:20px;border:3px solid #d8cfb9;background:#f6f1e3;color:#1d2230;font-family:var(--font-kid);font-weight:700;font-size:clamp(34px,10vw,56px);
   cursor:pointer;display:grid;place-items:center;padding:8px;box-shadow:inset 0 -6px 0 rgba(0,0,0,.1);touch-action:manipulation;line-height:1}
 .lr-opt:active{transform:scale(.97)}
 .lr-opt.lr-yes{border-color:var(--good);background:#d9f2cc}
@@ -27,7 +30,7 @@
 @keyframes lrhint{50%{transform:scale(1.08)}}
 /* order */
 .lr-slots,.lr-tray{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;max-width:680px}
-.lr-slot,.lr-tile{width:var(--ts,64px);height:var(--ts,64px);border-radius:16px;display:grid;place-items:center;font-family:var(--font-sign);font-size:calc(var(--ts,64px)*.48);line-height:1;box-sizing:border-box}
+.lr-slot,.lr-tile{width:var(--ts,64px);height:var(--ts,64px);border-radius:16px;display:grid;place-items:center;font-family:var(--font-kid);font-weight:700;font-size:calc(var(--ts,64px)*.56);line-height:1;box-sizing:border-box}
 .lr-slot{border:3px dashed var(--lane);color:#1d2230;position:relative}
 .lr-slot::before{content:attr(data-n);position:absolute;top:2px;left:6px;font:600 11px var(--font-body);color:var(--muted)}
 .lr-slot.full{border:0;background:#d9f2cc}
@@ -95,6 +98,9 @@
 .lr-cheer{position:fixed;left:50%;top:42%;z-index:35;font-size:110px;pointer-events:none;transform:translate(-50%,-50%) scale(.2);animation:lrpop .9s ease forwards}
 @keyframes lrpop{30%{transform:translate(-50%,-50%) scale(1.15)}70%{transform:translate(-50%,-60%) scale(1)}100%{transform:translate(-50%,-90%) scale(.9);opacity:0}}
 @media (prefers-reduced-motion:reduce){.lr-hint,.lr-no,.lr-cheer{animation:none}.lr-cheer{display:none}}
-.lr-prompt .big.l{font-family:var(--font-sign);font-size:clamp(64px,20vw,110px)}
+.lr-prompt .big.l{font-family:var(--font-kid);font-weight:700;font-size:clamp(64px,20vw,110px)}
 .lr-prompt .lr-shp.ic{width:1.6em;height:1.6em;vertical-align:middle}
 .lr-binhead .sides{display:grid;place-items:center;width:58px;height:58px;border-radius:50%;background:#f6f1e3;color:#1d2230;font:400 32px var(--font-sign)}
+.lr-voice{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center;font-size:14px;color:var(--muted);font-weight:600}
+.lr-voice select{min-width:0;background:var(--asphalt);color:var(--text);border:1px solid var(--lane);border-radius:10px;padding:8px;font:inherit;font-size:14px}
+.lr-vtip{margin:0;font-size:12px;color:var(--muted);line-height:1.35}

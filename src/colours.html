@@ -10,8 +10,8 @@
 (()=>{const U=TS_LEARN.util;
 TS_LEARN({id:"colours",name:"Colour Match",howto:[["🎨", "Each round is about colours."], ["👆", "Tap the right colour, or sort shapes into the basket of the same colour."], ["📖", "Later you read the colour word yourself!"], ["🔊", "Tap the speaker to hear it again."]],
 make(n,i,r,a){const COL=U.COLOURS,K=["circle","square","triangle","star","heart","diamond"];
-  const NAMES=a<=0?["red","blue","green","yellow"]:a===1?["red","blue","green","yellow","orange","purple","pink","brown"]:Object.keys(COL);
-  if((a<=0&&n<=15)||i%2===0){const cs=U.sample(r,NAMES,a<=0?3:4),t=cs[0],stroop=a>=2&&n>20,ink=stroop?U.pick(r,cs.slice(1)):null;
+  const NAMES=a<0?["red","blue","yellow","green"].slice(0,n<=15?3:4):a===0?["red","blue","green","yellow"]:a===1?["red","blue","green","yellow","orange","purple","pink","brown"]:Object.keys(COL);
+  if(a<0||(a===0&&n<=15)||i%2===0){const cs=U.sample(r,NAMES,a<0?(n<=15?2:3):a===0?3:4),t=cs[0],stroop=a>=2&&n>20,ink=stroop?U.pick(r,cs.slice(1)):null;
     const prompt=a<=0?'<span class="ask">Tap the '+t+" one</span>":'<span class="ask">'+(stroop?"Tap the colour the word SAYS":"Read the word. Tap that colour.")+'</span><span class="word" style="color:'+(stroop?COL[ink]:"#e9edf1")+'">'+t.toUpperCase()+"</span>";
     return{type:"pick",say:a<=0?"Tap the "+t+" one.":stroop?"Tap the colour the word says, not the colour of the letters.":"Read the colour word, then tap that colour.",prompt,
       options:U.shuffle(r,cs).map(c=>({key:c,html:U.shape(U.pick(r,K),COL[c]),aria:c,say:c})),answer:t}}

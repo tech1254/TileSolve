@@ -15,14 +15,15 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Barlow:wght@400;600;700&display=swap">
-<link rel="stylesheet" href="../../shared/ts.css?v=cb83ca14">
-<link rel="stylesheet" href="../../shared/game.css?v=cb83ca14">
+<link rel="stylesheet" href="../../shared/ts.css?v=dcda29ed">
+<link rel="stylesheet" href="../../shared/game.css?v=dcda29ed">
 </head>
 <body>
-<script src="../../shared/ts.js?v=cb83ca14"></script>
-<script src="../../shared/kit.js?v=cb83ca14"></script>
-<link rel="stylesheet" href="../../shared/learn.css?v=cb83ca14">
-<script src="../../shared/learn.js?v=cb83ca14"></script>
+<script src="../../shared/ts.js?v=dcda29ed"></script>
+<script src="../../shared/kit.js?v=dcda29ed"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&display=swap">
+<link rel="stylesheet" href="../../shared/learn.css?v=dcda29ed">
+<script src="../../shared/learn.js?v=dcda29ed"></script>
 <script>
 (()=>{const U=TS_LEARN.util;
 TS_LEARN({id:"sound",name:"First Sound",howto:[["🖼️", "Look at the picture and listen to the word."], ["👂", "What sound does it start with?"], ["👆", "Tap the letter it starts with."], ["🔊", "Tap the speaker to hear the word again."]],
@@ -32,8 +33,11 @@ make(n,i,r,a){const W=("apple🍎 ant🐜 alligator🐊|ball⚽ bee🐝 bear🐻
     "nest🪺 nose👃 nut🥜 net🥅|octopus🐙 otter🦦 ox🐂|pig🐷 pizza🍕 panda🐼 pear🍐 penguin🐧|queen👸|rabbit🐰 rocket🚀 rainbow🌈 robot🤖 ring💍|"+
     "sun☀️ snake🐍 sock🧦 star⭐ seal🦭|tiger🐯 tree🌳 turtle🐢 train🚆 tooth🦷|umbrella☂️ up⬆️|van🚐 violin🎻 volcano🌋|whale🐳 watermelon🍉 web🕸️ worm🪱 watch⌚|"+
     "yo-yo🪀 yarn🧶|zebra🦓 zero0️⃣").split("|").map(g=>g.split(" ").map(s=>{const m=s.match(/^([a-z-]+)(.+)$/);return{w:m[1],e:m[2]}}));
-  const easy="smtapbcdfln",pool=W.filter(g=>a>0||n>15||easy.includes(g[0].w[0])),word=U.pick(r,U.pick(r,pool)),l=word.w[0];
-  const count=a<=0?3:4,lower=a>=2||(a===1&&n>20),letters="abcdefghijklmnopqrstuvwyz".split("").filter(x=>x!==l),opts=[l,...U.sample(r,letters,count-1)];
+  const DG=[["sh","sheep🐑 shell🐚 shoe👟 ship🚢 shark🦈"],["ch","chick🐤 cheese🧀 cherry🍒 chair🪑"],["th","thumb👍 three3️⃣ thread🧵"]];
+  if(a>=1&&n>20&&i%2===1){const[d,ws]=U.pick(r,DG),word=U.pick(r,ws.split(" ")).match(/^([a-z]+)(.+)$/),opts=[d,...DG.map(x=>x[0]).filter(x=>x!==d),d[0]];
+    return{type:"pick",say:word[1]+". What sound does "+word[1]+" start with?",prompt:'<span class="big">'+word[2]+"</span>",options:U.shuffle(r,opts).map(x=>({key:x,html:x})),answer:d}}
+  const easy="smtapbcdfln",pool=W.filter(g=>a>0||(a===0&&n>15)||easy.includes(g[0].w[0])),word=U.pick(r,U.pick(r,pool)),l=word.w[0];
+  const count=a<0?(n<=15?2:3):a===0?3:4,lower=a>=2||(a===1&&n>20),letters="abcdefghijklmnopqrstuvwyz".split("").filter(x=>x!==l),opts=[l,...U.sample(r,letters,count-1)];
   const f=x=>lower?x:x.toUpperCase(),blank=a>=2||(a===1&&n>25);
   return{type:"pick",say:word.w.replace("-"," ")+". What sound does "+word.w.replace("-"," ")+" start with?",
     prompt:'<span class="big">'+word.e+"</span>"+(blank?'<span class="word">_'+word.w.slice(1)+"</span>":""),

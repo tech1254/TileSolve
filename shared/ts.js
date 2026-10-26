@@ -102,37 +102,50 @@ const MUSIC_SVG='<svg class="on" viewBox="0 0 24 24" fill="none" stroke="current
   '<svg class="off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/><path d="M3 3l18 18"/></svg>';
 
 /* ---------- maths: hint questions and level checkpoints ----------
-   Hint questions sit one grade below the player's grade (grade 3 gets grade 2 maths: adding and taking away within 100).
-   Checkpoints (before every 3rd new level) use an easier set from the same level: no carrying or borrowing,
-   smaller times tables. Three tries at the same question; after the third miss the answer is shown and a new
-   question appears. Closing a hint question keeps it and its tries, so it can't be skipped for an easier one. */
+   Calibrated to the Alberta K-6 mathematics curriculum (2022). Kids pick their CURRENT grade, but part way through
+   the year they may not have learned it yet, so questions come from the PREVIOUS grade's outcomes:
+     Kindergarten player -> pre-K: count pictures (checkpoint 1-5, hint 2-8)
+     Grade 1 -> Kindergarten: quantities to 10 (add/take away within 10, make 10)
+     Grade 2 -> Grade 1: addition facts to 20 and related subtraction
+     Grade 3 -> Grade 2: add and subtract within 100
+     Grade 4 -> Grade 3: add/subtract within 1000, multiplication facts to 10 x 10 and related division
+     Grade 5 -> Grade 4: facts to 12 x 12, 3-digit x 1-digit, add/subtract within 10 000
+     Grade 6 -> Grade 5: 3-digit x 2-digit, 3-digit / 1-digit, larger sums
+     Grade 7+ -> Grade 6: multiply/divide by 2-digit numbers, percent of a number
+   Checkpoints (before every 3rd new level) use an easier set from the same grade. Three tries at the same question;
+   after the third miss the answer is shown and a new question appears. Closing a hint question keeps it, so it
+   can't be skipped for an easier one. */
 function problem(level,easy){const ri=(a,b)=>a+Math.floor(Math.random()*(b-a+1)),pick=a=>a[Math.floor(Math.random()*a.length)];
-  if(level<=0){const n=easy?ri(1,5):ri(2,10),em=pick(["🍎","⭐","🐟","🎈","🐞","🍪","🌸","🚗","🦆","🍓"]);return{slot:"n",em,n,ans:n}} // Kindergarten: count the pictures
+  if(level<0){const n=easy?ri(1,5):ri(2,8),em=pick(["🍎","⭐","🐟","🎈","🐞","🍪","🌸","🚗","🦆","🍓"]);return{slot:"n",em,n,ans:n}} // pre-K: count the pictures
   const op=(a,o,b,ans)=>({a,op:o,b,ans,slot:"c"}),add=(a,b)=>op(a,"+",b,a+b),sub=(a,b)=>op(a,"−",b,a-b),
-    mul=(a,b)=>op(a,"×",b,a*b),div=(q,b)=>op(q*b,"÷",b,q),miss=(a,c)=>({a,op:"+",c,ans:c-a,slot:"b"});
+    mul=(a,b)=>op(a,"×",b,a*b),div=(q,b)=>op(q*b,"÷",b,q),miss=(a,c)=>({a,op:"+",c,ans:c-a,slot:"b"}),pct=(p,of)=>op(p+"%","of",of,p*of/100);
   // two-digit ± one-digit with no carrying/borrowing (e.g. 43 + 5, 68 − 3)
   const noCarryAdd=()=>{const t=10*ri(1,8),u=ri(0,8),b=ri(1,9-u);return add(t+u,b)},noBorrowSub=()=>{const t=10*ri(1,9),u=ri(1,9),b=ri(1,u);return sub(t+u,b)};
   const T={
-    1:[()=>add(ri(1,10),ri(1,10)),()=>{const a=ri(5,20);return sub(a,ri(1,Math.min(10,a)))},()=>{const a=ri(1,9);return miss(a,ri(a+1,Math.min(20,a+10)))}],
+    0:[()=>{const a=ri(1,9);return add(a,ri(1,10-a))},()=>{const a=ri(2,10);return sub(a,ri(1,a-1))},()=>{const a=ri(1,9);return miss(a,10)},()=>{const a=ri(1,5);return miss(a,ri(a+1,10))}],
+    1:[()=>add(ri(1,10),ri(1,10)),()=>{const a=ri(5,20);return sub(a,ri(1,Math.min(10,a)))},()=>{const a=ri(1,9);return miss(a,ri(a+1,Math.min(20,a+10)))},()=>{const a=ri(2,9);return add(a,a)}],
     2:[()=>{const b=ri(3,9);return add(ri(11,99-b),b)},()=>{const a=ri(10,79);return add(a,ri(10,99-a))},()=>sub(ri(12,99),ri(3,9)),
        ()=>{const a=ri(25,99);return sub(a,ri(10,a-5))},()=>{const a=ri(3,9);return miss(a,ri(a+3,a+9))},()=>{const a=10*ri(1,7);return miss(a,10*ri(a/10+1,9))}],
-    3:[()=>{const a=ri(100,800);return add(a,ri(10,999-a))},()=>{const a=ri(200,999);return sub(a,ri(10,a-50))},()=>mul(pick([2,5,10]),ri(1,10)),
-       ()=>mul(ri(2,5),ri(2,9)),()=>{const a=10*ri(2,40);return miss(a,a+10*ri(5,50))}],
-    4:[()=>mul(ri(2,10),ri(2,10)),()=>div(ri(2,10),ri(2,10)),()=>{const a=ri(300,999);return sub(a,ri(100,a-20))},()=>mul(ri(11,30),pick([2,3,4,5]))],
-    5:[()=>mul(ri(12,99),ri(2,9)),()=>div(ri(2,12),ri(2,12)),()=>{const a=ri(1000,8999);return add(a,ri(100,9999-a))},()=>mul(ri(2,12),ri(2,12))],
-    6:[()=>mul(ri(12,99),ri(3,9)),()=>div(ri(6,25),ri(3,9)),()=>{const a=ri(2000,9999);return sub(a,ri(500,a-100))},()=>mul(ri(11,25),ri(11,19))]};
+    3:[()=>mul(ri(2,10),ri(2,10)),()=>div(ri(2,10),ri(2,10)),()=>{const a=ri(100,800);return add(a,ri(10,999-a))},()=>{const a=ri(200,999);return sub(a,ri(10,a-50))},
+       ()=>{const a=10*ri(2,40);return miss(a,a+10*ri(5,50))}],
+    4:[()=>mul(ri(2,12),ri(2,12)),()=>div(ri(2,12),ri(2,12)),()=>mul(ri(100,999),ri(2,9)),()=>{const a=ri(1000,8999);return add(a,ri(100,9999-a))},
+       ()=>{const a=ri(2000,9999);return sub(a,ri(500,a-100))},()=>mul(ri(11,99),pick([10,100]))],
+    5:[()=>mul(ri(100,999),ri(11,99)),()=>div(ri(12,199),ri(2,9)),()=>mul(ri(12,99),ri(3,9)),()=>{const a=ri(10000,899999);return add(a,ri(1000,999999-a))},
+       ()=>mul(ri(2,12),ri(2,12))],
+    6:[()=>mul(ri(100,999),ri(11,99)),()=>div(ri(11,99),ri(11,40)),()=>pct(pick([10,20,25,50,75]),20*ri(1,20)),()=>{const a=ri(20000,999999);return sub(a,ri(1000,a-1000))}]};
   const E={ // a little easier than the hint questions at the same level
-    1:[()=>add(ri(1,5),ri(1,5)),()=>{const a=ri(3,10);return sub(a,ri(1,a-1))},()=>{const a=ri(1,5);return miss(a,ri(a+1,10))}],
+    0:[()=>{const a=ri(1,4);return add(a,ri(1,5-a))},()=>{const a=ri(2,5);return sub(a,ri(1,a-1))},()=>{const a=ri(1,9);return add(a,1)}],
+    1:[()=>{const a=ri(1,9);return add(a,ri(1,10-a))},()=>{const a=ri(3,10);return sub(a,ri(1,a-1))},()=>{const a=ri(1,5);return miss(a,ri(a+1,10))},()=>add(10,ri(1,10))],
     2:[noCarryAdd,noBorrowSub,()=>{const a=10*ri(1,8);return add(a,10*ri(1,9-a/10))},()=>{const a=10*ri(3,9);return sub(a,10*ri(1,a/10-1))},()=>{const a=ri(2,9);return add(a,a)},
        ()=>{const a=ri(2,9);return miss(a,ri(a+2,Math.min(20,a+9)))}],
-    3:[()=>{const a=10*ri(1,7)+ri(0,4),b=10*ri(1,8-Math.floor(a/10))+ri(0,5);return add(a,b)},()=>mul(pick([2,5,10]),ri(1,10)),noBorrowSub,()=>{const a=100*ri(1,8);return add(a,100*ri(1,9-a/100))}],
-    4:[()=>mul(ri(2,6),ri(2,6)),()=>div(ri(2,5),ri(2,5)),()=>mul(pick([2,5,10]),ri(2,12)),()=>{const a=10*ri(20,90);return sub(a,10*ri(1,15))}],
-    5:[()=>mul(ri(2,10),ri(2,10)),()=>div(ri(2,10),ri(2,5)),()=>mul(ri(11,20),pick([2,3]))],
-    6:[()=>mul(ri(2,12),ri(2,12)),()=>div(ri(2,10),ri(2,10)),()=>mul(ri(12,40),pick([2,3,4]))]};
+    3:[()=>mul(pick([2,5,10]),ri(1,10)),()=>{const a=100*ri(1,8);return add(a,100*ri(1,9-a/100))},()=>{const a=10*ri(1,7)+ri(0,4),b=10*ri(1,8-Math.floor(a/10))+ri(0,5);return add(a,b)},()=>div(ri(1,10),pick([2,5,10]))],
+    4:[()=>mul(ri(2,10),ri(2,10)),()=>div(ri(2,10),ri(2,10)),()=>mul(ri(11,99),10),()=>{const a=100*ri(10,80);return add(a,100*ri(1,19))}],
+    5:[()=>mul(ri(2,12),ri(2,12)),()=>div(ri(2,12),ri(2,12)),()=>mul(ri(12,99),ri(2,5))],
+    6:[()=>mul(ri(2,12),ri(2,12)),()=>mul(ri(12,99),ri(2,9)),()=>pct(pick([10,50]),10*ri(1,20))]};
   // Weight the first kinds a little more so the gentlest question type comes up often.
-  const list=(easy?E:T)[Math.max(1,Math.min(6,level))];return pick(list.concat([list[0]]))()}
-// Kindergarten (0) gets counting questions; grade 1 gets grade 1 maths; older grades get one grade below.
-const mathLevel=()=>{const p=players.current(),g=p?gnum(p.grade):3;return g<=0?0:Math.max(1,Math.min(6,g-1))};
+  const list=(easy?E:T)[Math.max(0,Math.min(6,level))];return pick(list.concat([list[0]]))()}
+// Questions come from the grade BEFORE the player's grade (Kindergarten players get pre-K counting: level -1).
+const mathLevel=()=>{const p=players.current(),g=p?gnum(p.grade):3;return Math.max(-1,Math.min(6,g-1))};
 
 const math=(()=>{
   const blank=()=>({q:null,lvl:0,tries:3,entry:"",lock:false,mark:"",done:null}),Ms={hint:blank(),check:blank()};let M=Ms.hint,kind="hint",el=null;
@@ -175,7 +188,7 @@ const math=(()=>{
     setTimeout(()=>{newQ();M.lock=false;render();fb("");if(M.q.slot==="n")talk.say("How many are there?")},2400)}
   function press(k){if(M.lock)return;
     if(k==="ok")return check();
-    if(k==="del")M.entry=M.entry.slice(0,-1);else if(M.entry.length<4)M.entry=(M.entry+k).replace(/^0+(?=\d)/,"");
+    if(k==="del")M.entry=M.entry.slice(0,-1);else if(M.entry.length<6)M.entry=(M.entry+k).replace(/^0+(?=\d)/,"");
     M.mark="";render();if(M.entry)fb(left())}
   return{open,close,get isOpen(){return !!el&&!el.hidden},get kind(){return kind}}})();
 
@@ -194,13 +207,26 @@ const gate={
    TS.talk.on / TS.talk.set(bool) is a shared on/off setting. */
 const talk=(()=>{let unlocked=false,pending=null,voice=null;
   const ok=()=>"speechSynthesis" in window&&"SpeechSynthesisUtterance" in window;
-  function pickVoice(){if(voice)return voice;try{const vs=speechSynthesis.getVoices();
-    voice=vs.find(v=>/en[-_]CA/i.test(v.lang))||vs.find(v=>/en[-_](US|GB|AU)/i.test(v.lang)&&/samantha|karen|female|google us/i.test(v.name))||vs.find(v=>/^en/i.test(v.lang))||null}catch(e){}return voice}
+  /* Voices differ by device. Rank English voices so the most natural-sounding one is used:
+     neural/natural/enhanced/premium voices first, then Siri and Google voices, Canadian English preferred;
+     joke voices (Zarvox, Bubbles...) are never picked. A parent can choose a different one in the Levels menu. */
+  const JOKE=/albert|bad news|bahh|bells|boing|bubbles|cellos|good news|jester|organ|superstar|trinoids|whisper|wobble|zarvox|fred|junior|ralph|kathy|grandpa|grandma|rocko|shelley|eddy|flo|reed|sandy/i;
+  function score(v){let s=0;const n=v.name||"",l=(v.lang||"").replace("_","-");
+    if(/^en-CA/i.test(l))s+=4;else if(/^en-(US|GB|AU|NZ|IE)/i.test(l))s+=2;else if(/^en/i.test(l))s+=1;else return -99;
+    if(/natural|neural|online/i.test(n))s+=8;if(/premium/i.test(n))s+=7;if(/enhanced/i.test(n))s+=6;if(/siri/i.test(n))s+=5;
+    if(/google/i.test(n))s+=4;if(/samantha|ava|allison|susan|zoe|nicky|karen|moira|tessa|serena/i.test(n))s+=2;if(JOKE.test(n))s-=50;return s}
+  function list(){if(!ok())return[];try{return speechSynthesis.getVoices().filter(v=>score(v)>-50).sort((a,b)=>score(b)-score(a))}catch(e){return[]}}
+  function pickVoice(){if(voice)return voice;const vs=list();voice=(data.voice&&vs.find(v=>v.voiceURI===data.voice))||vs[0]||null;return voice}
+  if(ok())try{speechSynthesis.addEventListener("voiceschanged",()=>{voice=null})}catch(e){}
   function speak(t){try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t),v=pickVoice();if(v){u.voice=v;u.lang=v.lang}else u.lang="en-CA";
-    u.rate=.85;u.pitch=1.1;speechSynthesis.speak(u)}catch(e){}}
+    u.rate=.92;u.pitch=1;speechSynthesis.speak(u)}catch(e){}}
   const api={get on(){return data.talk!==false},
     set(on){data.talk=!!on;persist();if(!on)try{speechSynthesis.cancel()}catch(e){}},
-    say(t){api.last=t;if(!t||!api.on||!ok())return;if(!unlocked){pending=t;return}speak(t)},last:""};
+    say(t){api.last=t;if(!t||!api.on||!ok())return;if(!unlocked){pending=t;return}speak(t)},last:"",
+    voices:()=>list().map(v=>({uri:v.voiceURI,name:v.name,lang:v.lang})),
+    get voice(){const v=pickVoice();return v?v.voiceURI:""},
+    setVoice(uri){data.voice=uri||null;persist();voice=null},
+    test(){unlocked=true;speak("Hi! I'll read the questions to you. Let's play!")}};
   const unlock=()=>{if(unlocked)return;unlocked=true;if(pending){const t=pending;pending=null;if(api.on&&ok())speak(t)}};
   addEventListener("pointerup",unlock,true);addEventListener("keydown",unlock,true);
   return api})();

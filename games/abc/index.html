@@ -15,14 +15,15 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Barlow:wght@400;600;700&display=swap">
-<link rel="stylesheet" href="../../shared/ts.css?v=cb83ca14">
-<link rel="stylesheet" href="../../shared/game.css?v=cb83ca14">
+<link rel="stylesheet" href="../../shared/ts.css?v=dcda29ed">
+<link rel="stylesheet" href="../../shared/game.css?v=dcda29ed">
 </head>
 <body>
-<script src="../../shared/ts.js?v=cb83ca14"></script>
-<script src="../../shared/kit.js?v=cb83ca14"></script>
-<link rel="stylesheet" href="../../shared/learn.css?v=cb83ca14">
-<script src="../../shared/learn.js?v=cb83ca14"></script>
+<script src="../../shared/ts.js?v=dcda29ed"></script>
+<script src="../../shared/kit.js?v=dcda29ed"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&display=swap">
+<link rel="stylesheet" href="../../shared/learn.css?v=dcda29ed">
+<script src="../../shared/learn.js?v=dcda29ed"></script>
 <script>
 (()=>{const U=TS_LEARN.util;
 TS_LEARN({id:"abc",name:"ABC Order",howto:[["🔤", "Letters are mixed up."], ["👆", "Tap the letters in ABC order: A, then B, then C..."], ["✅", "Fill every box to finish the round."], ["🔊", "Tap the speaker to hear it again."]],
@@ -39,7 +40,8 @@ make(n,i,r,a){const UP="ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     return{type:"order",wide:true,say:"Put the words in A B C order.",prompt:'<span class="ask">Put the words in ABC order</span>',
       tiles:U.mix(r,ws).map(w=>({key:w[0],html:w[1]+" "+w[0],say:w[0]})),answer:ans}}
   let len,start,lower;
-  if(a<=0){len=Math.min(7,3+Math.floor((n-1)/8));start=n<=12?0:U.ri(r,0,26-len);lower=false}
+  if(a<0){len=n<=20?3:n<=32?4:5;start=0;lower=false}
+  else if(a===0){len=Math.min(7,3+Math.floor((n-1)/8));start=n<=12?0:U.ri(r,0,26-len);lower=false}
   else if(a===1){len=Math.min(10,5+Math.floor((n-1)/8));start=U.ri(r,0,26-len);lower=n>20}
   else{len=U.ri(r,8,10);start=U.ri(r,0,26-len);lower=n>8}
   const seq=UP.slice(start,start+len).split("").map(c=>lower?c.toLowerCase():c);

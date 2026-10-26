@@ -15,7 +15,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Barlow:wght@400;600;700&display=swap">
-<link rel="stylesheet" href="shared/ts.css?v=cb83ca14">
+<link rel="stylesheet" href="shared/ts.css?v=dcda29ed">
 <style>
 body{overflow-y:auto}
 .app{min-height:100%;max-width:760px;margin:0 auto;box-sizing:border-box;display:flex;flex-direction:column;gap:22px;
@@ -122,7 +122,7 @@ h1{font-family:var(--font-sign);font-weight:400;font-size:clamp(26px,6vw,36px);m
   </form>
 </div>
 
-<script src="shared/ts.js?v=cb83ca14"></script>
+<script src="shared/ts.js?v=dcda29ed"></script>
 <script>
 (()=>{
 const{players,music}=TS,$=id=>document.getElementById(id);
@@ -181,7 +181,9 @@ function drawPlayers(){const g=$("playerGrid");g.innerHTML="";g.classList.toggle
 
 /* Two sections: Little learners (K-2) and Puzzles. Younger players see their section first. */
 function drawGames(){const g=$("gameGrid");g.innerHTML="";const cur=players.current(),young=cur&&TS.players.gnum(cur.grade)<=2;
-  const secs=[["little","Little learners","Kindergarten to grade 2"],["puzzles","Puzzles","Every grade"]];if(!young)secs.reverse();
+  // Little learners (letters, counting, shapes) only show for Kindergarten to grade 3.
+  const g0=cur?TS.players.gnum(cur.grade):3;let secs=[["little","Little learners","Kindergarten to grade 3"],["puzzles","Puzzles","Every grade"]];
+  if(g0>3)secs=secs.filter(x=>x[0]!=="little");else if(!young)secs.reverse();
   secs.forEach(([key,title,sub])=>{const h=document.createElement("h2");h.innerHTML=title+" <small>"+sub+"</small>";g.appendChild(h);
     const grid=document.createElement("div");grid.className="games";grid.dataset.group=key;g.appendChild(grid);
     GAMES.filter(x=>(x.group||"puzzles")===key).forEach(x=>drawGame(grid,x))})}

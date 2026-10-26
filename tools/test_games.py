@@ -123,7 +123,7 @@ with sync_playwright() as p:
     pg.screenshot(path=str(OUT / "flood-win.png"))
     pg.click("#kWinNext"); pg.wait_for_timeout(300)
     for _ in range(60):
-        if pg.is_visible("#kSheetWin"): break
+        if pg.is_visible("#kSheetWin") or pg.evaluate("__game.K.busy"): break   # busy = round over, card about to show
         cur = pg.evaluate("__game.S.g[0]"); pg.click(f"#pal button[data-c='{(cur+1)%2}']"); pg.wait_for_timeout(40)
     pg.wait_for_timeout(700)
     check(pg.is_visible("#kSheetWin") and "Out of moves" in pg.text_content("#kWinTitle"), "running out of moves: try again")

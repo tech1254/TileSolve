@@ -11,14 +11,15 @@
 TS_LEARN({id:"shapehunt",name:"Shape Hunt",howto:[["🔍", "Lots of shapes are mixed up."], ["👂", "Listen for which shape to find."], ["👆", "Tap every one of them!"], ["🔊", "Tap the speaker to hear it again."]],
 make(n,i,r,a){const C=U.SHAPE_COLS,PL={circle:"circles",oval:"ovals",square:"squares",rectangle:"rectangles",triangle:"triangles",star:"stars",heart:"hearts",diamond:"diamonds",pentagon:"pentagons",hexagon:"hexagons"};
   let cols,rows,kinds,bySides=false;
-  if(a<=0){cols=3;rows=n<=15?3:4;kinds=n<=15?["circle","square","triangle"]:["circle","square","triangle","star","heart"]}
+  if(a<0){cols=3;rows=2;kinds=["circle","square","triangle"]}
+  else if(a===0){cols=3;rows=n<=15?3:4;kinds=n<=15?["circle","square","triangle"]:["circle","square","triangle","star","heart"]}
   else if(a===1){cols=4;rows=4;kinds=["circle","square","triangle","rectangle","oval","star","heart"]}
   else{cols=4;rows=5;kinds=["triangle","square","rectangle","diamond","pentagon","hexagon","circle","oval"];bySides=n>15}
   const N=cols*rows,rot=k=>a<=0?0:k==="square"||k==="diamond"||k==="rectangle"?U.pick(r,[0,90]):U.ri(r,0,359);
   const cell=(k,ok)=>({html:U.shape(k,U.pick(r,C),rot(k),.65+.35*r()),ok,aria:k});let cells=[],say,ask;
   if(bySides){const s=U.pick(r,[3,4,5,6]),T=U.ri(r,3,6);const yes=kinds.filter(k=>U.SIDES[k]===s),no=kinds.filter(k=>U.SIDES[k]!==s);
     for(let k=0;k<N;k++){const ok=k<T;cells.push(cell(U.pick(r,ok?yes:no),ok))}say="Tap all the shapes with "+s+" sides.";ask="Tap all shapes with "+s+" sides"}
-  else{const t=U.pick(r,kinds),T=U.ri(r,2,Math.min(5,Math.floor(N/3))),LIKE={square:"rectangle",rectangle:"square",circle:"oval",oval:"circle"};
+  else{const t=U.pick(r,kinds),T=a<0?2:U.ri(r,2,Math.min(5,Math.floor(N/3))),LIKE={square:"rectangle",rectangle:"square",circle:"oval",oval:"circle"};
     const others=kinds.filter(k=>k!==t);for(let k=0;k<N;k++){const ok=k<T;cells.push(cell(ok?t:(a>=1&&LIKE[t]&&others.includes(LIKE[t])&&r()<.45?LIKE[t]:U.pick(r,others)),ok))}
     say="Tap all the "+PL[t]+".";ask="Tap all the "+PL[t]+" "+U.shape(t,"#9aa3ad").replace('class="lr-shp"','class="lr-shp ic"')}
   return{type:"hunt",cols,say,prompt:'<span class="ask">'+ask+"</span>",cells:U.shuffle(r,cells)}}});

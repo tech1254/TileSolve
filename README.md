@@ -6,15 +6,28 @@ A pack of puzzle games for kids. Open `index.html` in a browser. Everything is s
 
 "Who's playing?" opens first. Each player has a name, a buddy avatar, a colour and a grade, and every game keeps each player's progress separately. Tap the player chip at the top of the home screen to switch players. "Edit players" lets a parent rename, change the grade of, or delete a player.
 
-Hints in every game cost a maths question one grade below the player's grade (grade 3 gets grade 2 maths). There are three tries at the same question, then the answer is shown and a new question appears.
+**Matched to the Alberta curriculum, one grade back.** Kids pick their current grade, but part way through the year they may not have learned it yet, so maths questions and the Little learners games use the *previous* grade's outcomes from Alberta's K–6 curriculum (mathematics 2022, English language arts and literature):
 
-**Maths checkpoints:** the first time a player clears level 3, 6, 9 and so on, the next level asks a maths question before it opens. Checkpoint questions are a little easier than hint questions (for grade 3: adding and taking away with no carrying or borrowing). They can't be skipped, and leaving and coming back asks again.
+| Player picks | Content from | Maths questions |
+|---|---|---|
+| Kindergarten | pre-K | count pictures (to 5 at checkpoints, to 8 for hints) |
+| Grade 1 | Kindergarten | quantities to 10: add/take away within 10, make 10 |
+| Grade 2 | Grade 1 | addition facts to 20 and related subtraction |
+| Grade 3 | Grade 2 | add and subtract within 100 (no times tables) |
+| Grade 4 | Grade 3 | within 1,000; × and ÷ facts to 10 × 10 |
+| Grade 5 | Grade 4 | facts to 12 × 12; 3-digit × 1-digit; within 10,000 |
+| Grade 6 | Grade 5 | 3-digit × 2-digit; 3-digit ÷ 1-digit |
+| Grade 7+ | Grade 6 | multiply/divide by 2-digit numbers; percent of a number |
+
+Hints in every game cost one of these questions. There are three tries at the same question, then the answer is shown and a new question appears.
+
+**Maths checkpoints:** the first time a player clears level 3, 6, 9 and so on, the next level asks a maths question before it opens. Checkpoint questions are a little easier than hint questions from the same grade (for a grade 3 player: adding and taking away with no carrying or borrowing). They can't be skipped, and leaving and coming back asks again.
 
 **How to play:** the first time each player opens a game (each Picture Puzzle mode counts separately), a short picture-step card explains it. On level 1 a bouncing 👆 finger points at what to touch first. The **?** button shows the card again any time.
 
 ## Little learners (Kindergarten to grade 2)
 
-A second section on the home screen, shown first for players in Kindergarten to grade 2. Every question is read aloud with the device's built-in voice (🔊 repeats it; "Read things out loud" in the Levels menu turns it off). Levels are 4 to 6 quick rounds with cheering, big tap targets, and the same profiles, stars, hints, checkpoints and How to play cards as the puzzles. Kindergarten players get counting questions ("🍎🍎🍎 = ?") for hints and checkpoints.
+A second section on the home screen, shown first for players in Kindergarten to grade 2. Every question is read aloud with the device's built-in voice (🔊 repeats it; "Read things out loud" in the Levels menu turns it off). Levels are 4 to 6 quick rounds with cheering, big tap targets, and the same profiles, stars, hints, checkpoints and How to play cards as the puzzles. Content follows the previous grade too: Kindergarten players get a gentle pre-K version (fewer choices, numbers to 5, letters from A), grade 1 players get Kindergarten content, and so on. Grade 1 content adds sh/ch/th sounds and counting by 5s and 10s to 100; grade 2 content adds numbers to 1,000, counting by 25s, 50s and 100s, and sorting shapes by sides.
 
 - **Letters:** ABC Order, Missing Letter, Big & Little (a ↔ A), First Sound (picture → starting letter), Trace a Letter (finger-trace A–Z and 0–9).
 - **Numbers:** Count It (pictures, then tens and ones), Number Order, More or Less, Missing Number (counting on, back, and skip counting), Ten Frame.

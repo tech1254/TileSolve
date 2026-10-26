@@ -15,24 +15,26 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Barlow:wght@400;600;700&display=swap">
-<link rel="stylesheet" href="../../shared/ts.css?v=cb83ca14">
-<link rel="stylesheet" href="../../shared/game.css?v=cb83ca14">
+<link rel="stylesheet" href="../../shared/ts.css?v=dcda29ed">
+<link rel="stylesheet" href="../../shared/game.css?v=dcda29ed">
 </head>
 <body>
-<script src="../../shared/ts.js?v=cb83ca14"></script>
-<script src="../../shared/kit.js?v=cb83ca14"></script>
-<link rel="stylesheet" href="../../shared/learn.css?v=cb83ca14">
-<script src="../../shared/learn.js?v=cb83ca14"></script>
+<script src="../../shared/ts.js?v=dcda29ed"></script>
+<script src="../../shared/kit.js?v=dcda29ed"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&display=swap">
+<link rel="stylesheet" href="../../shared/learn.css?v=dcda29ed">
+<script src="../../shared/learn.js?v=dcda29ed"></script>
 <script>
 (()=>{const U=TS_LEARN.util;
 TS_LEARN({id:"moreless",name:"More or Less",howto:[["⚖️", "Look at both sides."], ["👂", "Listen: is it asking for more, or fewer?"], ["👆", "Tap the right one."], ["🔊", "Tap the speaker to hear it again."]],
 make(n,i,r,a){
-  if(a<=0){const EM=["🍎","⭐","🐟","🎈","🐞","🍪","🦆","🍓"],em=U.pick(r,EM),gap=n<=15?2:1;let x,y;do{x=U.ri(r,1,7);y=U.ri(r,1,7)}while(Math.abs(x-y)<gap);
-    const fewer=n>20&&i%2===1,ans=(fewer?x<y:x>y)?"L":"R";
+  if(a<=0){const EM=["🍎","⭐","🐟","🎈","🐞","🍪","🦆","🍓"],em=U.pick(r,EM),gap=a<0||n<=15?2:1,hi=a<0?5:7;let x,y;do{x=U.ri(r,1,hi);y=U.ri(r,1,hi)}while(Math.abs(x-y)<gap);
+    const fewer=a===0&&n>20&&i%2===1,ans=(fewer?x<y:x>y)?"L":"R";
     return{type:"pick",cols:2,say:fewer?"Which group has fewer?":"Which group has more?",prompt:'<span class="ask">Which has '+(fewer?"fewer":"more")+"?</span>",
       options:[{key:"L",html:U.cluster(em,x,3),aria:x+" pictures"},{key:"R",html:U.cluster(em,y,3),aria:y+" pictures"}],answer:ans}}
   const k=n>20?3:2,big=i%2===0;let nums;
-  if(a===1){const s=new Set();while(s.size<k)s.add(U.ri(r,1,20));nums=[...s]}
+  if(a===1){const s=new Set(),hi=n>25?100:20;while(s.size<k)s.add(U.ri(r,1,hi));nums=[...s]}
+  else if(a>=2&&n>25){const s=new Set(),b=U.ri(r,100,989);s.add(b);while(s.size<k)s.add(Math.max(100,Math.min(999,b+U.pick(r,[-100,100,-10,10,-1,1,90,-90]))));nums=[...s]}
   else{const s=new Set();const b=U.ri(r,12,98);s.add(b);const sw=+(String(b%10)+String(Math.floor(b/10)));if(b%10&&sw!==b&&sw>9)s.add(sw);
     while(s.size<k)s.add(Math.max(10,Math.min(99,b+U.ri(r,-9,9))));nums=[...s].slice(0,k)}
   const ans=big?Math.max(...nums):Math.min(...nums),w=a===1?(big?"bigger":"smaller"):(big?"greater":"less");

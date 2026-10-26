@@ -137,7 +137,7 @@ with sync_playwright() as p:
     sam_par = pg.text_content("#par")
     check(pg.text_content("#moves") == "0" and sam_par == str(pg.evaluate("window.__tilesolve.getLevel(1,1).par")), "Sam starts fresh with grade 1 puzzles")
     pg.click("#btnHint"); qs, _ = question(pg)
-    check(all(int(v) <= 20 for v in re.findall(r"\d+", qs)), f"grade 1 player gets grade 1 maths ({qs})")
+    check(all(int(v) <= 10 for v in re.findall(r"\d+", qs)), f"grade 1 player gets Kindergarten maths, within 10 ({qs})")
     pg.goto(HOME)
     pg.click("#btnMe")
     pg.screenshot(path=str(OUT / "shot-players.png"))

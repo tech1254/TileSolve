@@ -64,7 +64,8 @@ const HEAD=t=>`<meta charset="utf-8">
 const KIT=`<script src="../../shared/ts.js?v=__V__"></script>
 <script src="../../shared/kit.js?v=__V__"></script>`;
 // <!--LEARN--> adds the Little learners engine (shared/learn.js + learn.css) after the kit.
-const LEARN=`<link rel="stylesheet" href="../../shared/learn.css?v=__V__">
+const LEARN=`<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&display=swap">
+<link rel="stylesheet" href="../../shared/learn.css?v=__V__">
 <script src="../../shared/learn.js?v=__V__"></script>`;
 for(const[src,out]of PAGES){
   let html=fs.readFileSync(path.join(ROOT,src),'utf8').replace(/<!--HEAD:([^>]*)-->/,(_,t)=>HEAD(t)).replace('<!--KIT-->',KIT).replace('<!--LEARN-->',LEARN)
