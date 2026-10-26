@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!--HEAD:Big & Little-->
+</head>
+<body>
+<!--KIT-->
+<!--LEARN-->
+<script>
+(()=>{const U=TS_LEARN.util;
+TS_LEARN({id:"case",name:"Big & Little",howto:[["🅰️", "Every big letter has a little letter."], ["👀", "Look at the letter at the top."], ["👆", "Tap its matching big or little letter."], ["🔊", "Tap the speaker to hear it again."]],
+make(n,i,r,a){const AB="abcdefghijklmnopqrstuvwxyz",EASY="cosuvwxzpk";
+  const CONF={b:"dpq",d:"bpq",p:"qbd",q:"pdb",m:"nwu",n:"mhu",u:"nvw",w:"mvu",i:"ljt",l:"ijt",j:"igy",f:"tl",t:"fl",h:"nk",a:"oed",e:"aoc",c:"oe",o:"ce",g:"qy",y:"gv",v:"wy",s:"z",z:"s",k:"hx",r:"nm",x:"kz"};
+  const l=U.pick(r,(a<=0&&n<=10?EASY:AB).split("")),toLower=a<=0?(n<=20||i%2===0):i%2===0,count=a<=0?3:a===1?4:5,opts=new Set([l]);
+  if(a>=2||n>25)for(const c of U.shuffle(r,(CONF[l]||"").split("")))if(opts.size<count)opts.add(c);
+  while(opts.size<count)opts.add(U.pick(r,AB.split("")));
+  const show=toLower?l.toUpperCase():l,f=x=>toLower?x:x.toUpperCase();
+  return{type:"pick",say:toLower?"Find the little letter that matches big "+l.toUpperCase()+".":"Find the big letter that matches little "+l+".",
+    prompt:'<span class="ask">'+(toLower?"Find the little letter":"Find the big letter")+'</span><span class="big l">'+show+"</span>",
+    options:U.shuffle(r,[...opts]).map(x=>({key:f(x),html:f(x)})),answer:f(l)}}});
+})();
+</script>
+</body>
+</html>

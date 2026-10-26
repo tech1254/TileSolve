@@ -14,9 +14,11 @@ const data=Object.assign({list:[],current:null,music:true},store.get(PKEY,{}));
 const persist=()=>store.set(PKEY,data);
 const AVATARS=["🦊","🐼","🐯","🦁","🐸","🐙","🦄","🐢","🐧","🐨","🦖","🐬","🚀","🪐","👽","🌙"];
 const COLORS=["#e2412e","#3b6fd9","#2a9d8f","#f08a24","#8f5bd6","#6bb34a","#e06aa6","#4fb3d9"];
-const gradeName=g=>g>=7?"Grade 7+":"Grade "+g;
+const gradeName=g=>g<=0?"Kindergarten":g>=7?"Grade 7+":"Grade "+g;
+/* Grades are 0 (Kindergarten) to 7 (7 and up). */
+const gnum=v=>{v=+v;return Number.isFinite(v)&&v>=0&&v<=7?Math.round(v):3};
 function add(o){const p={id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),
-    name:String(o.name||"").trim().slice(0,16)||"Player",avatar:o.avatar||AVATARS[0],grade:+o.grade||3,
+    name:String(o.name||"").trim().slice(0,16)||"Player",avatar:o.avatar||AVATARS[0],grade:gnum(o.grade),
     color:o.color||COLORS[data.list.length%COLORS.length]};
   data.list.push(p);persist();return p}
 const players={
@@ -25,11 +27,11 @@ const players={
   use(id){data.current=id;persist()},
   add,
   update(id,patch){const p=data.list.find(p=>p.id===id);if(!p)return null;Object.assign(p,patch);
-    p.name=String(p.name||"").trim().slice(0,16)||"Player";p.grade=+p.grade||3;persist();return p},
+    p.name=String(p.name||"").trim().slice(0,16)||"Player";p.grade=gnum(p.grade);persist();return p},
   remove(id){data.list=data.list.filter(p=>p.id!==id);if(data.current===id)data.current=null;
     try{for(let k=localStorage.length-1;k>=0;k--){const key=localStorage.key(k);if(key&&key.startsWith("tilesolve:p:"+id+":"))localStorage.removeItem(key)}}catch(e){}
     persist()},
-  AVATARS,COLORS,gradeName};
+  AVATARS,COLORS,gradeName,gnum};
 
 // Before players existed, Unblock the Car kept one save. Turn it into "Player 1" so nobody loses progress.
 (()=>{const old=store.get("tilesolve:car",null);if(!old)return;
@@ -105,6 +107,7 @@ const MUSIC_SVG='<svg class="on" viewBox="0 0 24 24" fill="none" stroke="current
    smaller times tables. Three tries at the same question; after the third miss the answer is shown and a new
    question appears. Closing a hint question keeps it and its tries, so it can't be skipped for an easier one. */
 function problem(level,easy){const ri=(a,b)=>a+Math.floor(Math.random()*(b-a+1)),pick=a=>a[Math.floor(Math.random()*a.length)];
+  if(level<=0){const n=easy?ri(1,5):ri(2,10),em=pick(["🍎","⭐","🐟","🎈","🐞","🍪","🌸","🚗","🦆","🍓"]);return{slot:"n",em,n,ans:n}} // Kindergarten: count the pictures
   const op=(a,o,b,ans)=>({a,op:o,b,ans,slot:"c"}),add=(a,b)=>op(a,"+",b,a+b),sub=(a,b)=>op(a,"−",b,a-b),
     mul=(a,b)=>op(a,"×",b,a*b),div=(q,b)=>op(q*b,"÷",b,q),miss=(a,c)=>({a,op:"+",c,ans:c-a,slot:"b"});
   // two-digit ± one-digit with no carrying/borrowing (e.g. 43 + 5, 68 − 3)
@@ -128,7 +131,8 @@ function problem(level,easy){const ri=(a,b)=>a+Math.floor(Math.random()*(b-a+1))
     6:[()=>mul(ri(2,12),ri(2,12)),()=>div(ri(2,10),ri(2,10)),()=>mul(ri(12,40),pick([2,3,4]))]};
   // Weight the first kinds a little more so the gentlest question type comes up often.
   const list=(easy?E:T)[Math.max(1,Math.min(6,level))];return pick(list.concat([list[0]]))()}
-const mathLevel=()=>{const p=players.current();return Math.max(1,Math.min(6,(p?p.grade:3)-1))};
+// Kindergarten (0) gets counting questions; grade 1 gets grade 1 maths; older grades get one grade below.
+const mathLevel=()=>{const p=players.current(),g=p?gnum(p.grade):3;return g<=0?0:Math.max(1,Math.min(6,g-1))};
 
 const math=(()=>{
   const blank=()=>({q:null,lvl:0,tries:3,entry:"",lock:false,mark:"",done:null}),Ms={hint:blank(),check:blank()};let M=Ms.hint,kind="hint",el=null;
@@ -148,7 +152,8 @@ const math=(()=>{
   const left=()=>M.tries<3?(M.tries===1?"Last try!":M.tries+" tries left"):"";
   function render(){const q=M.q,txt=M.entry||(M.mark==="show"?String(q.ans):"?");
     const slot='<span class="slot'+(M.entry||M.mark==="show"?"":" empty")+(M.mark?" "+M.mark:"")+'">'+txt+"</span>",s=x=>"<span>"+x+"</span>";
-    el.querySelector(".prob").innerHTML=q.slot==="b"?s(q.a)+s(q.op)+slot+s("=")+s(q.c):s(q.a)+s(q.op)+s(q.b)+s("=")+slot;
+    el.querySelector(".prob").innerHTML=q.slot==="n"?'<span class="ts-count" aria-label="'+q.n+' pictures">'+q.em.repeat(q.n)+"</span>"+s("=")+slot
+      :q.slot==="b"?s(q.a)+s(q.op)+slot+s("=")+s(q.c):s(q.a)+s(q.op)+s(q.b)+s("=")+slot;
     el.querySelector(".tries").innerHTML=[0,1,2].map(k=>'<i class="'+(k<M.tries?"":"used")+'"></i>').join("")}
   function fb(t,cls){const f=el.querySelector(".fb");f.textContent=t||"";f.className="fb"+(cls?" "+cls:"")}
   /* open(onSolved) asks a hint question; open(onSolved,{checkpoint:true}) asks an easier checkpoint question that can't be closed. */
@@ -156,7 +161,8 @@ const math=(()=>{
     el.dataset.kind=kind;el.querySelector("#tsMathT").textContent=kind==="check"?"Maths checkpoint!":"Solve it for a hint!";
     const sub=el.querySelector(".ts-sub");sub.hidden=kind!=="check";sub.textContent="Answer this to unlock the next level.";
     el.querySelector(".close").hidden=kind==="check";
-    if(!M.q||M.lvl!==mathLevel())newQ();M.done=onSolved;M.entry="";M.mark="";M.lock=false;render();fb(left());el.hidden=false}
+    if(!M.q||M.lvl!==mathLevel())newQ();M.done=onSolved;M.entry="";M.mark="";M.lock=false;render();fb(left());el.hidden=false;
+    if(M.q.slot==="n")talk.say("How many are there?")}
   function close(){if(el)el.hidden=true}
   function check(){if(M.lock||!M.entry)return;
     if(+M.entry===M.q.ans){M.lock=true;M.mark="good";render();fb(kind==="check"?"Correct! On to the next level.":"Correct! Here's your hint.","good");music.fx("good");
@@ -166,7 +172,7 @@ const math=(()=>{
       fb(M.tries===1?"Not quite. Last try!":"Not quite. Try again! "+M.tries+" tries left","bad");
       setTimeout(()=>{if(!M.lock&&!M.entry)render()},500);return}
     M.lock=true;M.entry="";M.mark="show";render();fb("The answer was "+M.q.ans+". Here's a new one!","bad");
-    setTimeout(()=>{newQ();M.lock=false;render();fb("")},2400)}
+    setTimeout(()=>{newQ();M.lock=false;render();fb("");if(M.q.slot==="n")talk.say("How many are there?")},2400)}
   function press(k){if(M.lock)return;
     if(k==="ok")return check();
     if(k==="del")M.entry=M.entry.slice(0,-1);else if(M.entry.length<4)M.entry=(M.entry+k).replace(/^0+(?=\d)/,"");
@@ -181,6 +187,23 @@ const gate={
   afterWin(pr,level,total){if(level%3===0&&level<total&&level+1>(pr.unlocked|0))pr.gate=level+1},
   pending:(pr,level)=>pr.gate===level,
   open(pr,level,save,go){if(pr.gate!==level)return false;math.open(()=>{delete pr.gate;save();go(level)},{checkpoint:true});return true}};
+
+/* ---------- talking ----------
+   TS.say(text) reads text aloud with the device's built-in voice (no downloads). Browsers only allow speech after
+   the player has touched the screen, so anything said before the first touch is held and spoken on that touch.
+   TS.talk.on / TS.talk.set(bool) is a shared on/off setting. */
+const talk=(()=>{let unlocked=false,pending=null,voice=null;
+  const ok=()=>"speechSynthesis" in window&&"SpeechSynthesisUtterance" in window;
+  function pickVoice(){if(voice)return voice;try{const vs=speechSynthesis.getVoices();
+    voice=vs.find(v=>/en[-_]CA/i.test(v.lang))||vs.find(v=>/en[-_](US|GB|AU)/i.test(v.lang)&&/samantha|karen|female|google us/i.test(v.name))||vs.find(v=>/^en/i.test(v.lang))||null}catch(e){}return voice}
+  function speak(t){try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t),v=pickVoice();if(v){u.voice=v;u.lang=v.lang}else u.lang="en-CA";
+    u.rate=.85;u.pitch=1.1;speechSynthesis.speak(u)}catch(e){}}
+  const api={get on(){return data.talk!==false},
+    set(on){data.talk=!!on;persist();if(!on)try{speechSynthesis.cancel()}catch(e){}},
+    say(t){api.last=t;if(!t||!api.on||!ok())return;if(!unlocked){pending=t;return}speak(t)},last:""};
+  const unlock=()=>{if(unlocked)return;unlocked=true;if(pending){const t=pending;pending=null;if(api.on&&ok())speak(t)}};
+  addEventListener("pointerup",unlock,true);addEventListener("keydown",unlock,true);
+  return api})();
 
 /* ---------- how to play ----------
    howto.show(game, title, steps, onClose) shows a "How to play" card: steps are [icon, text] pairs.
@@ -204,4 +227,4 @@ function point(target){unpoint();if(!target)return;const r=target.getBoundingCli
 function unpoint(){if(finger){finger.remove();finger=null}}
 addEventListener("resize",unpoint);
 
-return{HOME,rngFrom,store,players,requirePlayer,gameSave,music,MUSIC_SVG,math,problem,gate,howto,point}})();
+return{HOME,rngFrom,store,players,requirePlayer,gameSave,music,MUSIC_SVG,math,problem,gate,howto,point,talk,say:t=>talk.say(t)}})();

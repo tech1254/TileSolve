@@ -63,8 +63,11 @@ const HEAD=t=>`<meta charset="utf-8">
 <link rel="stylesheet" href="../../shared/game.css?v=__V__">`;
 const KIT=`<script src="../../shared/ts.js?v=__V__"></script>
 <script src="../../shared/kit.js?v=__V__"></script>`;
+// <!--LEARN--> adds the Little learners engine (shared/learn.js + learn.css) after the kit.
+const LEARN=`<link rel="stylesheet" href="../../shared/learn.css?v=__V__">
+<script src="../../shared/learn.js?v=__V__"></script>`;
 for(const[src,out]of PAGES){
-  let html=fs.readFileSync(path.join(ROOT,src),'utf8').replace(/<!--HEAD:([^>]*)-->/,(_,t)=>HEAD(t)).replace('<!--KIT-->',KIT)
+  let html=fs.readFileSync(path.join(ROOT,src),'utf8').replace(/<!--HEAD:([^>]*)-->/,(_,t)=>HEAD(t)).replace('<!--KIT-->',KIT).replace('<!--LEARN-->',LEARN)
     .replace(/__V__/g,V).replace('"__BANK__"','"'+b64+'"')
     .replace('__BOXBANK__',()=>fs.existsSync(path.join(__dirname,'box-bank.json'))?fs.readFileSync(path.join(__dirname,'box-bank.json'),'utf8'):'[]');
   fs.mkdirSync(path.dirname(path.join(ROOT,out)),{recursive:true});fs.writeFileSync(path.join(ROOT,out),html);

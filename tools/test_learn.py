@@ -1,0 +1,138 @@
+"""Browser tests for the Little learners (K-2) games and Kindergarten support.  python3 tools/test_learn.py [screenshot_dir]"""
+import sys, json, re, pathlib
+from playwright.sync_api import sync_playwright
+from tsutil import *
+
+OUT = pathlib.Path(sys.argv[1]) if len(sys.argv) > 1 else pathlib.Path(".")
+check = Checker(); errors = []
+LEARN = ["abc", "missletter", "case", "sound", "trace", "count", "numorder", "moreless", "missnum", "tenframe", "shapesort", "shapehunt", "colours", "sizeorder"]
+
+def player(grade, pid="kk"):
+    seen = json.dumps({g: 1 for g in LEARN + GAMES})
+    return (f"localStorage.setItem('tilesolve:players',JSON.stringify({{list:[{{id:'{pid}',name:'Kid',avatar:'🐸',grade:{grade},color:'#43a047'}}],current:'{pid}',music:true}}));"
+            f"localStorage.setItem('tilesolve:p:{pid}:seen',{json.dumps(seen)})")
+
+VALIDATE = """(()=>{const bad=[],TR=TS_LEARN.TRACE;let rounds=0;
+  for(const a of [0,1,2,3])for(let n=1;n<=40;n++){const r=TS.rngFrom(n*977+a*31+7);for(let i=0;i<6;i++){let R;
+    try{R=__learn.make(n,i,r,a)}catch(e){bad.push(a+':'+n+':'+i+' threw '+e.message);continue}rounds++;const id=a+':'+n+':'+i+' '+R.type;
+    if(!R.say)bad.push(id+' no say');
+    if(R.type==='pick'){const ks=R.options.map(o=>o.key);if(new Set(ks).size!==ks.length)bad.push(id+' dup options '+ks);if(!ks.includes(R.answer))bad.push(id+' answer missing');if(ks.length<2)bad.push(id+' too few')}
+    else if(R.type==='order'){const ks=R.tiles.map(t=>t.key);if(new Set(ks).size!==ks.length)bad.push(id+' dup tiles');if(ks.slice().sort().join()!==R.answer.slice().sort().join())bad.push(id+' answer not tiles');
+      if(ks.length>1&&ks.join()===R.answer.join())bad.push(id+' already in order')}
+    else if(R.type==='sort'){const bk=R.bins.map(b=>b.key);if(R.items.some(x=>!bk.includes(x.key)))bad.push(id+' item without bin');if(R.items.length<2)bad.push(id+' few items')}
+    else if(R.type==='hunt'){if(!R.cells.some(c=>c.ok))bad.push(id+' nothing to find');if(R.cells.every(c=>c.ok))bad.push(id+' all targets')}
+    else if(R.type==='fill'){if(!(R.target>=1&&R.target<=(R.size||10)))bad.push(id+' bad target')}
+    else if(R.type==='trace'){if(!TR[R.ch])bad.push(id+' no strokes for '+R.ch)}
+    else bad.push(id+' unknown type')}}
+  return{bad:bad.slice(0,8),n:bad.length,rounds}})()"""
+
+def win_level(pg, limit=12):
+    for _ in range(limit):
+        if pg.is_visible("#kSheetWin"): return True
+        pg.evaluate("__learn.R && !__learn.R.done && __learn.solve()"); pg.wait_for_timeout(1000)
+    return pg.is_visible("#kSheetWin")
+
+with sync_playwright() as p:
+    b = p.chromium.launch()
+    ctx = b.new_context(viewport={"width": 390, "height": 844}, device_scale_factor=2); ctx.add_init_script(player(0))
+    for g in LEARN:
+        pg = watch_errors(ctx.new_page(), errors); pg.goto(URL(g)); pg.wait_for_function("window.__learn && __learn.R", timeout=10000)
+        v = pg.evaluate(VALIDATE)
+        check(v["n"] == 0, f"{g}: all {v['rounds']} rounds (K-3, 40 levels) are well formed {v['bad']}")
+        pg.screenshot(path=str(OUT / f"learn-{g}.png"))
+        R = pg.evaluate("({type:__learn.R.type,options:(__learn.R.options||[]).map(o=>o.key),answer:__learn.R.answer})")
+        if R["type"] == "pick":
+            wrong = next(k for k in R["options"] if k != R["answer"])
+            pg.click(f".lr-opt[data-key='{wrong}']"); pg.wait_for_timeout(150)
+            check("Oops 1" in pg.text_content("#kSub"), f"{g}: a wrong answer counts an oops")
+        check(win_level(pg), f"{g}: playing every round wins the level")
+        pg.close()
+
+    # A level for each grade plays through
+    for grade in (1, 2):
+        c = b.new_context(viewport={"width": 390, "height": 844}); c.add_init_script(player(grade, f"g{grade}"))
+        for g in ["abc", "count", "shapesort", "tenframe", "trace"]:
+            pg = watch_errors(c.new_page(), errors); pg.goto(URL(g)); pg.wait_for_function("window.__learn && __learn.R", timeout=10000)
+            check(win_level(pg), f"grade {grade} {g}: level 1 can be won"); pg.close()
+        c.close()
+
+    # Hints, pointer, talking
+    pg = watch_errors(ctx.new_page(), errors)
+    pg.add_init_script("window.__said=[];const S=window.speechSynthesis;if(S){S.speak=u=>window.__said.push(u.text);S.cancel=()=>{}}")
+    pg.goto(URL("count")); pg.wait_for_timeout(500)
+    pg.mouse.click(5, 5); pg.wait_for_timeout(300)
+    check(any("How many" in s for s in pg.evaluate("window.__said")), "questions are read aloud after the first touch")
+    pg.click("#lrSay"); pg.wait_for_timeout(100)
+    check(len(pg.evaluate("window.__said")) >= 2, "🔊 reads the question again")
+    pg.click("#kHint"); pg.wait_for_timeout(300)
+    t = pg.inner_text(".prob")
+    check("?" in t and len(re.findall(r"\d", t)) == 0, f"Kindergarten hint question is counting pictures ({t.strip()[:30]})")
+    n = pg.evaluate("TS.math.isOpen") and pg.locator(".ts-count").get_attribute("aria-label")
+    cnt = int(n.split()[0])
+    for ch in str(cnt): pg.click(f".keys button[data-k='{ch}']")
+    pg.click(".keys .ok"); pg.wait_for_timeout(1300)
+    check(pg.locator(".lr-hint").count() >= 1, "counting answer unlocks a hint that highlights the answer")
+    pg.click("#kLevels")
+    check(pg.locator("#lrTalk").is_checked(), "Read things out loud is on by default")
+    pg.click("#lrTalk"); pg.click("#kCloseLevels")
+    check(pg.evaluate("JSON.parse(localStorage.getItem('tilesolve:players')).talk") is False, "talking can be turned off")
+    pg.close()
+
+    # ---------- iPad touch ----------
+    tctx = b.new_context(**p.devices["iPad Mini"]); tctx.add_init_script(player(0))
+    tp = watch_errors(tctx.new_page(), errors)
+    tp.goto(URL("count")); tp.wait_for_timeout(400)
+    tap_center(tp, f".lr-opt[data-key='{tp.evaluate('__learn.R.answer')}']"); tp.wait_for_timeout(200)
+    check(tp.evaluate("__learn.S.i") == 1 or tp.evaluate("__learn.R.done"), "touch: tapping the right answer finishes the round")
+    tp.goto(URL("abc")); tp.wait_for_timeout(400)
+    for k in tp.evaluate("__learn.R.answer"): tap_center(tp, f".lr-tile[data-key='{k}']")
+    check(tp.evaluate("__learn.R.done") or tp.evaluate("__learn.S.i") == 1, "touch: tapping letters in ABC order")
+    tp.goto(URL("shapesort")); tp.wait_for_timeout(400)
+    left0 = tp.evaluate("__learn.R.left")
+    item = tp.locator(".lr-tray .lr-item").first; key = tp.evaluate("__learn.R.items[+document.querySelector('.lr-tray .lr-item').dataset.k].key")
+    a = item.bounding_box(); z = tp.locator(f".lr-bin[data-bin='{key}']").bounding_box()
+    touch_drag(tp, a["x"]+a["width"]/2, a["y"]+a["height"]/2, z["x"]+z["width"]/2, z["y"]+z["height"]/2, 12)
+    check(tp.evaluate("__learn.R.left") == left0 - 1, "touch: dragging a shape into its home")
+    key = tp.evaluate("__learn.R.items[+document.querySelector('.lr-tray .lr-item').dataset.k].key")
+    tap_center(tp, ".lr-tray .lr-item >> nth=0"); tap_center(tp, f".lr-bin[data-bin='{key}']")
+    check(tp.evaluate("__learn.R.left") == left0 - 2, "touch: tap a shape, then tap its home")
+    tp.screenshot(path=str(OUT / "learn-ipad-sort.png"))
+    tp.goto(URL("trace")); tp.wait_for_timeout(400)
+    ch = tp.evaluate("__learn.R.ch")
+    strokes = tp.evaluate("__learn.R.strokes")
+    box = tp.locator(".lr-tsvg").bounding_box()
+    to = lambda q: (box["x"] + q[0]/100*box["width"], box["y"] + q[1]/100*box["height"])
+    cdp = tctx.new_cdp_session(tp)
+    for st in strokes:
+        x, y = to(st[0]); cdp.send("Input.dispatchTouchEvent", {"type": "touchStart", "touchPoints": [{"x": x, "y": y}]})
+        for q in st[1::2] + [st[-1]]:
+            x, y = to(q); cdp.send("Input.dispatchTouchEvent", {"type": "touchMove", "touchPoints": [{"x": x, "y": y}]})
+        cdp.send("Input.dispatchTouchEvent", {"type": "touchEnd", "touchPoints": []}); tp.wait_for_timeout(120)
+    tp.wait_for_timeout(300)
+    check(tp.evaluate("__learn.R.done") or tp.evaluate("__learn.S.i") == 1, f"touch: tracing the letter {ch} with a finger completes it")
+    tp.goto(URL("tenframe")); tp.wait_for_timeout(400)
+    t = tp.evaluate("__learn.R.target")
+    for k in range(t): tap_center(tp, f".lr-fc[data-i='{k}']")
+    tp.wait_for_timeout(800)
+    check(tp.evaluate("__learn.S.i") == 1, "touch: filling the ten frame finishes the round")
+    tctx.close()
+
+    # ---------- Kindergarten on the home screen and in older games ----------
+    hc = b.new_context(viewport={"width": 390, "height": 844})
+    hp = watch_errors(hc.new_page(), errors); hp.goto(HOME_URL); hp.wait_for_timeout(300)
+    hp.fill("#fName", "Lily"); hp.click("#fGrades button:nth-child(1)"); hp.click("#formSave"); hp.wait_for_timeout(300)
+    check(hp.evaluate("JSON.parse(localStorage.getItem('tilesolve:players')).list[0].grade") == 0, "Kindergarten can be picked for a player")
+    heads = hp.locator(".gsec h2").all_text_contents()
+    check(heads[0].startswith("Little learners") and hp.locator(".games[data-group='little'] .game").count() == 14, "a Kindergarten player sees Little learners first (14 games)")
+    hp.screenshot(path=str(OUT / "home-little.png"), full_page=True)
+    hp.click("#btnMe"); hp.click("#btnEdit")
+    check("Kindergarten" in hp.text_content(".player"), "player card says Kindergarten")
+    hp.click("#btnDone"); hp.click(".player:has-text('Lily')"); hp.wait_for_timeout(200)
+    hp.goto(URL("car")); hp.wait_for_timeout(500)
+    if hp.locator(".ts-howto").is_visible(): hp.click(".ts-howto .bigbtn")
+    check(hp.text_content("#par") == str(hp.evaluate("window.__tilesolve.getLevel(1,1).par")), "Unblock the Car gives a Kindergarten player grade 1 puzzles")
+    hc.close()
+
+    check(not errors, "no JavaScript errors" + ("" if not errors else ": " + "; ".join(errors[:3])))
+    b.close()
+sys.exit(check.finish())

@@ -15,27 +15,29 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Barlow:wght@400;600;700&display=swap">
-<link rel="stylesheet" href="../../shared/ts.css?v=3b582d24">
-<link rel="stylesheet" href="../../shared/game.css?v=3b582d24">
+<link rel="stylesheet" href="../../shared/ts.css?v=cb83ca14">
+<link rel="stylesheet" href="../../shared/game.css?v=cb83ca14">
+<!-- Andika: a font made for children learning to read (clear a, g, l and I shapes). -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&display=swap">
 <style>
 .theme{margin:0;font-family:var(--font-sign);color:var(--paint);font-size:20px}
-.wsg{--cs:clamp(22px,min(calc((100vw - 56px)/var(--n)),calc((100dvh - 420px)/var(--n))),56px);position:relative;display:grid;
+.wsg{--cs:clamp(21px,min(calc((100vw - 56px)/var(--n)),calc((100dvh - 420px)/var(--n))),48px);position:relative;display:grid;
   grid-template-columns:repeat(var(--n),var(--cs));grid-auto-rows:var(--cs);background:#f6f1e3;border-radius:10px;
   touch-action:none;user-select:none;-webkit-user-select:none;cursor:pointer}
 .wsg svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
-.wc{position:relative;z-index:1;display:grid;place-items:center;font-family:var(--font-sign);font-size:calc(var(--cs)*.55);line-height:1;color:#1d2230;border-radius:50%}
+.wc{position:relative;z-index:1;display:grid;place-items:center;font-family:"Andika","Verdana","Trebuchet MS",sans-serif;font-weight:700;font-size:calc(var(--cs)*.74);line-height:1;color:#1d2230;border-radius:50%}
 .wc.anchor{box-shadow:inset 0 0 0 3px var(--target)}
 .wc.hint{animation:wsh .8s ease 4}
 @keyframes wsh{50%{background:var(--paint)}}
 .wlist{display:flex;flex-wrap:wrap;gap:6px 8px;justify-content:center;max-width:620px}
-.wchip{display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border-radius:999px;background:var(--panel);border:1px solid var(--lane);font-weight:700;font-size:15px;letter-spacing:.06em}
+.wchip{font-family:"Andika","Verdana",sans-serif;display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border-radius:999px;background:var(--panel);border:1px solid var(--lane);font-weight:700;font-size:15px;letter-spacing:.06em}
 .wchip.found{text-decoration:line-through;text-decoration-thickness:2px;color:var(--muted);border-color:var(--wc);background:color-mix(in srgb,var(--wc) 28%,var(--panel))}
 @media (prefers-reduced-motion:reduce){.wc.hint{animation:none;background:var(--paint)}}
 </style>
 </head>
 <body>
-<script src="../../shared/ts.js?v=3b582d24"></script>
-<script src="../../shared/kit.js?v=3b582d24"></script>
+<script src="../../shared/ts.js?v=cb83ca14"></script>
+<script src="../../shared/kit.js?v=cb83ca14"></script>
 <script>
 (()=>{
 /* Word Search: find every word on the list hidden in the letters. Drag across a word, or tap its first and last letter.

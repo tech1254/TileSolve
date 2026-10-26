@@ -174,7 +174,7 @@ body{overflow:hidden}
 <script>
 (()=>{
 const PLAYER=TS.requirePlayer(),Music=TS.music,PICS=window.TS_PICTURES,$=id=>document.getElementById(id);
-const GRADE=Math.max(1,Math.min(7,PLAYER.grade|0||3)),LEVELS=40;
+const GRADE=Math.max(1,TS.players.gnum(PLAYER.grade)),LEVELS=40; // Kindergarten plays grade 1 puzzles
 const SAVE=TS.gameSave("picture",{mode:null,drop:{},slide:{},numbers:GRADE<=2,ghost:GRADE<=2,all:false}),save=SAVE.data,persist=SAVE.save;
 const prog=(m=mode)=>save[m][GRADE]||(save[m][GRADE]={unlocked:1,stars:{},last:1});
 let mode=save.mode||"drop";

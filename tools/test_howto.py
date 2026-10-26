@@ -5,7 +5,8 @@ from tsutil import *
 
 OUT = pathlib.Path(sys.argv[1]) if len(sys.argv) > 1 else pathlib.Path(".")
 check = Checker(); errors = []
-KIT = ["memory", "pattern", "flood", "blocks", "numbers", "words", "sudoku", "pipes", "lights", "pixels", "boxes", "wordsearch"]
+KIT = ["memory", "pattern", "flood", "blocks", "numbers", "words", "sudoku", "pipes", "lights", "pixels", "boxes", "wordsearch",
+       "abc", "count", "shapesort", "trace", "tenframe"]
 
 def card(pg): return pg.locator(".ts-howto").is_visible()
 def finger(pg):

@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!--HEAD:Number Order-->
+</head>
+<body>
+<!--KIT-->
+<!--LEARN-->
+<script>
+(()=>{const U=TS_LEARN.util;
+TS_LEARN({id:"numorder",name:"Number Order",howto:[["🔢", "Numbers are mixed up."], ["👆", "Tap them in order, smallest first."], ["⬇️", "Later, some rounds go from biggest to smallest. Listen!"], ["🔊", "Tap the speaker to hear it again."]],
+make(n,i,r,a){const range=(s,len,step)=>Array.from({length:len},(_,k)=>s+k*step);let nums,desc=false;
+  if(a<=0){const len=n<=10?3:n<=20?5:U.ri(r,4,5);nums=range(n<=20?1:U.ri(r,1,11-len),len,1)}
+  else if(a===1){if(n<=15){const len=U.ri(r,5,6);nums=range(U.ri(r,1,21-len),len,1)}else if(n<=28)nums=range(2*U.ri(r,1,5),5,2);else nums=U.sample(r,range(1,20,1),5)}
+  else{if(n<=12){const step=U.pick(r,[2,5,10]);nums=range(step*U.ri(r,1,step===10?4:8),6,step)}else nums=U.sample(r,range(1,99,1),U.ri(r,5,6));desc=n>15&&i%2===1}
+  const ans=nums.slice().sort((x,y)=>desc?y-x:x-y).map(String);
+  return{type:"order",say:desc?"Put the numbers in order from biggest to smallest.":"Put the numbers in order from smallest to biggest.",
+    prompt:'<span class="ask">'+(desc?"Biggest to smallest ⬇️":"Smallest to biggest ⬆️")+"</span>",tiles:U.mix(r,ans).map(v=>({key:v,html:v,say:v})),answer:ans}}});
+})();
+</script>
+</body>
+</html>

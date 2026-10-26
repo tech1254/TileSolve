@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#161b21">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box;height:100%}body{margin:0}[hidden]{display:none!important}</style>
+<title>Ten Frame · Tile Solve</title>
+<meta name="apple-mobile-web-app-title" content="Tile Solve">
+<link rel="apple-touch-icon" href="../../icon-180.png">
+<link rel="icon" type="image/png" href="../../icon-512.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Barlow:wght@400;600;700&display=swap">
+<link rel="stylesheet" href="../../shared/ts.css?v=cb83ca14">
+<link rel="stylesheet" href="../../shared/game.css?v=cb83ca14">
+</head>
+<body>
+<script src="../../shared/ts.js?v=cb83ca14"></script>
+<script src="../../shared/kit.js?v=cb83ca14"></script>
+<link rel="stylesheet" href="../../shared/learn.css?v=cb83ca14">
+<script src="../../shared/learn.js?v=cb83ca14"></script>
+<script>
+(()=>{const U=TS_LEARN.util;
+TS_LEARN({id:"tenframe",name:"Ten Frame",howto:[["🔟", "A ten frame has 10 boxes."], ["👆", "Tap boxes to put in dots. Tap again to take one out."], ["🧮", "Some rounds ask how many dots, or how many more make 10."], ["🔊", "Tap the speaker to hear it again."]],
+make(n,i,r,a){const size=a>=2?20:10;
+  if(i%2===0){const t=a<=0?(n<=15?U.ri(r,1,5):U.ri(r,3,10)):a===1?U.ri(r,3,10):U.ri(r,11,20);
+    return{type:"fill",size,target:t,say:"Show "+t+". Tap the boxes to put in "+t+" dots.",prompt:'<span class="ask">Put in this many dots</span><span class="big l">'+t+"</span>"}}
+  if(a<=0){const k=U.ri(r,1,n<=15?6:10);return{type:"pick",say:"How many dots?",prompt:'<span class="ask">How many dots?</span>'+U.frame(k),
+    options:U.near(r,k,3,0,10,2).map(v=>({key:v,html:String(v)})),answer:k}}
+  if(a===1){const k=U.ri(r,1,9);return{type:"pick",say:"How many more dots make 10?",prompt:'<span class="ask">How many more make 10?</span>'+U.frame(k),
+    options:U.near(r,10-k,4,0,10,2).map(v=>({key:v,html:String(v)})),answer:10-k}}
+  const k=U.ri(r,11,19),more=i%4===1;
+  return{type:"pick",say:more?"How many more dots make 20?":"How many dots?",prompt:'<span class="ask">'+(more?"How many more make 20?":"How many dots?")+"</span>"+U.frame(k,20),
+    options:U.near(r,more?20-k:k,4,0,20,2).map(v=>({key:v,html:String(v)})),answer:more?20-k:k}}});
+})();
+</script>
+</body>
+</html>

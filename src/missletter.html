@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!--HEAD:Missing Letter-->
+</head>
+<body>
+<!--KIT-->
+<!--LEARN-->
+<script>
+(()=>{const U=TS_LEARN.util;
+TS_LEARN({id:"missletter",name:"Missing Letter",howto:[["🔤", "Some letters are in ABC order."], ["❓", "One letter is missing."], ["👆", "Tap the letter that goes in the box."], ["🔊", "Tap the speaker to hear it again."]],
+make(n,i,r,a){const UP="ABCDEFGHIJKLMNOPQRSTUVWXYZ",len=a<=0?4:a===1?5:6,lower=(a===1&&n>20)||(a>=2&&n>8),back=a>=2&&n>20&&i%2===1;
+  const start=a<=0&&n<=10?U.ri(r,0,6):U.ri(r,0,26-len);let seq=UP.slice(start,start+len).split("");if(back)seq.reverse();
+  const hole=a<=0&&n<=10?len-1:U.ri(r,1,len-1),ans=seq[hole],idx=UP.indexOf(ans),count=a<=0?3:4,opts=new Set([ans]);
+  for(const d of U.shuffle(r,[-1,1,-2,2,-3,3,4,-4]))if(opts.size<count&&UP[idx+d]&&idx+d>=0)opts.add(UP[idx+d]);
+  const c=x=>lower?x.toLowerCase():x;
+  return{type:"pick",say:"Which letter is missing?"+(back?" These go backwards!":""),
+    prompt:'<span class="ask">Which letter is missing?</span><span class="seq">'+seq.map((x,k)=>k===hole?'<b class="q">?</b>':"<b>"+c(x)+"</b>").join("")+"</span>",
+    options:U.shuffle(r,[...opts]).map(x=>({key:c(x),html:c(x),say:c(x)})),answer:c(ans)}}});
+})();
+</script>
+</body>
+</html>

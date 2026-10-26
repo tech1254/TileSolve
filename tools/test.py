@@ -31,7 +31,7 @@ def movable(cars, pos):
 def add_player(pg, name, avatar_ix, grade):
     pg.fill("#fName", name)
     pg.click(f"#fAvatars button:nth-child({avatar_ix})")
-    pg.click(f"#fGrades button:nth-child({grade})")
+    pg.click(f"#fGrades button:nth-child({grade + 1})")  # K is first
     pg.click("#formSave")
 
 def question(pg):
@@ -62,7 +62,7 @@ with sync_playwright() as p:
     add_player(pg, "Mia", 3, 3)
     check(pg.is_visible("#viewGames") and "Hi Mia!" in pg.text_content("#hello"), "saving a player goes to the game grid")
     live = len([d for d in (ROOT / "games").iterdir() if (d / "index.html").exists()])
-    check(pg.locator(".game:not(.soon)").count() == live and pg.locator(".game").count() == 14, f"{live} games playable, the rest say coming soon")
+    check(pg.locator(".game:not(.soon)").count() == live and pg.locator(".game").count() == 28, f"{live} games playable, the rest say coming soon")
     pg.screenshot(path=str(OUT / "shot-games.png"))
 
     # ---- Car game ----

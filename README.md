@@ -12,7 +12,17 @@ Hints in every game cost a maths question one grade below the player's grade (gr
 
 **How to play:** the first time each player opens a game (each Picture Puzzle mode counts separately), a short picture-step card explains it. On level 1 a bouncing 👆 finger points at what to touch first. The **?** button shows the card again any time.
 
-## Games
+## Little learners (Kindergarten to grade 2)
+
+A second section on the home screen, shown first for players in Kindergarten to grade 2. Every question is read aloud with the device's built-in voice (🔊 repeats it; "Read things out loud" in the Levels menu turns it off). Levels are 4 to 6 quick rounds with cheering, big tap targets, and the same profiles, stars, hints, checkpoints and How to play cards as the puzzles. Kindergarten players get counting questions ("🍎🍎🍎 = ?") for hints and checkpoints.
+
+- **Letters:** ABC Order, Missing Letter, Big & Little (a ↔ A), First Sound (picture → starting letter), Trace a Letter (finger-trace A–Z and 0–9).
+- **Numbers:** Count It (pictures, then tens and ones), Number Order, More or Less, Missing Number (counting on, back, and skip counting), Ten Frame.
+- **Shapes and colours:** Shape Sort (drag to the matching home, later by number of sides), Shape Hunt, Colour Match (colours, colour words, sorting), Size Order.
+
+All rounds are built by `shared/learn.js` from a small description in each game's `src/<game>.html`.
+
+## Puzzle games
 
 - **Unblock the Car** (`games/car/`): slide cars until the red one can drive out. 1,000 levels from a bank of pre-generated, verified puzzles; the par is each puzzle's exact shortest solution. Difficulty ramps by grade: for grade 3, it's properly challenging by about level 30.
 - **Picture Puzzle** (`games/picture/`): eight original cartoon pictures (animals and space). Two modes, 40 levels each:
@@ -40,4 +50,4 @@ Hints in every game cost a maths question one grade below the player's grade (gr
 - More Car puzzles: `node tools/gen-bank.js SEED SECONDS out.json`, then `node tools/build.js out.json` to merge, verify and rebuild.
 - More Box Push levels: `node tools/gen-boxes.js SEED SECONDS out.json`, then `node tools/merge-boxes.js out.json` (re-verifies every par) and rebuild.
 - `shared/pictures.js`: the picture set, drawn in code. Photo entries can be added later.
-- `sh tools/test_all.sh` rebuilds and runs all nine browser test suites over a local web server (needs Playwright). Each `tools/test*.py` can also run on its own.
+- `sh tools/test_all.sh` rebuilds and runs all ten browser test suites over a local web server (needs Playwright). Each `tools/test*.py` can also run on its own.

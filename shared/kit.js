@@ -7,9 +7,10 @@
      hint:()=>{...}});          // called after the maths question is answered (omit for no hint)
    K.win({stars,text}), K.fail({title,text}), K.stat(big,small), K.sub(text), K.tip(text), K.busy */
 window.TS_KIT=function(o){
-  const PLAYER=TS.requirePlayer(),GRADE=Math.max(1,Math.min(7,PLAYER.grade|0||3)),LEVELS=o.levels||40;
+  /* AGE is the real grade (0 = Kindergarten). Older puzzle games treat Kindergarten like grade 1 (GRADE). */
+  const PLAYER=TS.requirePlayer(),AGE=TS.players.gnum(PLAYER.grade),GRADE=Math.max(1,AGE),LEVELS=o.levels||40;
   const SAVE=TS.gameSave(o.id,{grades:{},all:false}),save=SAVE.data;
-  const prog=()=>save.grades[GRADE]||(save.grades[GRADE]={unlocked:1,stars:{},last:1});
+  const prog=()=>save.grades[AGE]||(save.grades[AGE]={unlocked:1,stars:{},last:1});
   const ICON={home:'<path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/>',levels:'<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>'};
   const svg=p=>'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+p+"</svg>";
   document.body.insertAdjacentHTML("afterbegin",
@@ -32,11 +33,11 @@ window.TS_KIT=function(o){
   const $=id=>document.getElementById(id);
   $("kMusic").innerHTML=TS.MUSIC_SVG;TS.music.button($("kMusic"));
   if(!o.hint)$("kHint").disabled=true;
-  const K={grade:GRADE,player:PLAYER,levels:LEVELS,stage:$("kStage"),level:1,busy:false,save,persist:SAVE.save,
+  const K={grade:GRADE,age:AGE,player:PLAYER,levels:LEVELS,stage:$("kStage"),level:1,busy:false,save,persist:SAVE.save,
     tip:t=>{$("kTip").textContent=t||""},stat:(a,b)=>{$("kS1").textContent=a==null?"":a;$("kS2").textContent=b||""},sub:t=>{$("kSub").textContent=t||o.name},
     canPlay:n=>n>=1&&n<=LEVELS&&(save.all||n<=prog().unlocked),
     /* seeded random for level n, different per game and grade */
-    rng:n=>TS.rngFrom((o.id.length*7919+o.id.charCodeAt(0)*131)*100003+GRADE*1009+n),
+    rng:n=>TS.rngFrom((o.id.length*7919+o.id.charCodeAt(0)*131)*100003+AGE*1009+n),
     load(n){n=Math.min(Math.max(1,n|0),LEVELS);
       if(TS.gate.pending(prog(),n)){$("kSheetWin").hidden=true;TS.gate.open(prog(),n,SAVE.save,K.load);return} // maths checkpoint first
       K.level=n;prog().last=n;SAVE.save();K.busy=false;
@@ -61,7 +62,7 @@ window.TS_KIT=function(o){
     for(let n=1;n<=LEVELS;n++){const b=document.createElement("button");b.type="button";const st=pr.stars[n]||0;
       b.innerHTML="<b>"+n+"</b><span>"+(st?"★".repeat(st):K.canPlay(n)?(o.label?o.label(n):""):"🔒")+"</span>";
       if(n===K.level)b.className="cur";b.disabled=!K.canPlay(n);b.onclick=()=>{$("kSheetLevels").hidden=true;K.load(n)};lg.appendChild(b)}
-    $("kAll").checked=!!save.all;$("kWho").textContent=PLAYER.avatar+" "+PLAYER.name+" · "+TS.players.gradeName(GRADE)}
+    $("kAll").checked=!!save.all;$("kWho").textContent=PLAYER.avatar+" "+PLAYER.name+" · "+TS.players.gradeName(AGE)}
   $("kLevels").onclick=()=>{drawPicker();$("kSheetLevels").hidden=false};
   $("kCloseLevels").onclick=()=>{$("kSheetLevels").hidden=true};
   $("kSheetLevels").addEventListener("click",e=>{if(e.target===$("kSheetLevels"))$("kSheetLevels").hidden=true});

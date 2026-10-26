@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!--HEAD:ABC Order-->
+</head>
+<body>
+<!--KIT-->
+<!--LEARN-->
+<script>
+(()=>{const U=TS_LEARN.util;
+TS_LEARN({id:"abc",name:"ABC Order",howto:[["🔤", "Letters are mixed up."], ["👆", "Tap the letters in ABC order: A, then B, then C..."], ["✅", "Fill every box to finish the round."], ["🔊", "Tap the speaker to hear it again."]],
+label:n=>"",
+make(n,i,r,a){const UP="ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  if(a>=2&&n>15){ // putting words in ABC order
+    const W=[["ant","🐜"],["apple","🍎"],["bat","🦇"],["bear","🐻"],["bed","🛏️"],["bus","🚌"],["cat","🐱"],["cake","🎂"],["cup","☕"],["dog","🐶"],["duck","🦆"],["egg","🥚"],
+      ["fish","🐟"],["fox","🦊"],["frog","🐸"],["goat","🐐"],["gift","🎁"],["hat","🎩"],["hen","🐔"],["jet","✈️"],["kite","🪁"],["key","🔑"],["lamp","💡"],["lion","🦁"],
+      ["map","🗺️"],["moon","🌙"],["nest","🪺"],["nut","🥜"],["owl","🦉"],["pig","🐷"],["pear","🍐"],["queen","👸"],["rain","🌧️"],["ring","💍"],["sun","☀️"],["sock","🧦"],
+      ["tree","🌳"],["tent","⛺"],["van","🚐"],["web","🕸️"],["yarn","🧶"],["zebra","🦓"]];
+    const k=U.ramp(n,16,40,3,5),same=n>30;let ws;
+    for(let t=0;t<50;t++){ws=U.sample(r,W,k);if(same||new Set(ws.map(w=>w[0][0])).size===k)break}
+    ws.sort((x,y)=>x[0]<y[0]?-1:1);const ans=ws.map(w=>w[0]);   // mix() shuffles away from the sorted order
+    return{type:"order",wide:true,say:"Put the words in A B C order.",prompt:'<span class="ask">Put the words in ABC order</span>',
+      tiles:U.mix(r,ws).map(w=>({key:w[0],html:w[1]+" "+w[0],say:w[0]})),answer:ans}}
+  let len,start,lower;
+  if(a<=0){len=Math.min(7,3+Math.floor((n-1)/8));start=n<=12?0:U.ri(r,0,26-len);lower=false}
+  else if(a===1){len=Math.min(10,5+Math.floor((n-1)/8));start=U.ri(r,0,26-len);lower=n>20}
+  else{len=U.ri(r,8,10);start=U.ri(r,0,26-len);lower=n>8}
+  const seq=UP.slice(start,start+len).split("").map(c=>lower?c.toLowerCase():c);
+  return{type:"order",say:"Put the letters in A B C order."+(start===0?" Start with A.":""),prompt:'<span class="ask">Put the letters in ABC order</span>',
+    tiles:U.mix(r,seq).map(c=>({key:c,html:c,say:c})),answer:seq}}});
+})();
+</script>
+</body>
+</html>

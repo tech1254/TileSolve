@@ -38,7 +38,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--paint);outline-
 .toggle b{color:var(--text)}
 .toggle input{width:18px;height:18px;accent-color:var(--paint)}
 
-.grades{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.grades{display:grid;grid-template-columns:repeat(8,1fr);gap:5px}
 .grades button{background:var(--asphalt);border:1px solid var(--lane);border-radius:12px;padding:10px 0 8px;cursor:pointer;display:grid;gap:2px}
 .grades button b{font-family:var(--font-sign);font-weight:400;font-size:22px;line-height:1;color:var(--paint)}
 .grades button span{font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
@@ -74,3 +74,4 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--paint);outline-
 @keyframes ts-tap{50%{transform:translate(-30%,-14px)}}
 .chip.help{font-size:18px;font-weight:700;text-transform:none}
 @media (prefers-reduced-motion:reduce){.ts-finger{animation:none}}
+.ts-count{display:inline-flex;flex-wrap:wrap;justify-content:center;max-width:min(78vw,380px);font-size:clamp(24px,7vw,36px);gap:2px;line-height:1.15}
