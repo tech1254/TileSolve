@@ -35,6 +35,18 @@ A second section on the home screen, shown first for players in Kindergarten to 
 
 All rounds are built by `shared/learn.js` from a small description in each game's `src/<game>.html`.
 
+## Learn & explore (grade ranges)
+
+Each game here has a grade range and only shows for players in it. Content again follows the previous grade's Alberta outcomes. They are written by `tools/mk_explore.py`.
+
+- **Make Ten** (grades 1–4): tap numbers that add up to a target. Sums to 10, then 20, then tens to 100 with three numbers, then hundreds.
+- **Times Tables** (grades 3–7): equal groups and skip counting for grade 3 players, 10×10 facts for grade 4, 12×12 and division after that.
+- **Fraction Pizza** (grades 2–7): equal halves, then unit fractions, k/N and comparing, then equivalent fractions.
+- **Money Shop** (grades 3–7): Canadian coins. Count one kind of coin, then mixed coins and paying an exact price, then making change.
+- **Clock & Calendar** (grades 2–7): days and months in order, then which takes longer and units of time, then reading analog clocks, then quarter past/to and minutes between times.
+- **Number Line Jump** (grades 1–6): where does the frog land? Within 10, 20, tens to 100, hundreds to 1,000, then tenths.
+- **Pattern Next** (Kindergarten–grade 7): repeating picture patterns, then counting up or down, ×2 and ÷2, then squares, triangle numbers and Fibonacci.
+
 ## Puzzle games
 
 - **Unblock the Car** (`games/car/`): slide cars until the red one can drive out. 1,000 levels from a bank of pre-generated, verified puzzles; the par is each puzzle's exact shortest solution. Difficulty ramps by grade: for grade 3, it's properly challenging by about level 30.

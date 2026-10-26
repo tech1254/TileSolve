@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!--HEAD:Number Line Jump-->
+</head>
+<body>
+<!--KIT-->
+<!--LEARN-->
+<script>
+(()=>{const U=TS_LEARN.util;
+TS_LEARN({id:"numberline",name:"Number Line Jump",howto:[["🐸", "The frog starts at the green dot."], ["↪️", "It jumps forward (+) or back (−)."], ["👆", "Tap where the frog lands."], ["🔊", "Tap the speaker to hear it again."]],
+make(n,i,r,a){let lo=0,hi,tick,label,unit,fmt=v=>String(v),s,j;
+  if(a<=0){hi=10;tick=1;label=1;s=U.ri(r,0,6);j=U.ri(r,1,10-s);if(n>20&&i%2===1){s=U.ri(r,4,10);j=-U.ri(r,1,s)}}                 // K: within 10
+  else if(a===1){hi=20;tick=1;label=5;s=U.ri(r,0,15);j=U.ri(r,1,Math.min(9,20-s));if(n>10&&i%2===1){s=U.ri(r,6,20);j=-U.ri(r,1,Math.min(9,s))}} // grade 1: within 20
+  else if(a===2){hi=100;tick=10;label=20;s=10*U.ri(r,0,7);j=10*U.ri(r,1,10-s/10);if(n>12&&i%2===1){s=10*U.ri(r,3,10);j=-10*U.ri(r,1,s/10)}} // grade 2: tens to 100
+  else if(a===3){hi=1000;tick=100;label=200;s=100*U.ri(r,0,7);j=100*U.ri(r,1,10-s/100);if(i%2===1){s=100*U.ri(r,3,10);j=-100*U.ri(r,1,s/100)}} // grade 3: hundreds to 1000
+  else{hi=20;tick=1;label=5;fmt=v=>(v/10).toFixed(1).replace(/\.0$/,"");s=U.ri(r,0,12);j=U.ri(r,1,8);if(i%2===1){s=U.ri(r,8,20);j=-U.ri(r,1,8)}}       // grade 4+: tenths
+  const e=s+j,o=new Set([e]);for(const d of U.shuffle(r,[tick,-tick,2*tick,-2*tick,-2*j]))if(o.size<4&&e+d>=lo&&e+d<=hi)o.add(e+d);
+  const js=(j>0?"+":"−")+fmt(Math.abs(j));
+  return{type:"pick",say:"Start at "+fmt(s)+". Jump "+(j>0?"forward ":"back ")+fmt(Math.abs(j))+". Where do you land?",
+    prompt:'<span class="ask">Start at '+fmt(s)+", jump "+js+". Where do you land?</span>"+U.numberline(lo,hi,tick,label,s,e,fmt),
+    options:U.shuffle(r,[...o]).map(v=>({key:v,html:fmt(v)})),answer:e}}});
+})();
+</script>
+</body>
+</html>

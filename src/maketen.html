@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!--HEAD:Make Ten-->
+</head>
+<body>
+<!--KIT-->
+<!--LEARN-->
+<script>
+(()=>{const U=TS_LEARN.util;
+TS_LEARN({id:"maketen",name:"Make Ten",howto:[["🔟", "Each round has a target number."], ["👆", "Tap numbers that add up to it. Tap again to take one back."], ["➕", "Later you'll need three numbers!"], ["🔊", "Tap the speaker to hear it again."]],
+make(n,i,r,a){let target,unit,parts;
+  if(a<=0){target=n<=15?U.pick(r,[5,6,7]):U.pick(r,[8,9,10]);unit=1;parts=2}            // Kindergarten: make numbers to 10
+  else if(a===1){target=n<=15?10:U.pick(r,[12,14,15,16,18,20]);unit=1;parts=n>25?3:2}   // grade 1: facts to 20
+  else if(a===2){target=10*U.ri(r,5,10);unit=10;parts=n>20?3:2}                        // grade 2: within 100, several addends
+  else{target=50*U.ri(r,10,20);unit=50;parts=3}                                          // grade 3: within 1000
+  const sol=[];let left=target;for(let j=0;j<parts-1;j++){const v=unit*U.ri(r,1,left/unit-(parts-1-j));sol.push(v);left-=v}sol.push(left);
+  const extra=Array.from({length:a<=0?3:4},()=>unit*U.ri(r,1,Math.max(1,target/unit-1)));
+  const cells=U.shuffle(r,sol.map(v=>({v,sol:true})).concat(extra.map(v=>({v,sol:false}))));
+  return{type:"combo",target,say:"Tap numbers that add up to "+target+".",prompt:'<span class="ask">Make</span><span class="big l">'+target+"</span>",
+    cells:cells.map(c=>({v:c.v,html:String(c.v)})),solution:cells.map((c,k)=>c.sol?k:-1).filter(k=>k>=0)}}});
+})();
+</script>
+</body>
+</html>

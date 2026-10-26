@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!--HEAD:Money Shop-->
+</head>
+<body>
+<!--KIT-->
+<!--LEARN-->
+<script>
+(()=>{const U=TS_LEARN.util;
+TS_LEARN({id:"money",name:"Money Shop",howto:[["🪙", "Canadian coins: nickel 5¢, dime 10¢, quarter 25¢, loonie $1, toonie $2."], ["🧮", "Count the coins to find how much money."], ["🛒", "Some rounds: tap coins to pay exactly the price."], ["🔊", "Tap the speaker to hear it again."]],
+make(n,i,r,a){const NM={5:"nickels",10:"dimes",25:"quarters",100:"loonies",200:"toonies"},row=vs=>'<span class="lr-coins">'+vs.map(U.coin).join("")+"</span>";
+  const opts=(t,step)=>{const o=new Set([t]);for(const d of U.shuffle(r,[step,-step,5,-5,10,2*step]))if(o.size<4&&t+d>0)o.add(t+d);return U.shuffle(r,[...o]).map(v=>({key:v,html:U.cents(v)}))};
+  if(a<=2){ // grade 2: skip counting with coins of one kind
+    const k=U.pick(r,n<=15?[10,5]:[10,5,25]),c=U.ri(r,2,k===25?4:n<=15?6:9);
+    return{type:"pick",say:"Count the "+NM[k]+". How much money?",prompt:'<span class="ask">How much money?</span>'+row(Array(c).fill(k)),options:opts(k*c,k),answer:k*c}}
+  if(a===3){ // grade 3: counting mixed coins, paying exact amounts
+    if(i%2===0){const vs=Array.from({length:U.ri(r,3,6)},()=>U.pick(r,n>20?[100,25,25,10,10,5]:[25,25,10,10,5])).sort((x,y)=>y-x),t=vs.reduce((x,y)=>x+y,0);
+      return{type:"pick",say:"How much money is there? Start with the biggest coins.",prompt:'<span class="ask">How much money?</span>'+row(vs),options:opts(t,5),answer:t}}
+    const sol=Array.from({length:U.ri(r,2,4)},()=>U.pick(r,n>20?[100,25,10,5]:[25,10,5])),price=sol.reduce((x,y)=>x+y,0),extra=U.sample(r,[25,10,5,25,10,100],3);
+    const cells=U.shuffle(r,sol.map(v=>({v,s:1})).concat(extra.map(v=>({v,s:0}))));
+    return{type:"combo",target:price,fmt:U.cents,say:"Tap coins to pay exactly "+U.cents(price).replace("¢"," cents")+".",prompt:'<span class="ask">Pay exactly</span><span class="big l">'+U.cents(price)+"</span>",
+      cells:cells.map(c=>({v:c.v,html:U.coin(c.v),aria:U.cents(c.v)})),solution:cells.map((c,k)=>c.s?k:-1).filter(k=>k>=0)}}
+  // grade 4+: making change
+  const paid=U.pick(r,[100,200,500,1000]),cost=5*U.ri(r,3,paid/5-1),ch=paid-cost,o=new Set([ch]);
+  for(const d of U.shuffle(r,[5,-5,10,-10,25,-25,100]))if(o.size<4&&ch+d>0)o.add(ch+d);
+  return{type:"pick",say:"A toy costs "+U.cents(cost)+". You pay "+U.cents(paid)+". How much change do you get?",
+    prompt:'<span class="ask">🧸 costs '+U.cents(cost)+". You pay "+U.cents(paid)+". Change?</span>",options:U.shuffle(r,[...o]).map(v=>({key:v,html:U.cents(v)})),answer:ch}}});
+})();
+</script>
+</body>
+</html>

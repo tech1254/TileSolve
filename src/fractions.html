@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!--HEAD:Fraction Pizza-->
+</head>
+<body>
+<!--KIT-->
+<!--LEARN-->
+<script>
+(()=>{const U=TS_LEARN.util;
+TS_LEARN({id:"fractions",name:"Fraction Pizza",howto:[["🍕", "Pizzas are cut into equal slices."], ["👀", "Look at how many slices there are, and how many are coloured."], ["👆", "Tap the right fraction or pizza."], ["🔊", "Tap the speaker to hear it again."]],
+make(n,i,r,a){const F=(x,y)=>U.frac(x,y),key=(x,y)=>x+"/"+y;
+  if(a<=1){ // grade 1: one-half means two EQUAL parts
+    if(i%2===0){const opts=U.shuffle(r,[{key:"half",html:U.pizza(2,1)},{key:"uneven",html:U.pie([120,240],[0])},{key:"third",html:U.pizza(3,1)},{key:"quarter",html:U.pizza(4,1)}]).slice(0,a<=0?3:4);
+      if(!opts.some(o=>o.key==="half"))opts[0]={key:"half",html:U.pizza(2,1)};
+      return{type:"pick",cols:2,say:"Which pizza shows one half? Two equal parts!",prompt:'<span class="ask">Which shows one half?</span>',options:U.shuffle(r,opts),answer:"half"}}
+    return{type:"pick",cols:2,say:"Which pizza is cut into two equal halves?",prompt:'<span class="ask">Which is cut into equal halves?</span>',
+      options:U.shuffle(r,[{key:"eq",html:U.pizza(2,0)},{key:"no",html:U.pie([100,260],[])},{key:"no2",html:U.pie([150,210],[])}]),answer:"eq"}}
+  if(a===2){ // grade 2: unit fractions, 10 or fewer parts
+    const N=U.ri(r,2,n<=20?4:8),o=new Set([N]);while(o.size<4)o.add(U.ri(r,2,10));
+    return{type:"pick",say:"The pizza has "+N+" equal slices and 1 is coloured. What fraction is coloured?",prompt:'<span class="ask">What fraction is coloured?</span>'+U.pizza(N,1),
+      options:U.shuffle(r,[...o]).map(d=>({key:key(1,d),html:F(1,d)})),answer:key(1,N)}}
+  if(a===3){ // grade 3: fractions as unit fractions put together, denominators up to 12
+    const N=U.pick(r,[2,3,4,5,6,8,10,12]),K=U.ri(r,1,N-1);
+    if(i%3===2){const d1=U.pick(r,[2,3,4,5,6,8]),d2=U.pick(r,[2,3,4,5,6,8].filter(d=>d!==d1)),big=Math.min(d1,d2);
+      return{type:"pick",cols:2,say:"Which is bigger: one "+d1+"th or one "+d2+"th? Look at the slices!",prompt:'<span class="ask">Which is bigger?</span>',
+        options:[{key:key(1,d1),html:U.pizza(d1,1)+F(1,d1)},{key:key(1,d2),html:U.pizza(d2,1)+F(1,d2)}],answer:key(1,big)}}
+    const o=new Map([[key(K,N),F(K,N)]]);for(const[x,y]of U.shuffle(r,[[N-K,N],[K,N+1],[K+1,N],[1,N],[K,N*2]]))if(o.size<4&&x>0&&x<y&&!o.has(key(x,y)))o.set(key(x,y),F(x,y));
+    return{type:"pick",say:"What fraction of the pizza is coloured?",prompt:'<span class="ask">What fraction is coloured?</span>'+U.pizza(N,K),
+      options:U.shuffle(r,[...o].map(([k,h])=>({key:k,html:h}))),answer:key(K,N)}}
+  // grade 4+: equivalent fractions
+  const[x,y]=U.pick(r,[[1,2],[1,3],[2,3],[1,4],[3,4],[2,5]]),m=U.ri(r,2,4),o=new Map([[key(x*m,y*m),F(x*m,y*m)]]);
+  for(const[p,q]of U.shuffle(r,[[x*m+1,y*m],[x+m,y+m],[x*m,y*m+1],[y,x*m+y],[x*m-1,y*m]]))if(o.size<4&&p>0&&p<q&&p*y!==q*x&&!o.has(key(p,q)))o.set(key(p,q),F(p,q));
+  return{type:"pick",say:"Which fraction is the same as "+x+" over "+y+"?",prompt:'<span class="ask">Which is the same as</span>'+F(x,y)+U.pizza(y,x),
+    options:U.shuffle(r,[...o].map(([k,h])=>({key:k,html:h}))),answer:key(x*m,y*m)}}});
+})();
+</script>
+</body>
+</html>

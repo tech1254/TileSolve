@@ -8,6 +8,8 @@
      hunt  {type:"hunt", say, prompt, cells:[{html,ok,aria?}], cols}                      tap every match
      fill  {type:"fill", say, prompt, target, size:10|20}                                 fill a ten frame
      trace {type:"trace", say, prompt, ch}                                                trace a letter/number
+     combo {type:"combo", say, prompt, cells:[{html,v}], target, solution:[indexes], fmt?}  tap tiles that add up to target
+   Order tiles may carry a val (answer lists vals) so letters can repeat and extra tiles can be decoys.
    "say" is read aloud (🔊 repeats it). Stars: 0-1 oops = 3, 2-3 = 2, more = 1. */
 window.TS_LEARN=function(o){
   const $=id=>document.getElementById(id),U=TS_LEARN.util;let K,R=null,S=null;
@@ -42,11 +44,11 @@ window.TS_LEARN=function(o){
     order:{draw(b){R.pos=0;b.innerHTML='<div class="lr-slots"></div><div class="lr-tray"></div>';const sl=b.firstChild,tr=b.lastChild;
         if(R.size)b.style.setProperty("--ts",R.size+"px");if(R.wide)b.classList.add("wide");
         R.answer.forEach((_,k)=>{const s=document.createElement("div");s.className="lr-slot";s.dataset.n=k+1;sl.appendChild(s)});
-        R.tiles.forEach(t=>{const x=document.createElement("button");x.type="button";x.className="lr-tile";x.innerHTML=t.html;x.dataset.key=t.key;x.setAttribute("aria-label",t.aria||String(t.key));
+        R.tiles.forEach(t=>{const x=document.createElement("button");x.type="button";x.className="lr-tile";x.innerHTML=t.html;x.dataset.key=t.key;x.dataset.val=String(t.val!==undefined?t.val:t.key);x.setAttribute("aria-label",t.aria||String(t.key));
           x.onclick=()=>{if(R.done||K.busy||x.classList.contains("used"))return;
-            if(t.key===R.answer[R.pos]){const s=sl.children[R.pos];s.innerHTML=t.html;s.classList.add("full");x.classList.add("used");R.pos++;TS.music.fx("tap");
+            if(String(t.val!==undefined?t.val:t.key)===String(R.answer[R.pos])){const s=sl.children[R.pos];s.innerHTML=t.html;s.classList.add("full");x.classList.add("used");R.pos++;TS.music.fx("tap");
               if(t.say)TS.say(t.say);if(R.pos>=R.answer.length)roundDone()}else oops(x)};tr.appendChild(x)})},
-      target:b=>b.querySelector('.lr-tile:not(.used)[data-key="'+cssq(R.answer[R.pos])+'"]'),
+      target:b=>b.querySelector('.lr-tile:not(.used)[data-val="'+cssq(R.answer[R.pos])+'"]'),
       hint(b){flash(this.target(b))},solve(b){while(!R.done)this.target(b).click()}},
     sort:{draw(b){R.left=R.items.length;R.sel=null;b.innerHTML='<div class="lr-bins"></div><div class="lr-tray"></div>';const bins=b.firstChild,tr=b.lastChild;
         R.bins.forEach(bn=>{const d=document.createElement("button");d.type="button";d.className="lr-bin";d.dataset.bin=bn.key;d.setAttribute("aria-label",bn.label||bn.key);
@@ -72,6 +74,18 @@ window.TS_LEARN=function(o){
       target(b){const cs=[...b.querySelectorAll(".lr-fc")];return R.on.size<R.target?cs.find(c=>!c.classList.contains("on")):cs.find(c=>c.classList.contains("on"))},
       hint(b){const cs=[...b.querySelectorAll(".lr-fc")];cs.forEach((c,i)=>{const want=i<R.target;if(want!==c.classList.contains("on"))c.click()})},
       solve(b){this.hint(b)}},
+    combo:{draw(b){R.sel=new Set();const fmt=R.fmt||(v=>String(v));
+        b.innerHTML='<div class="lr-combo"></div><div class="lr-count">Total: <b id="lrSum">'+fmt(0)+"</b> / "+fmt(R.target)+"</div>";const g=b.firstChild;
+        const sum=()=>[...R.sel].reduce((a,k)=>a+R.cells[k].v,0);
+        R.cells.forEach((c,k)=>{const x=document.createElement("button");x.type="button";x.className="lr-cbt";x.innerHTML=c.html;x.dataset.k=k;x.setAttribute("aria-label",c.aria||String(c.v));
+          x.onclick=()=>{if(R.done||K.busy)return;if(R.sel.has(k)){R.sel.delete(k);x.classList.remove("on")}else{R.sel.add(k);x.classList.add("on")}TS.music.fx("tap");
+            const t=sum();$("lrSum").textContent=fmt(t);clearTimeout(R.t);
+            if(t===R.target)R.t=setTimeout(()=>{if(!R.done&&sum()===R.target)roundDone()},450);
+            else if(t>R.target){oops(x);K.tip("Too much! Take one away.");setTimeout(()=>{if(R.sel.has(k)){R.sel.delete(k);x.classList.remove("on");$("lrSum").textContent=fmt(sum())}},450)}};g.appendChild(x)})},
+      target(b){const k=R.solution.find(i=>!R.sel.has(i));return k===undefined?null:b.querySelector('.lr-cbt[data-k="'+k+'"]')},
+      hint(b){R.solution.forEach(i=>flash(b.querySelector('.lr-cbt[data-k="'+i+'"]')))},
+      solve(b){[...R.sel].filter(i=>!R.solution.includes(i)).forEach(i=>b.querySelector('.lr-cbt[data-k="'+i+'"]').click());
+        R.solution.forEach(i=>{if(!R.sel.has(i))b.querySelector('.lr-cbt[data-k="'+i+'"]').click()})}},
     trace:{draw(b){R.strokes=(TS_LEARN.TRACE[R.ch]||TS_LEARN.TRACE.O).map(U.sampleLine);R.si=0;R.pi=0;
         const P=R.strokes;b.innerHTML='<svg class="lr-tsvg" viewBox="0 0 100 100" role="img" aria-label="Trace '+R.ch+'"><line x1="0" y1="10" x2="100" y2="10" class="lr-ln"/><line x1="0" y1="50" x2="100" y2="50" class="lr-ln mid"/><line x1="0" y1="90" x2="100" y2="90" class="lr-ln"/>'+
           P.map(p=>'<polyline class="lr-guide" points="'+U.pts(p)+'"/>').join("")+P.map((p,k)=>'<polyline class="lr-ink" data-s="'+k+'" points=""/>').join("")+
@@ -166,7 +180,36 @@ TS_LEARN.util=(()=>{
   const dist=(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1]),pts=p=>p.map(q=>q[0].toFixed(1)+","+q[1].toFixed(1)).join(" ");
   function sampleLine(poly){const out=[poly[0]];for(let k=1;k<poly.length;k++){const a=poly[k-1],b=poly[k],d=dist(a,b),n=Math.max(1,Math.round(d/3));
       for(let j=1;j<=n;j++)out.push([a[0]+(b[0]-a[0])*j/n,a[1]+(b[1]-a[1])*j/n])}return out}
-  return{ri,pick,shuffle,sample,mix,ramp,near,shape,SHAPES,SIDES,COLOURS,SHAPE_COLS,cluster,scatter,tens,frame,dist,pts,sampleLine}})();
+  /* ---------- fractions, coins, clocks, number lines ---------- */
+  const frac=(a,b)=>'<span class="lr-frac" aria-label="'+a+' over '+b+'"><i>'+a+"</i><i>"+b+"</i></span>";
+  // a pie split into slices with the given angles (degrees); slices listed in "fill" are shaded
+  function pie(angles,fill){let a0=-90,out="";angles.forEach((ang,k)=>{const a1=a0+ang,r=44,x0=50+r*Math.cos(a0*Math.PI/180),y0=50+r*Math.sin(a0*Math.PI/180),
+      x1=50+r*Math.cos(a1*Math.PI/180),y1=50+r*Math.sin(a1*Math.PI/180);
+      out+='<path d="M50 50L'+x0.toFixed(2)+" "+y0.toFixed(2)+"A44 44 0 "+(ang>180?1:0)+" 1 "+x1.toFixed(2)+" "+y1.toFixed(2)+'Z" fill="'+(fill.includes(k)?"#e8833a":"#ffe9a8")+'" stroke="#8a5a1e" stroke-width="2.2" stroke-linejoin="round"/>';a0=a1});
+    return'<svg class="lr-pic" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="48" fill="#d9a35a"/>'+out+"</svg>"}
+  const pizza=(N,K)=>pie(Array(N).fill(360/N),[...Array(K).keys()]);
+  const COIN={5:["#c9ced6","5¢",36],10:["#c9ced6","10¢",31],25:["#c9ced6","25¢",42],100:["#e3b341","$1",44],200:["#e3b341","$2",46]};
+  function coin(v){const[c,l,r]=COIN[v];let body;
+    if(v===100){const pts=Array.from({length:11},(_,k)=>{const a=(k*360/11-90)*Math.PI/180;return(50+r*Math.cos(a)).toFixed(1)+","+(50+r*Math.sin(a)).toFixed(1)}).join(" ");body='<polygon points="'+pts+'" fill="'+c+'" stroke="#9c7a1e" stroke-width="3"/>'}
+    else if(v===200)body='<circle cx="50" cy="50" r="'+r+'" fill="#c9ced6" stroke="#8e96a1" stroke-width="3"/><circle cx="50" cy="50" r="28" fill="#e3b341" stroke="#9c7a1e" stroke-width="2"/>';
+    else body='<circle cx="50" cy="50" r="'+r+'" fill="'+c+'" stroke="#8e96a1" stroke-width="3"/><circle cx="50" cy="50" r="'+(r-6)+'" fill="none" stroke="#e8ebef" stroke-width="2"/>';
+    return'<svg class="coin" viewBox="0 0 100 100" aria-hidden="true">'+body+'<text x="50" y="52" text-anchor="middle" dominant-baseline="central" font-family="Verdana,sans-serif" font-weight="700" font-size="'+(v>=100?24:Math.max(15,r*.55))+'" fill="#2b2f36">'+l+"</text></svg>"}
+  const cents=v=>v<100?v+"¢":"$"+(v/100).toFixed(2);
+  function clock(h,m){let t="";for(let k=0;k<60;k++){const a=k*6*Math.PI/180,r1=k%5?42:38;t+='<line x1="'+(50+r1*Math.sin(a)).toFixed(1)+'" y1="'+(50-r1*Math.cos(a)).toFixed(1)+'" x2="'+(50+45*Math.sin(a)).toFixed(1)+'" y2="'+(50-45*Math.cos(a)).toFixed(1)+'" stroke="#2b2f36" stroke-width="'+(k%5?.8:2)+'"/>'}
+    for(let k=1;k<=12;k++){const a=k*30*Math.PI/180;t+='<text x="'+(50+31*Math.sin(a)).toFixed(1)+'" y="'+(50-31*Math.cos(a)).toFixed(1)+'" text-anchor="middle" dominant-baseline="central" font-family="Verdana,sans-serif" font-weight="700" font-size="9" fill="#2b2f36">'+k+"</text>"}
+    const ha=((h%12)+m/60)*30,ma=m*6;
+    return'<svg class="lr-pic" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="47" fill="#fff" stroke="#3b6fd9" stroke-width="4"/>'+t+
+      '<line x1="50" y1="50" x2="'+(50+21*Math.sin(ha*Math.PI/180)).toFixed(1)+'" y2="'+(50-21*Math.cos(ha*Math.PI/180)).toFixed(1)+'" stroke="#2b2f36" stroke-width="4.5" stroke-linecap="round"/>'+
+      '<line x1="50" y1="50" x2="'+(50+34*Math.sin(ma*Math.PI/180)).toFixed(1)+'" y2="'+(50-34*Math.cos(ma*Math.PI/180)).toFixed(1)+'" stroke="#e2412e" stroke-width="2.6" stroke-linecap="round"/><circle cx="50" cy="50" r="3" fill="#2b2f36"/></svg>'}
+  // number line from lo to hi (in "units"), a jump from s to e; fmt turns a unit into a label
+  function numberline(lo,hi,tick,label,s,e,fmt){const W=440,x=v=>30+(v-lo)/(hi-lo)*(W-60);let t='<line x1="20" y1="80" x2="'+(W-20)+'" y2="80" stroke="#e9edf1" stroke-width="3"/>';
+    for(let v=lo;v<=hi+1e-9;v+=tick){const big=Math.abs(Math.round(v/label)*label-v)<1e-9;t+='<line x1="'+x(v)+'" y1="'+(big?68:73)+'" x2="'+x(v)+'" y2="'+(big?92:87)+'" stroke="#e9edf1" stroke-width="'+(big?3:1.5)+'"/>';
+      if(big)t+='<text x="'+x(v)+'" y="116" text-anchor="middle" font-family="Verdana,sans-serif" font-size="22" font-weight="700" fill="#e9edf1">'+fmt(v)+"</text>"}
+    const xs=x(s),xe=x(e),mid=(xs+xe)/2;
+    t+='<path d="M'+xs+' 76 Q'+mid+" "+(76-Math.min(70,Math.abs(xe-xs)*.6+20))+" "+xe+' 76" fill="none" stroke="#f2c230" stroke-width="3.5" stroke-dasharray="7 5" marker-end="url(#ah)"/>'+
+      '<circle cx="'+xs+'" cy="80" r="9" fill="#43a047" stroke="#fff" stroke-width="2"/><text x="'+xe+'" y="62" text-anchor="middle" font-family="Verdana,sans-serif" font-size="26" font-weight="700" fill="#f2c230">?</text>';
+    return'<svg class="lr-line" viewBox="0 0 '+W+' 124" aria-hidden="true"><defs><marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#f2c230"/></marker></defs>'+t+"</svg>"}
+  return{ri,pick,shuffle,sample,mix,ramp,near,shape,SHAPES,SIDES,COLOURS,SHAPE_COLS,cluster,scatter,tens,frame,dist,pts,sampleLine,frac,pie,pizza,coin,cents,clock,numberline}})();
 
 /* Letter and number shapes for tracing, drawn in a 100x100 box (top line y=10, middle y=50, bottom y=90).
    Each character is a list of strokes in writing order; each stroke is a list of points. */

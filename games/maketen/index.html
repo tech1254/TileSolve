@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#161b21">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box;height:100%}body{margin:0}[hidden]{display:none!important}</style>
+<title>Make Ten · Tile Solve</title>
+<meta name="apple-mobile-web-app-title" content="Tile Solve">
+<link rel="apple-touch-icon" href="../../icon-180.png">
+<link rel="icon" type="image/png" href="../../icon-512.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Barlow:wght@400;600;700&display=swap">
+<link rel="stylesheet" href="../../shared/ts.css?v=ab57def8">
+<link rel="stylesheet" href="../../shared/game.css?v=ab57def8">
+</head>
+<body>
+<script src="../../shared/ts.js?v=ab57def8"></script>
+<script src="../../shared/kit.js?v=ab57def8"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&display=swap">
+<link rel="stylesheet" href="../../shared/learn.css?v=ab57def8">
+<script src="../../shared/learn.js?v=ab57def8"></script>
+<script>
+(()=>{const U=TS_LEARN.util;
+TS_LEARN({id:"maketen",name:"Make Ten",howto:[["🔟", "Each round has a target number."], ["👆", "Tap numbers that add up to it. Tap again to take one back."], ["➕", "Later you'll need three numbers!"], ["🔊", "Tap the speaker to hear it again."]],
+make(n,i,r,a){let target,unit,parts;
+  if(a<=0){target=n<=15?U.pick(r,[5,6,7]):U.pick(r,[8,9,10]);unit=1;parts=2}            // Kindergarten: make numbers to 10
+  else if(a===1){target=n<=15?10:U.pick(r,[12,14,15,16,18,20]);unit=1;parts=n>25?3:2}   // grade 1: facts to 20
+  else if(a===2){target=10*U.ri(r,5,10);unit=10;parts=n>20?3:2}                        // grade 2: within 100, several addends
+  else{target=50*U.ri(r,10,20);unit=50;parts=3}                                          // grade 3: within 1000
+  const sol=[];let left=target;for(let j=0;j<parts-1;j++){const v=unit*U.ri(r,1,left/unit-(parts-1-j));sol.push(v);left-=v}sol.push(left);
+  const extra=Array.from({length:a<=0?3:4},()=>unit*U.ri(r,1,Math.max(1,target/unit-1)));
+  const cells=U.shuffle(r,sol.map(v=>({v,sol:true})).concat(extra.map(v=>({v,sol:false}))));
+  return{type:"combo",target,say:"Tap numbers that add up to "+target+".",prompt:'<span class="ask">Make</span><span class="big l">'+target+"</span>",
+    cells:cells.map(c=>({v:c.v,html:String(c.v)})),solution:cells.map((c,k)=>c.sol?k:-1).filter(k=>k>=0)}}});
+})();
+</script>
+</body>
+</html>

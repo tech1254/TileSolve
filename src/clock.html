@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!--HEAD:Clock & Calendar-->
+</head>
+<body>
+<!--KIT-->
+<!--LEARN-->
+<script>
+(()=>{const U=TS_LEARN.util;
+TS_LEARN({id:"clock",name:"Clock & Calendar",howto:[["📅", "Days, months, and how long things take."], ["🕒", "Later: read the clock. The short hand shows the hour, the long red hand shows minutes."], ["👆", "Tap the right answer, or tap things in order."], ["🔊", "Tap the speaker to hear it again."]],
+make(n,i,r,a){const D=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"],M=["January","February","March","April","May","June","July","August","September","October","November","December"];
+  if(a<=1){ // grade 1: days of the week and months of the year
+    if(i%2===0){const L=n>20&&i%4===2?M:D,len=L===M?U.ri(r,4,6):(n<=12?7:U.ri(r,4,5)),s=L===D&&n<=12?0:U.ri(r,0,L.length-1),seq=Array.from({length:len},(_,k)=>L[(s+k)%L.length]);
+      return{type:"order",wide:true,say:"Put the "+(L===M?"months":"days")+" in order.",prompt:'<span class="ask">Put the '+(L===M?"months":"days")+" in order</span>",
+        tiles:U.mix(r,seq).map(x=>({key:x,html:x,say:x})),answer:seq}}
+    const L=n>20?U.pick(r,[D,M]):D,k=U.ri(r,0,L.length-1),before=n>15&&i%3===1,ans=L[(k+(before?-1:1)+L.length)%L.length];
+    const o=new Set([ans]);while(o.size<4)o.add(U.pick(r,L.filter(x=>x!==L[k])));
+    return{type:"pick",cols:2,say:"What "+(L===M?"month":"day")+" comes "+(before?"before ":"after ")+L[k]+"?",prompt:'<span class="ask">What comes '+(before?"before":"after")+'</span><span class="word">'+L[k]+"</span>",
+      options:U.shuffle(r,[...o]).map(x=>({key:x,html:'<span style="font-size:22px">'+x+"</span>"})),answer:ans}}
+  if(a===2){ // grade 2: duration (longer/shorter) and units of time
+    const A=[["Blink","👁️",.2],["Sneeze","🤧",.5],["Tie your shoes","👟",30],["Brush your teeth","🪥",120],["Eat lunch","🥪",1200],["Walk around the block","🚶",900],
+      ["Watch a movie","🎬",6000],["A school day","🏫",21600],["Sleep at night","😴",36000],["Summer holidays","🏖️",5e6],["Grow a tree","🌳",3e8],["Bake cookies","🍪",1800]];
+    if(i%2===0){let x,y;do{[x,y]=U.sample(r,A,2)}while(Math.max(x[2],y[2])/Math.min(x[2],y[2])<(n>20?4:20));const ans=x[2]>y[2]?x[0]:y[0];
+      return{type:"pick",cols:2,say:"Which takes longer?",prompt:'<span class="ask">Which takes longer?</span>',options:[x,y].map(v=>({key:v[0],html:'<span class="act"><b>'+v[1]+"</b>"+v[0]+"</span>"})),answer:ans}}
+    const v=U.pick(r,A),u=v[2]<60?"seconds":v[2]<3600?"minutes":v[2]<172800?"hours":"days";
+    return{type:"pick",cols:2,say:"How would you measure how long it takes to "+v[0].toLowerCase()+"?",prompt:'<span class="ask">How long? Pick the best unit</span><span class="act"><b>'+v[1]+"</b>"+v[0]+"</span>",
+      options:["seconds","minutes","hours","days"].map(x=>({key:x,html:'<span style="font-size:22px">'+x+"</span>"})),answer:u}}
+  const t=(h,m)=>h+":"+String(m).padStart(2,"0");
+  if(a===3){ // grade 3: read analog and digital clocks
+    const h=U.ri(r,1,12),m=n<=12?U.pick(r,[0,30]):5*U.ri(r,0,11),ans=t(h,m),o=new Set([ans]);
+    for(const c of U.shuffle(r,[t(m===0?12:Math.max(1,m/5),h*5%60),t(h%12+1,m),t(h,(m+30)%60),t(h===1?12:h-1,m),t(h,(m+5)%60)]))if(o.size<4)o.add(c);
+    if(i%3===2){const arr=[...o];return{type:"pick",cols:2,say:"Which clock shows "+ans+"?",prompt:'<span class="ask">Which clock shows</span><span class="big l">'+ans+"</span>",
+      options:U.shuffle(r,arr).map(x=>{const[hh,mm]=x.split(":").map(Number);return{key:x,html:U.clock(hh,mm),aria:x}}),answer:ans}}
+    return{type:"pick",cols:2,say:"What time is it?",prompt:'<span class="ask">What time is it?</span>'+U.clock(h,m),options:U.shuffle(r,[...o]).map(x=>({key:x,html:x})),answer:ans}}
+  // grade 4+: quarter past / to, and how long between times
+  if(i%2===0){const h=U.ri(r,1,12),m=U.pick(r,[0,15,30,45]),nx=h%12+1,W={0:h+" o'clock",15:"quarter past "+h,30:"half past "+h,45:"quarter to "+nx},ans=W[m];
+    return{type:"pick",cols:2,say:"What time is it? Use words.",prompt:'<span class="ask">What time is it?</span>'+U.clock(h,m),
+      options:U.shuffle(r,[0,15,30,45].map(k=>({key:W[k],html:'<span style="font-size:20px">'+W[k]+"</span>"}))),answer:ans}}
+  const h=U.ri(r,1,10),m=5*U.ri(r,0,9),d=5*U.ri(r,2,n>20?20:11),e=h*60+m+d,o=new Set([d]);for(const x of U.shuffle(r,[d+5,d-5,d+10,d+15,60-d]))if(o.size<4&&x>0)o.add(x);
+  return{type:"pick",say:"How many minutes from "+t(h,m)+" to "+t(Math.floor(e/60),e%60)+"?",prompt:'<span class="ask">How many minutes from '+t(h,m)+" to "+t(Math.floor(e/60),e%60)+"?</span>",
+    options:U.shuffle(r,[...o]).map(v=>({key:v,html:String(v)})),answer:d}}});
+})();
+</script>
+</body>
+</html>

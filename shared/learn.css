@@ -104,3 +104,25 @@
 .lr-voice{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center;font-size:14px;color:var(--muted);font-weight:600}
 .lr-voice select{min-width:0;background:var(--asphalt);color:var(--text);border:1px solid var(--lane);border-radius:10px;padding:8px;font:inherit;font-size:14px}
 .lr-vtip{margin:0;font-size:12px;color:var(--muted);line-height:1.35}
+/* combo: tap tiles that add up to a target */
+.lr-combo{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;max-width:560px}
+.lr-cbt{min-width:74px;height:74px;padding:0 10px;border-radius:18px;border:3px solid #d8cfb9;background:#f6f1e3;color:#1d2230;font:700 30px var(--font-kid);cursor:pointer;
+  display:grid;place-items:center;box-shadow:inset 0 -5px 0 rgba(0,0,0,.1);touch-action:manipulation}
+.lr-cbt.on{border-color:var(--paint);background:#fff3c4;transform:translateY(-4px)}
+.lr-cbt.lr-no{border-color:var(--target)}
+.lr-cbt .coin{width:62px;height:62px}
+/* fractions, clocks, number lines, coins */
+.lr-frac{display:inline-grid;grid-template-rows:auto auto;justify-items:center;line-height:1;font:700 1em var(--font-kid)}
+.lr-frac i{font-style:normal;padding:0 .12em}
+.lr-frac i:first-child{border-bottom:.08em solid currentColor;padding-bottom:.06em}
+.lr-pic{width:min(150px,38vw);height:min(150px,38vw)}
+.lr-opt .lr-pic{width:min(100px,24vw);height:min(100px,24vw)}
+.lr-line{width:100%;max-width:560px;height:auto}
+.lr-coins{display:flex;flex-wrap:wrap;gap:4px;justify-content:center;max-width:440px;flex-basis:100%}
+.lr-coins .coin{width:72px;height:72px}
+.lr-cbt .coin{width:64px;height:64px;display:block}
+.lr-opt .act{display:grid;justify-items:center;gap:4px;font:700 16px var(--font-body)}
+.lr-opt .act b{font-size:40px;line-height:1}
+.lr-groups{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;flex-basis:100%}
+.lr-groups .grp{border:2px dashed var(--lane);border-radius:14px;padding:4px 6px}
+.lr-groups .lr-cl{font-size:clamp(20px,5.5vw,30px)}

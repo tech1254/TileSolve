@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!--HEAD:Times Tables-->
+</head>
+<body>
+<!--KIT-->
+<!--LEARN-->
+<script>
+(()=>{const U=TS_LEARN.util;
+TS_LEARN({id:"times",name:"Times Tables",howto:[["✖️", "Answer the times table questions."], ["🍪", "Equal groups: count how many altogether."], ["🧗", "Every right answer climbs the ladder!"], ["🔊", "Tap the speaker to hear it again."]],
+rounds:()=>8,
+make(n,i,r,a){
+  if(a<=2){ // grade 2: skip counting with equal groups (multiplication starts in Alberta grade 3)
+    const g=U.ri(r,2,n<=20?4:5),per=U.pick(r,n<=20?[2,5,10]:[2,3,4,5,10]),em=U.pick(r,["🍪","🍎","⭐","🐞","🌸"]),t=g*per,o=new Set([t]);
+    for(const d of U.shuffle(r,[per,-per,1,-1,2*per]))if(o.size<4&&t+d>0)o.add(t+d);
+    return{type:"pick",say:"There are "+g+" groups of "+per+". How many altogether?",prompt:'<span class="ask">'+g+" groups of "+per+": how many?</span>"+
+      '<span class="lr-groups">'+Array.from({length:g},()=>'<span class="grp">'+U.cluster(em,per,per>5?5:per)+"</span>").join("")+"</span>",
+      options:U.shuffle(r,[...o]).map(v=>({key:v,html:String(v)})),answer:t}}
+  const mx=a===3?10:12,x=U.ri(r,2,n<=10?5:mx),y=U.ri(r,2,mx),div=a>=4&&i%3===2,ans=div?x:x*y,o=new Set([ans]);  // grade 3: to 10x10; grade 4+: to 12x12
+  for(const d of U.shuffle(r,div?[1,-1,2,-2,y]:[x,-x,y,-y,1,-1,10]))if(o.size<4&&ans+d>0)o.add(ans+d);
+  return{type:"pick",say:div?"What is "+x*y+" divided by "+y+"?":"What is "+x+" times "+y+"?",
+    prompt:'<span class="seq"><b>'+(div?x*y+" ÷ "+y:x+" × "+y)+'</b><b class="q">?</b></span>',options:U.shuffle(r,[...o]).map(v=>({key:v,html:String(v)})),answer:ans}}});
+})();
+</script>
+</body>
+</html>
