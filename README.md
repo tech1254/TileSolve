@@ -30,6 +30,7 @@ Hints in every game cost a maths question one grade below the player's grade (gr
 - **Lights Out** (`games/lights/`): tapping a light flips it and its neighbours; turn them all off. Boards grow from 3×3 to 5×5 (6×6 older). Par is the exact fewest taps, worked out with linear algebra. Hints ring a light from the best answer.
 - **Picture Logic** (`games/pixels/`): number clues reveal a hidden pixel picture (nonograms). 40 drawn pictures at 5×5, 8×8 and 10×10, each checked to be solvable by logic alone. Drag to fill several squares, and switch to ✕ to mark empty ones. Hints fix or fill one square.
 - **Box Push** (`games/boxes/`): push every crate onto a red spot (Sokoban). Swipe, use the arrows, or tap where to walk; Undo takes a move back. Levels come from a bank of 1,118 made backwards from solved positions, each re-verified, and par is the exact fewest pushes. Grade 3 goes from 1 crate to 3. Hints show the next push.
+- **Word Search** (`games/wordsearch/`): find the themed words hidden in the letters (13 themes: animals, space, ocean, food and more). Drag across a word, or tap its first and last letter. Grade 3 goes from 7×7 with across/down words to 10×10 with diagonal and backwards words. Each word is hidden exactly once, and filler letters are checked so they never spell anything unkind. Hints flash a word's first letter.
 
 ## Working on it
 
@@ -39,4 +40,4 @@ Hints in every game cost a maths question one grade below the player's grade (gr
 - More Car puzzles: `node tools/gen-bank.js SEED SECONDS out.json`, then `node tools/build.js out.json` to merge, verify and rebuild.
 - More Box Push levels: `node tools/gen-boxes.js SEED SECONDS out.json`, then `node tools/merge-boxes.js out.json` (re-verifies every par) and rebuild.
 - `shared/pictures.js`: the picture set, drawn in code. Photo entries can be added later.
-- `sh tools/test_all.sh` rebuilds and runs all eight browser test suites over a local web server (needs Playwright). Each `tools/test*.py` can also run on its own.
+- `sh tools/test_all.sh` rebuilds and runs all nine browser test suites over a local web server (needs Playwright). Each `tools/test*.py` can also run on its own.

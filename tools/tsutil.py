@@ -14,7 +14,7 @@ BASE = _serve()
 URL = lambda g: f"{BASE}/games/{g}/index.html"
 HOME_URL = f"{BASE}/index.html"
 PLAYERS = json.dumps({"list": [{"id": "k1", "name": "Mia", "avatar": "🐯", "grade": 3, "color": "#e2412e"}], "current": "k1", "music": True})
-GAMES = ["car", "picture-drop", "picture-slide", "memory", "pattern", "flood", "blocks", "numbers", "words", "sudoku", "pipes", "lights", "pixels", "boxes"]
+GAMES = ["car", "picture-drop", "picture-slide", "memory", "pattern", "flood", "blocks", "numbers", "words", "sudoku", "pipes", "lights", "pixels", "boxes", "wordsearch"]
 # Test player starts with every "How to play" card already seen (tools/test_howto.py tests the cards themselves).
 SEEN = json.dumps({g: 1 for g in GAMES})
 INIT = (f"if(!localStorage.getItem('tilesolve:players'))localStorage.setItem('tilesolve:players', {json.dumps(PLAYERS)});"

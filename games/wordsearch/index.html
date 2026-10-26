@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#161b21">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box;height:100%}body{margin:0}[hidden]{display:none!important}</style>
+<title>Word Search · Tile Solve</title>
+<meta name="apple-mobile-web-app-title" content="Tile Solve">
+<link rel="apple-touch-icon" href="../../icon-180.png">
+<link rel="icon" type="image/png" href="../../icon-512.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Barlow:wght@400;600;700&display=swap">
+<link rel="stylesheet" href="../../shared/ts.css?v=3b582d24">
+<link rel="stylesheet" href="../../shared/game.css?v=3b582d24">
+<style>
+.theme{margin:0;font-family:var(--font-sign);color:var(--paint);font-size:20px}
+.wsg{--cs:clamp(22px,min(calc((100vw - 56px)/var(--n)),calc((100dvh - 420px)/var(--n))),56px);position:relative;display:grid;
+  grid-template-columns:repeat(var(--n),var(--cs));grid-auto-rows:var(--cs);background:#f6f1e3;border-radius:10px;
+  touch-action:none;user-select:none;-webkit-user-select:none;cursor:pointer}
+.wsg svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.wc{position:relative;z-index:1;display:grid;place-items:center;font-family:var(--font-sign);font-size:calc(var(--cs)*.55);line-height:1;color:#1d2230;border-radius:50%}
+.wc.anchor{box-shadow:inset 0 0 0 3px var(--target)}
+.wc.hint{animation:wsh .8s ease 4}
+@keyframes wsh{50%{background:var(--paint)}}
+.wlist{display:flex;flex-wrap:wrap;gap:6px 8px;justify-content:center;max-width:620px}
+.wchip{display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border-radius:999px;background:var(--panel);border:1px solid var(--lane);font-weight:700;font-size:15px;letter-spacing:.06em}
+.wchip.found{text-decoration:line-through;text-decoration-thickness:2px;color:var(--muted);border-color:var(--wc);background:color-mix(in srgb,var(--wc) 28%,var(--panel))}
+@media (prefers-reduced-motion:reduce){.wc.hint{animation:none;background:var(--paint)}}
+</style>
+</head>
+<body>
+<script src="../../shared/ts.js?v=3b582d24"></script>
+<script src="../../shared/kit.js?v=3b582d24"></script>
+<script>
+(()=>{
+/* Word Search: find every word on the list hidden in the letters. Drag across a word, or tap its first and last letter.
+   Each word appears exactly once, and filler letters are checked so they never spell anything unkind.
+   Grids grow and words start going diagonally, then backwards, as levels go on. */
+const THEMES=[
+ ["Animals","🐾","CAT🐱 DOG🐶 PIG🐷 COW🐮 FOX🦊 OWL🦉 BEAR🐻 LION🦁 FROG🐸 DUCK🦆 GOAT🐐 WOLF🐺 TIGER🐯 ZEBRA🦓 HORSE🐴 MOUSE🐭 PANDA🐼 KOALA🐨 RABBIT🐰 MONKEY🐵 TURTLE🐢 GIRAFFE🦒 PENGUIN🐧 ELEPHANT🐘 KANGAROO🦘"],
+ ["Space","🚀","SUN☀️ MOON🌙 STAR⭐ MARS🔴 COMET☄️ EARTH🌍 ORBIT🛰️ ALIEN👽 ROCKET🚀 PLANET🪐 GALAXY🌌 METEOR☄️ JUPITER🪐 COSMOS✨ GRAVITY🍎 ASTRONAUT👩‍🚀 TELESCOPE🔭"],
+ ["Ocean","🌊","FISH🐟 CRAB🦀 SEAL🦭 WAVE🌊 SHELL🐚 WHALE🐳 SHARK🦈 SQUID🦑 CORAL🪸 OTTER🦦 LOBSTER🦞 DOLPHIN🐬 OCTOPUS🐙 STARFISH⭐ SEAHORSE🐴 JELLYFISH🪼"],
+ ["Food","🍕","PIE🥧 EGG🥚 JAM🍓 CAKE🎂 RICE🍚 SOUP🍲 MILK🥛 TACO🌮 PIZZA🍕 BREAD🍞 HONEY🍯 PASTA🍝 COOKIE🍪 CHEESE🧀 BURGER🍔 NOODLE🍜 PANCAKE🥞 POPCORN🍿 SANDWICH🥪 SPAGHETTI🍝"],
+ ["Fruit","🍎","FIG🟣 KIWI🥝 LIME🍋 PEAR🍐 PLUM🟣 APPLE🍎 GRAPE🍇 LEMON🍋 MANGO🥭 MELON🍈 PEACH🍑 BANANA🍌 CHERRY🍒 ORANGE🍊 COCONUT🥥 APRICOT🍑 PINEAPPLE🍍 BLUEBERRY🫐 STRAWBERRY🍓 WATERMELON🍉"],
+ ["Weather","⛅","RAIN🌧️ SNOW❄️ WIND💨 HAIL🧊 FOG🌫️ CLOUD☁️ STORM⛈️ FROST❄️ SUNNY☀️ RAINBOW🌈 THUNDER⚡ TORNADO🌪️ LIGHTNING⚡ BREEZE🍃 PUDDLE💧 SLEET🌨️"],
+ ["Bugs","🐞","ANT🐜 BEE🐝 FLY🪰 MOTH🦋 WASP🐝 SLUG🐌 SNAIL🐌 BEETLE🪲 SPIDER🕷️ CRICKET🦗 LADYBUG🐞 HORNET🐝 FIREFLY✨ BUTTERFLY🦋 DRAGONFLY🪽 CATERPILLAR🐛 GRASSHOPPER🦗"],
+ ["Vehicles","🚗","CAR🚗 BUS🚌 VAN🚐 JET✈️ TAXI🚕 BIKE🚲 BOAT⛵ SHIP🚢 TRAM🚊 TRAIN🚆 TRUCK🚚 PLANE🛩️ SCOOTER🛴 TRACTOR🚜 SUBWAY🚇 HELICOPTER🚁 AMBULANCE🚑 SKATEBOARD🛹 FIRETRUCK🚒"],
+ ["Sports","⚽","SKI⛷️ SWIM🏊 GOLF⛳ BALL⚽ GOAL🥅 TEAM👕 KICK🦵 JUMP🦘 SKATE⛸️ HOCKEY🏒 TENNIS🎾 SOCCER⚽ KARATE🥋 BASEBALL⚾ FOOTBALL🏈 GYMNAST🤸 BASKETBALL🏀"],
+ ["Colours","🎨","RED🔴 TAN🟫 BLUE🔵 PINK🩷 GOLD🥇 GREY🩶 GREEN🟢 BLACK⚫ WHITE⚪ BROWN🟤 PURPLE🟣 ORANGE🟠 YELLOW🟡 SILVER🥈 VIOLET🟣 MAGENTA🩷 TURQUOISE🩵"],
+ ["Farm","🚜","HEN🐔 HAY🌾 BARN🛖 LAMB🐑 CORN🌽 FARM🚜 SHEEP🐑 HORSE🐴 DONKEY🫏 FARMER🧑‍🌾 TRACTOR🚜 ROOSTER🐓 CHICKEN🐔 PUMPKIN🎃 SCARECROW🌾 PIGLET🐷 DUCKLING🐤"],
+ ["Garden","🌻","BUD🌱 SOIL🟫 SEED🌱 LEAF🍃 ROSE🌹 TREE🌳 WORM🪱 TULIP🌷 DAISY🌼 PLANT🪴 FLOWER🌸 SPROUT🌱 CARROT🥕 SUNFLOWER🌻 MUSHROOM🍄 BUTTERCUP🌼 WATERING🚿"],
+ ["School","🏫","PEN🖊️ BOOK📖 DESK🪑 BELL🔔 GLUE🧴 RULER📏 PAPER📄 CHALK✏️ CRAYON🖍️ PENCIL✏️ ERASER🧽 TEACHER🧑‍🏫 LIBRARY📚 BACKPACK🎒 SCISSORS✂️ RECESS🛝 LUNCHBOX🍱"]
+].map(([name,icon,s])=>({name,icon,words:s.split(" ").map(x=>{const m=x.match(/^([A-Z]+)(.*)$/);return{w:m[1],e:m[2]}})}));
+const DIRS={R:[0,1],D:[1,0],DR:[1,1],UR:[-1,1],L:[0,-1],U:[-1,0],UL:[-1,-1],DL:[1,-1]};
+const SETS={RD:["R","D"],RDX:["R","D","DR","UR"],RDXB:["R","D","DR","UR","L","U"],ALL:Object.keys(DIRS)};
+const SAY={RD:"Words go across → and down ↓.",RDX:"Words go across, down, and diagonally ↘ ↗.",RDXB:"Words go across, down, diagonally, and some go backwards ← ↑!",ALL:"Words can go in any direction, even backwards!"};
+// [fromLevel, grid size, words, directions, longest word]
+const PLAN={1:[[1,6,3,"RD",4],[15,6,4,"RD",5],[30,7,5,"RD",6]],
+  2:[[1,6,4,"RD",5],[11,7,5,"RD",6],[21,8,6,"RDX",7],[33,8,7,"RDX",8]],
+  3:[[1,7,4,"RD",6],[6,8,5,"RD",7],[11,8,6,"RDX",8],[21,9,7,"RDX",8],[29,10,8,"RDXB",9],[36,10,9,"ALL",10]],
+  4:[[1,8,5,"RD",7],[6,9,6,"RDX",8],[16,10,8,"RDXB",9],[28,11,9,"ALL",10]],
+  5:[[1,9,6,"RDX",8],[9,10,8,"RDXB",9],[21,12,10,"ALL",11]],
+  6:[[1,10,7,"RDXB",9],[11,12,10,"ALL",11],[26,13,12,"ALL",12]],
+  7:[[1,10,8,"ALL",10],[9,12,10,"ALL",11],[21,14,13,"ALL",12]]};
+// Never let random filler letters spell these.
+const BLOCK=["SEX","ASS","FUK","FUCK","SHIT","PISS","DAMN","HELL","CUM","TIT","FAG","NIG","KKK","POO","BUTT","KILL","DIE","DEAD","GUN","CRAP","SUCK","HATE","DUMB","UGLY","FAT","PEE","BUM"];
+const FILL="AAAABBCCDDEEEEEFFGGHHIIIIJKLLMMNNNOOOOPPRRRSSSTTTUUUVWWXYYZ";
+const COLS=["#ff6b6b","#4dabf7","#51cf66","#fcc419","#b197fc","#ff922b","#20c997","#f783ac","#74c0fc","#94d82d","#e599f7","#ffa94d","#38d9a9","#ff8787"];
+let K,S=null;
+function pick(steps,n){let v=steps[0];for(const s of steps)if(n>=s[0])v=s;return v}
+function spec(n){const[,size,count,set,maxlen]=pick(PLAN[K.grade],n);return{size,count,set,dirs:SETS[set],maxlen:Math.min(maxlen,size),theme:THEMES[(n-1+K.grade*5)%THEMES.length]}}
+const rev=w=>w.split("").reverse().join("");
+function occurrences(g,N,w){let k=0;
+  for(let r=0;r<N;r++)for(let c=0;c<N;c++){if(g[r*N+c]!==w[0])continue;
+    for(const d of Object.values(DIRS)){let ok=true;for(let i=1;i<w.length;i++){const rr=r+d[0]*i,cc=c+d[1]*i;if(rr<0||cc<0||rr>=N||cc>=N||g[rr*N+cc]!==w[i]){ok=false;break}}if(ok)k++}}
+  return k}
+function make(sp,r){const N=sp.size,sh=a=>{for(let k=a.length-1;k>0;k--){const j=Math.floor(r()*(k+1));[a[k],a[j]]=[a[j],a[k]]}return a};
+  for(let t=0;t<300;t++){
+    const pool=sh(sp.theme.words.filter(x=>x.w.length>=3&&x.w.length<=sp.maxlen)),chosen=[];
+    for(const x of pool){if(chosen.length>=sp.count)break;   // no word hidden inside another (SUN in SUNFLOWER)
+      if(chosen.some(y=>y.w.includes(x.w)||x.w.includes(y.w)||y.w.includes(rev(x.w))||x.w.includes(rev(y.w))))continue;chosen.push(x)}
+    if(chosen.length<sp.count)return null;
+    chosen.sort((a,b)=>b.w.length-a.w.length);
+    const g=new Array(N*N).fill(null),placed=[];let ok=true;
+    for(const x of chosen){let done=false;
+      for(let k=0;k<300&&!done;k++){const dn=sp.dirs[Math.floor(r()*sp.dirs.length)],d=DIRS[dn],r0=Math.floor(r()*N),c0=Math.floor(r()*N),cells=[];
+        for(let i=0;i<x.w.length;i++){const rr=r0+d[0]*i,cc=c0+d[1]*i;if(rr<0||cc<0||rr>=N||cc>=N)break;const v=g[rr*N+cc];if(v&&v!==x.w[i])break;cells.push(rr*N+cc)}
+        if(cells.length!==x.w.length)continue;cells.forEach((ci,i)=>g[ci]=x.w[i]);placed.push({...x,cells,dir:dn});done=true}
+      if(!done){ok=false;break}}
+    if(!ok)continue;
+    for(let f=0;f<25;f++){const h=g.map(v=>v||FILL[Math.floor(r()*FILL.length)]);
+      if(placed.every(x=>occurrences(h,N,x.w)===1)&&BLOCK.every(b=>occurrences(h,N,b)===0))return{grid:h,words:placed}}}
+  return null}
+
+function start(n){const sp=spec(n),r=K.rng(n);let pz=null;for(let c=sp.count;!pz&&c>=2;c--)pz=make({...sp,count:c},r);
+  K.stage.insertAdjacentHTML("beforeend",'<p class="theme">'+sp.theme.icon+" "+sp.theme.name+'</p><div class="frame"><div class="wsg" id="wsg"></div></div><div class="wlist" id="wl"></div>');
+  const el=document.getElementById("wsg"),N=sp.size;el.style.setProperty("--n",N);
+  S={sp,N,grid:pz.grid,words:pz.words.map((w,i)=>({...w,found:false,col:COLS[i%COLS.length]})),miss:0,anchor:null,el};
+  el.innerHTML='<svg viewBox="0 0 '+N+" "+N+'" preserveAspectRatio="none" aria-hidden="true"><g id="wsFound"></g><g id="wsSel"></g></svg>'+
+    S.grid.map((ch,i)=>'<div class="wc" data-i="'+i+'">'+ch+"</div>").join("");
+  drawList();stats();K.tip(SAY[sp.set]+" Drag across a word, or tap its first and last letter.")}
+const seg=(cells,col,op)=>{const a=cells[0],b=cells[cells.length-1],N=S.N,x=i=>i%N+.5,y=i=>((i/N)|0)+.5;
+  return'<line x1="'+x(a)+'" y1="'+y(a)+'" x2="'+x(b)+'" y2="'+y(b)+'" stroke="'+col+'" stroke-width=".8" stroke-linecap="round" stroke-opacity="'+op+'"/>'};
+function drawFound(){document.getElementById("wsFound").innerHTML=S.words.filter(w=>w.found).map(w=>seg(w.cells,w.col,.5)).join("")}
+function drawSel(cells,col){document.getElementById("wsSel").innerHTML=cells&&cells.length?seg(cells,col||"#ffd43b",.6):""}
+function drawList(){const wl=document.getElementById("wl");
+  wl.innerHTML=S.words.slice().sort((a,b)=>a.w<b.w?-1:1).map(w=>'<span class="wchip'+(w.found?" found":"")+'" style="--wc:'+w.col+'" data-w="'+w.w+'">'+(w.e?'<span aria-hidden="true">'+w.e+"</span>":"")+w.w+"</span>").join("")}
+function stats(){K.stat(S.words.filter(w=>w.found).length+"/"+S.words.length,"Words");K.sub("Misses "+S.miss)}
+function setAnchor(i){S.el.querySelectorAll(".wc.anchor").forEach(c=>c.classList.remove("anchor"));S.anchor=i;
+  if(i!=null)S.el.querySelector('.wc[data-i="'+i+'"]').classList.add("anchor")}
+
+/* ---------- selecting: drag in a straight line (snapped to the nearest of 8 directions), or tap first then last letter ---------- */
+function cellAt(x,y){const r=S.el.getBoundingClientRect(),cs=r.width/S.N,c=Math.floor((x-r.left)/cs),rr=Math.floor((y-r.top)/cs);
+  return c>=0&&rr>=0&&c<S.N&&rr<S.N?rr*S.N+c:-1}
+function line(a,b){const N=S.N,r0=(a/N)|0,c0=a%N,dr=((b/N)|0)-r0,dc=b%N-c0;if(!dr&&!dc)return[a];
+  const ang=Math.round(Math.atan2(dr,dc)/(Math.PI/4))*(Math.PI/4),sr=Math.round(Math.sin(ang)),sc=Math.round(Math.cos(ang)),len=Math.max(Math.abs(dr),Math.abs(dc)),out=[];
+  for(let k=0;k<=len;k++){const r=r0+sr*k,c=c0+sc*k;if(r<0||c<0||r>=N||c>=N)break;out.push(r*N+c)}return out}
+let drag=null;
+document.addEventListener("pointerdown",e=>{if(!S||K.busy||!e.target.closest("#wsg"))return;const i=cellAt(e.clientX,e.clientY);if(i<0)return;e.preventDefault();
+  if(S.anchor!=null&&S.anchor!==i){drag={start:S.anchor,end:i,id:e.pointerId,moved:true};drawSel(line(S.anchor,i));return}  // second tap of tap-tap
+  drag={start:i,end:i,id:e.pointerId,moved:false};drawSel([i])});
+document.addEventListener("pointermove",e=>{if(!drag||e.pointerId!==drag.id)return;const i=cellAt(e.clientX,e.clientY);if(i<0||i===drag.end)return;
+  drag.end=i;if(i!==drag.start)drag.moved=true;drawSel(line(drag.start,i))});
+function up(e){if(!drag||e.pointerId!==drag.id)return;const d=drag;drag=null;
+  if(!d.moved||d.start===d.end){drawSel(null);setAnchor(S.anchor===d.start?null:d.start);return}   // a tap: remember the first letter
+  setAnchor(null);check(line(d.start,d.end))}
+document.addEventListener("pointerup",up);document.addEventListener("pointercancel",e=>{if(drag&&e.pointerId===drag.id){drag=null;drawSel(null)}});
+function check(cells){const key=cells.join(","),rk=cells.slice().reverse().join(",");
+  const w=S.words.find(x=>x.cells.join(",")===key||x.cells.join(",")===rk);
+  if(w&&!w.found){w.found=true;drawSel(null);drawFound();drawList();stats();TS.music.fx("good");K.tip("You found "+w.w+"!");
+    if(S.words.every(x=>x.found)){const st=S.miss<=1?3:S.miss<=4?2:1;
+      K.win({stars:st,text:S.words.length+" words · "+(S.miss?S.miss+" miss"+(S.miss>1?"es":""):"no misses")+(st===3?" · eagle eyes!":"")})}
+    return}
+  if(w){drawSel(null);K.tip("You already found "+w.w+".");return}
+  S.miss++;stats();TS.music.fx("bad");drawSel(cells,"#e2412e");K.tip("That's not one of the words. Keep looking!");setTimeout(()=>{if(!drag)drawSel(null)},600)}
+/* Hint: flash the first letter of a word you haven't found yet. */
+function hint(){if(!S||K.busy)return;const w=S.words.slice().sort((a,b)=>a.w<b.w?-1:1).find(x=>!x.found);if(!w)return;
+  const c=S.el.querySelector('.wc[data-i="'+w.cells[0]+'"]');c.classList.remove("hint");void c.offsetWidth;c.classList.add("hint");
+  K.tip("Look for "+w.w+". It starts at the flashing letter.")}
+K=TS_KIT({id:"wordsearch",howto:[["🔍","Find the hidden words from the list in the letters."],["👆","Drag across a word, or tap its first letter and then its last letter."],["↗️","Words go across and down. Later they go diagonally, and even backwards!"],["✅","Find every word on the list to win."]],
+  point:()=>{const w=S.words.slice().sort((a,b)=>a.w<b.w?-1:1)[0];return S.el.querySelector('.wc[data-i="'+w.cells[0]+'"]')},
+  name:"Word Search",levels:40,start,hint,label:n=>{const s=spec(n);return s.size+"×"+s.size}});
+window.__game={get S(){return S},K,spec,occurrences,BLOCK,line};// for tools/test_games5.py
+K.start();
+})();
+</script>
+</body>
+</html>
