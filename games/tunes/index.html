@@ -15,8 +15,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Barlow:wght@400;600;700&display=swap">
-<link rel="stylesheet" href="../../shared/ts.css?v=df918c02">
-<link rel="stylesheet" href="../../shared/game.css?v=df918c02">
+<link rel="stylesheet" href="../../shared/ts.css?v=f62baa0f">
+<link rel="stylesheet" href="../../shared/game.css?v=f62baa0f">
 <style>
 .tt-wrap{position:relative;width:100%;max-width:520px;flex:1;min-height:360px;display:flex}
 .tt-cv{width:100%;height:100%;display:block;border-radius:16px;touch-action:none;user-select:none;-webkit-user-select:none;background:#11151d}
@@ -28,8 +28,8 @@
 </style>
 </head>
 <body>
-<script src="../../shared/ts.js?v=df918c02"></script>
-<script src="../../shared/kit.js?v=df918c02"></script>
+<script src="../../shared/ts.js?v=f62baa0f"></script>
+<script src="../../shared/kit.js?v=f62baa0f"></script>
 <script>
 (()=>{
 /* Tile Tunes: tiles slide down four lanes; tap each one as it reaches the line and it plays the next note of the song.
@@ -58,7 +58,27 @@ const SONGS=[
  ["In the Hall of the Mountain King","Edvard Grieg, 1875",110,"A3:.5 B3 C4 D4 E4 C4 E4:1 D#4:.5 B3 D#4:1 D4:.5 A#3 D4:1 A3:.5 B3 C4 D4 E4 C4 E4 A4 G4 E4 C4 E4 G4:2 A3:.5 B3 C4 D4 E4 C4 E4:1 D#4:.5 B3 D#4:1 D4:.5 A#3 D4:1 A3:.5 B3 C4 D4 E4 C4 E4 A4 G4 E4 C4 E4 A4:2"],
  ["Für Elise","Ludwig van Beethoven, 1810",60,"E5:.5 D#5 E5 D#5 E5 B4 D5 C5 A4:1 C4:.5 E4 A4 B4:1 E4:.5 G#4 B4 C5:1 E4:.5 E5 D#5 E5 D#5 E5 B4 D5 C5 A4:1 C4:.5 E4 A4 B4:1 E4:.5 C5 B4 A4:2"],
  ["The Entertainer","Scott Joplin, 1902",70,"D4:.25 D#4 E4 C5:.5 E4:.25 C5:.5 E4:.25 C5:1.5 C5:.25 D5 D#5 E5 C5 D5 E5:.5 B4:.25 D5:.5 C5:2 D4:.25 D#4 E4 C5:.5 E4:.25 C5:.5 E4:.25 C5:1.5 A4:.25 G4 F#4 A4 C5 E5:.5 D5:.25 C5 A4 D5:2"],
- ["Turkish March","Wolfgang Amadeus Mozart, 1783",70,"B4:.25 A4 G#4 A4 C5:1 D5:.25 C5 B4 C5 E5:1 F5:.25 E5 D#5 E5 B5 A5 G#5 A5 B5 A5 G#5 A5 C6:2 A5:.5 C6 B5 A5 G5 A5 B5 A5 G5 A5 B5 A5 G5 F#5 E5:2"]];
+ ["Turkish March","Wolfgang Amadeus Mozart, 1783",70,"B4:.25 A4 G#4 A4 C5:1 D5:.25 C5 B4 C5 E5:1 F5:.25 E5 D#5 E5 B5 A5 G#5 A5 B5 A5 G#5 A5 C6:2 A5:.5 C6 B5 A5 G5 A5 B5 A5 G5 A5 B5 A5 G5 F#5 E5:2"],
+ ["This Old Man","Traditional",110,"G4:1 E4 G4:2 G4:1 E4 G4:2 A4:1 G4 F4 E4 D4 E4 F4:2 E4:1 F4 G4 C4 C4 C4:.5 C4 C4:1 D4:.5 E4 F4 G4 G4:1 D4 D4 F4 E4 D4 C4:2"],
+ ["Oh! Susanna","Stephen Foster, 1848",120,"C4:.5 D4 E4:1 G4 G4:1.5 A4:.5 G4:1 E4 C4:1.5 D4:.5 E4:1 E4 D4 C4 D4:3 C4:.5 D4 E4:1 G4 G4:1.5 A4:.5 G4:1 E4 C4:1.5 D4:.5 E4:1 E4 D4 D4 C4:3 R:1 F4:2 F4:1 A4 A4:2 G4:1 G4 E4 C4 D4:3 C4:.5 D4 E4:1 G4 G4:1.5 A4:.5 G4:1 E4 C4:1.5 D4:.5 E4:1 E4 D4 D4 C4:4"],
+ ["Clementine","Traditional, 1884",110,"C4:.75 C4:.25 C4:1 G3 E4:.75 E4:.25 E4:1 C4 C4:.75 E4:.25 G4:1.5 G4:.5 F4 E4 D4:2 D4:.75 E4:.25 F4:1 F4 E4:.75 D4:.25 E4:1 C4 C4:.75 E4:.25 D4:1.5 G3:.5 B3 D4 C4:2"],
+ ["My Bonnie Lies over the Ocean","Traditional, 1881",120,"G4:1 E5:1.5 D5:.5 C5:1 D5 C5 A4 G4 E4:3 G4:1 E5:1.5 D5:.5 C5:1 C5 B4 C5 D5:5 G4:1 E5:1.5 D5:.5 C5:1 D5 C5 A4 G4 E4:3 G4:1 A4 D5 C5 B4 A4 B4 C5:5"],
+ ["Canon in D","Johann Pachelbel, about 1680",80,"F#5:2 E5 D5 C#5 B4 A4 B4 C#5 D5:1 C#5 B4 A4 G4 F#4 G4 E4 D4:.5 F#4 A4 G4 F#4 D4 F#4 E4 D4 B3 D4 A4 G4 B4 A4 G4 F#4:4"],
+ ["Morning Mood","Edvard Grieg, 1875",80,"G5:.5 E5 D5 C5 D5 E5 G5 E5 D5 C5 D5:.25 E5 D5:.5 E5 G5 E5 G5 A5 E5 A5 G5 E5 D5 C5:2"],
+ ["Eine kleine Nachtmusik","Wolfgang Amadeus Mozart, 1787",90,"G4:1 D4:.5 G4:1 D4:.5 G4:.5 D4 G4 B4 D5:2 C5:1 A4:.5 C5:1 A4:.5 C5:.5 A4 F#4 A4 D4:2"]];
+const CAROLS=[
+ ["Jingle Bells","James Lord Pierpont, 1857",120,"E4:1 E4 E4:2 E4:1 E4 E4:2 E4:1 G4 C4:1.5 D4:.5 E4:4 F4:1 F4 F4:1.5 F4:.5 F4:1 E4 E4 E4:.5 E4 E4:1 D4 D4 E4 D4:2 G4 E4:1 E4 E4:2 E4:1 E4 E4:2 E4:1 G4 C4:1.5 D4:.5 E4:4 F4:1 F4 F4 F4 F4 E4 E4 E4:.5 E4 G4:1 G4 F4 D4 C4:4"],
+ ["We Wish You a Merry Christmas","Traditional English",120,"D4:1 G4 G4:.5 A4 G4 F#4 E4:1 E4 E4 A4 A4:.5 B4 A4 G4 F#4:1 D4 D4 B4 B4:.5 C5 B4 A4 G4:1 E4 D4:.5 D4 E4:1 A4 F#4 G4:2 D4:1 G4 G4 G4 F#4:2 F#4:1 G4 F#4 E4 D4:2 A4:1 B4 A4:.5 A4 G4 G4 D5:1 D4 D4:.5 D4 E4:1 A4 F#4 G4:2"],
+ ["Deck the Halls","Traditional Welsh",120,"G4:1.5 F4:.5 E4:1 D4 C4 D4 E4 C4 D4:.5 E4 F4 D4 E4:1.5 D4:.5 C4:1 B3 C4:2 G4:1.5 F4:.5 E4:1 D4 C4 D4 E4 C4 D4:.5 E4 F4 D4 E4:1.5 D4:.5 C4:1 B3 C4:2 D4:1.5 E4:.5 F4:1 D4 E4:1.5 F4:.5 G4:1 D4 E4:.5 F#4 G4:1 A4:.5 B4 C5:1 B4 A4 G4:2 G4:1.5 F4:.5 E4:1 D4 C4 D4 E4 C4 A4:.5 A4 A4 A4 G4:1.5 F4:.5 E4:1 D4 C4:2"],
+ ["Silent Night","Franz Gruber, 1818",80,"G4:1.5 A4:.5 G4:1 E4:3 G4:1.5 A4:.5 G4:1 E4:3 D5:2 D5:1 B4:3 C5:2 C5:1 G4:3 A4:2 A4:1 C5:1.5 B4:.5 A4:1 G4:1.5 A4:.5 G4:1 E4:3 A4:2 A4:1 C5:1.5 B4:.5 A4:1 G4:1.5 A4:.5 G4:1 E4:3 D5:2 D5:1 F5:1.5 D5:.5 B4:1 C5:3 E5:3 C5:1 G4 E4 G4:1.5 F4:.5 D4:1 C4:6"],
+ ["O Christmas Tree","Traditional German",100,"G3:1 C4:.75 C4:.25 C4:1.5 D4:.5 E4:.75 E4:.25 E4:1.5 E4:.5 D4 E4 F4:1 B3 D4 C4:2 G3:1 C4:.75 C4:.25 C4:1.5 D4:.5 E4:.75 E4:.25 E4:1.5 E4:.5 D4 E4 F4:1 B3 D4 C4:2 G4:.5 G4 E4 A4:1.5 G4:.5 G4 F4 F4:1.5 F4:.5 F4 D4 G4:1.5 F4:.5 F4 E4 E4:1.5 G3:.5 C4:.75 C4:.25 C4:1.5 D4:.5 E4:.75 E4:.25 E4:1.5 E4:.5 D4 E4 F4:1 B3 D4 C4:3"],
+ ["Joy to the World","Lowell Mason, 1839",100,"C5:1 B4:.75 A4:.25 G4:1.5 F4:.5 E4:1 D4 C4:1.5 G4:.5 A4:1.5 A4:.5 B4:1.5 B4:.5 C5:3 C5:.5 C5 B4 A4 G4 G4:.75 F4:.25 E4:.5 C5 C5 B4 A4 G4 G4:.75 F4:.25 E4:.5 E4 E4 E4 E4 E4:.25 F4 G4:1.5 F4:.25 E4 D4:.5 D4 D4 D4:.25 E4 F4:1.5 E4:.25 D4 C4:.5 C5:1 A4:.5 G4:.75 F4:.25 E4:.5 F4 E4:1 D4 C4:2"],
+ ["Good King Wenceslas","Traditional, 1582",110,"G4:1 G4 G4 A4 G4 G4 D4:2 E4:1 D4 E4 F4 G4:2 G4 G4:1 G4 G4 A4 G4 G4 D4:2 E4:1 D4 E4 F4 G4:2 G4 D5:1 C5 B4 A4 B4 A4 G4:2 E4:1 D4 E4 F4 G4:2 G4 D4:1 D4 E4 F4 G4 G4 A4:2 D5:1 C5 B4 A4 G4:2 C5 G4:4"],
+ ["Angels We Have Heard on High","Traditional French",110,"E4:1 E4 E4 G4 G4:1.5 F4:.5 E4:2 E4:1 D4 E4 G4 E4:1.5 D4:.5 C4:2 E4:1 E4 E4 G4 G4:1.5 F4:.5 E4:2 E4:1 D4 E4 G4 E4:1.5 D4:.5 C4:2 G4:2 A4:.5 G4 F4 E4 F4:2 G4:.5 F4 E4 D4 E4:2 F4:.5 E4 D4 C4 D4:1.5 G3:.5 G3:1 C4 D4 C4:2 G4:2 A4:.5 G4 F4 E4 F4:2 G4:.5 F4 E4 D4 E4:2 F4:.5 E4 D4 C4 D4:1.5 G3:.5 G3:1 C4 D4 C4:4"],
+ ["The First Noel","Traditional English",100,"E4:.5 D4 C4:1.5 D4:.5 E4 F4 G4:2 A4:.5 B4 C5:1 B4 A4 G4:2 A4:.5 B4 C5:1 B4 A4 G4 A4 B4 C5 G4 F4 E4:2 E4:.5 D4 C4:1.5 D4:.5 E4 F4 G4:2 A4:.5 B4 C5:1 B4 A4 G4:2 A4:.5 B4 C5:1 B4 A4 G4 A4 B4 C5 G4 F4 E4:2 E4:.5 D4 C4:1.5 D4:.5 E4 F4 G4:2 C5:.5 B4 A4:2 A4:1 G4:3 C5:1 B4 A4 G4 A4 B4 C5 G4 F4 E4:3"],
+ ["Auld Lang Syne","Traditional Scottish (New Year)",90,"G4:1 C5:1.5 C5:.5 C5:1 E5 D5:1.5 C5:.5 D5:1 E5:.5 D5 C5:1.5 C5:.5 E5:1 G5 A5:3 A5:1 G5:1.5 E5:.5 E5:1 C5 D5:1.5 C5:.5 D5:1 E5:.5 D5 C5:1.5 A4:.5 A4:1 G4 C5:3"],
+ ["What Child Is This (Greensleeves)","Traditional English",90,"A4:.5 C5:1 D5:.5 E5:.75 F5:.25 E5:.5 D5:1 B4:.5 G4:.75 A4:.25 B4:.5 C5:1 A4:.5 A4:.75 G#4:.25 A4:.5 B4:1 G#4:.5 E4:1 A4:.5 C5:1 D5:.5 E5:.75 F5:.25 E5:.5 D5:1 B4:.5 G4:.75 A4:.25 B4:.5 C5:.75 B4:.25 A4:.5 G#4:.75 F#4:.25 G#4:.5 A4:1.5 G5:1.5 G5:.75 F#5:.25 E5:.5 D5:1 B4:.5 G4:.75 A4:.25 B4:.5 C5:1 A4:.5 A4:.75 G#4:.25 A4:.5 B4:1 G#4:.5 E4:1.5 G5:1.5 G5:.75 F#5:.25 E5:.5 D5:1 B4:.5 G4:.75 A4:.25 B4:.5 C5:.75 B4:.25 A4:.5 G#4:.75 F#4:.25 G#4:.5 A4:1.5"]];
+
 const NAMES=["C","C♯","D","D♯","E","F","F♯","G","G♯","A","A♯","B"];
 // a colour for each note name, like classroom bell sets, so kids start to link colours and notes
 const COL=["#e53935","#ef6c3a","#fb8c00","#f2b705","#e2c72a","#43a047","#1e9e8a","#1e88e5","#3949ab","#5e35b1","#8e24aa","#c2185b"];
@@ -70,12 +90,14 @@ function parse(str){let dur=1;const out=[];let beat=0;
   // lanes follow the tune: higher notes step right, lower notes step left, the same note stays put
   let lane=1;out.forEach((n,i)=>{if(i){const dm=n.m-out[i-1].m;if(dm){const st=Math.sign(dm)*(Math.abs(dm)>4?2:1);let l=lane+st;if(l<0||l>3)l=lane-st;lane=Math.max(0,Math.min(3,l))}}n.lane=lane});
   return out}
-const LIST=SONGS.map(([title,by,bpm,notes])=>({title,by,bpm,notes:parse(notes)}));
+/* Two songbooks share this page: games/tunes and games/carols (Christmas Tunes, cheaper so the carols are reachable by December). */
+const BOOK=/\/carols\//.test(location.pathname)?"carols":"tunes";
+const LIST=(BOOK==="carols"?CAROLS:SONGS).map(([title,by,bpm,notes])=>({title,by,bpm,notes:parse(notes)}));
 const OPT=TS.gameSave("tunes-options",{relaxed:null});
 const relaxed=()=>OPT.data.relaxed===null?K.age<=1:OPT.data.relaxed;
 /* Songs are a reward: the first is free, then each song needs 5 more 🎵.
    A 🎵 comes from every level finished in the other games and every maths question answered right (TS.notes). */
-const PER=5,cost=n=>(n-1)*PER,locked=n=>TS.notes.count()<cost(n)?"🔒🎵"+cost(n):false;
+const PER=BOOK==="carols"?3:5,cost=n=>(n-1)*PER,locked=n=>TS.notes.count()<cost(n)?"🔒🎵"+cost(n):false;
 function earnLine(n){const have=TS.notes.count(),nx=n+1;if(nx>LIST.length)return"🎵 "+have+" · every song is open!";
   return have>=cost(nx)?"🎵 "+have+" · next song is open":"🎵 "+have+" · "+(cost(nx)-have)+" more for the next song"}
 const SPEED=[.55,.62,.72,.82,.92,1,1.05,1.1];
@@ -151,10 +173,10 @@ function lose(lane,msg){if(S.done)return;S.oops++;S.hearts--;S.flash.push({l:lan
   if(S.hearts<=0){S.done=true;setTimeout(()=>K.fail({title:"Out of hearts",text:relaxed()?"Try again: take your time!":"Try again. Tip: turn on 🐢 Wait for me so the tiles wait for you."}),500)}}
 /* Hint: an extra heart and a slower song. */
 function hint(){if(!S||S.done)return;S.hearts=Math.min(9,S.hearts+1);S.slow=Math.max(.7,S.slow*.88);K.stat(S.hearts,"Hearts");K.tip("❤️ +1, and the song slows down a little.")}
-K=TS_KIT({id:"tunes",name:"Tile Tunes",levels:LIST.length,start,hint,locked,
+K=TS_KIT({id:BOOK,name:BOOK==="carols"?"Christmas Tunes":"Tile Tunes",levels:LIST.length,start,hint,locked,
   howto:[["🎹","Coloured tiles slide down. Each one is a note of the song."],["👆","Tap each tile when it reaches the line. Tap the first tile to start."],["❤️","Wrong lane or a missed tile costs a heart."],["🐢","Turn on Wait for me and the tiles stop at the line until you tap."],["🎵","New songs open as you earn 🎵: finish levels in other games and answer maths questions."]],
   label:n=>LIST[n-1].title.length>14?LIST[n-1].title.slice(0,13)+"…":LIST[n-1].title});
-window.__game={get S(){return S},K,LIST,parse,hitLane,relaxed,cost,locked};// for tools/test_tunes.py
+window.__game={get S(){return S},K,LIST,BOOK,PER,parse,hitLane,relaxed,cost,locked};// for tools/test_tunes.py
 K.start();
 })();
 </script>

@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#161b21">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box;height:100%}body{margin:0}[hidden]{display:none!important}</style>
+<title>Tile Tunes · Tile Solve</title>
+<meta name="apple-mobile-web-app-title" content="Tile Solve">
+<link rel="apple-touch-icon" href="../../icon-180.png">
+<link rel="icon" type="image/png" href="../../icon-512.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Barlow:wght@400;600;700&display=swap">
+<link rel="stylesheet" href="../../shared/ts.css?v=f62baa0f">
+<link rel="stylesheet" href="../../shared/game.css?v=f62baa0f">
+<style>
+.tt-wrap{position:relative;width:100%;max-width:520px;flex:1;min-height:360px;display:flex}
+.tt-cv{width:100%;height:100%;display:block;border-radius:16px;touch-action:none;user-select:none;-webkit-user-select:none;background:#11151d}
+.tt-bar{display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap}
+.tt-bar button{border:0;border-radius:999px;padding:6px 14px;font:700 14px var(--font-body);background:var(--panel,#262b36);color:var(--text);cursor:pointer;touch-action:manipulation}
+.tt-bar button[aria-pressed="true"]{background:var(--paint);color:var(--night)}
+.tt-song{font:700 18px var(--font-body);text-align:center;margin:0}
+.tt-song small{display:block;color:var(--muted);font-size:13px;font-weight:600}
+</style>
+</head>
+<body>
+<script src="../../shared/ts.js?v=f62baa0f"></script>
+<script src="../../shared/kit.js?v=f62baa0f"></script>
+<script>
+(()=>{
+/* Tile Tunes: tiles slide down four lanes; tap each one as it reaches the line and it plays the next note of the song.
+   The game is its own piano (Web Audio), so there are no recordings: every song is a public-domain melody
+   (traditional tunes, or composers who died long ago), written out below note by note.
+   "Wait for me" mode (on for Kindergarten and grade 1) stops each tile at the line until it's tapped. */
+let K,S=null;
+// Notes: letter, optional # or b, octave, then :beats (the length carries on until it changes). R = rest.
+const SONGS=[
+ ["Hot Cross Buns","Traditional",100,"E4:1 D4 C4:2 E4:1 D4 C4:2 C4:.5 C4 C4 C4 D4 D4 D4 D4 E4:1 D4 C4:2"],
+ ["Mary Had a Little Lamb","Traditional, 1830",110,"E4:1 D4 C4 D4 E4 E4 E4:2 D4:1 D4 D4:2 E4:1 G4 G4:2 E4:1 D4 C4 D4 E4 E4 E4 E4 D4 D4 E4 D4 C4:4"],
+ ["Twinkle Twinkle Little Star","Traditional",100,"C4:1 C4 G4 G4 A4 A4 G4:2 F4:1 F4 E4 E4 D4 D4 C4:2 G4:1 G4 F4 F4 E4 E4 D4:2 G4:1 G4 F4 F4 E4 E4 D4:2 C4:1 C4 G4 G4 A4 A4 G4:2 F4:1 F4 E4 E4 D4 D4 C4:2"],
+ ["Frère Jacques","Traditional French",110,"C4:1 D4 E4 C4 C4 D4 E4 C4 E4 F4 G4:2 E4:1 F4 G4:2 G4:.5 A4 G4 F4 E4:1 C4 G4:.5 A4 G4 F4 E4:1 C4 C4 G3 C4:2 C4:1 G3 C4:2"],
+ ["London Bridge","Traditional",110,"G4:1.5 A4:.5 G4:1 F4 E4 F4 G4:2 D4:1 E4 F4:2 E4:1 F4 G4:2 G4:1.5 A4:.5 G4:1 F4 E4 F4 G4:2 D4:2 G4 E4:1 C4:3"],
+ ["Row, Row, Row Your Boat","Traditional, 1852",100,"C4:1.5 C4 C4:1 D4:.5 E4:1.5 E4:1 D4:.5 E4:1 F4:.5 G4:3 C5:.5 C5 C5 G4 G4 G4 E4 E4 E4 C4 C4 C4 G4:1 F4:.5 E4:1 D4:.5 C4:3"],
+ ["Old MacDonald","Traditional",120,"G4:1 G4 G4 D4 E4 E4 D4:2 B4:1 B4 A4 A4 G4:3 D4:1 G4 G4 G4 D4 E4 E4 D4:2 B4:1 B4 A4 A4 G4:3"],
+ ["Itsy Bitsy Spider","Traditional",100,"G4:.5 C4:1 C4:.5 C4:1 D4:.5 E4:1.5 E4:1 E4:.5 D4:1 C4:.5 D4:1 E4:.5 C4:3 E4:1.5 E4:1 F4:.5 G4:1.5 G4 F4:1 E4:.5 F4:1 G4:.5 E4:3"],
+ ["Alouette","Traditional French-Canadian",110,"C4:1.5 D4:.5 E4:1 E4 D4:.5 C4 D4 E4 C4:1 G3 C4:1.5 D4:.5 E4:1 E4 D4:.5 C4 D4 E4 C4:2"],
+ ["Yankee Doodle","Traditional",120,"C4:1 C4 D4 E4 C4 E4 D4 G3 C4 C4 D4 E4 C4:2 B3 C4:1 C4 D4 E4 F4 E4 D4 C4 B3 G3 A3 B3 C4:2 C4"],
+ ["Ode to Joy","Ludwig van Beethoven, 1824",110,"E4:1 E4 F4 G4 G4 F4 E4 D4 C4 C4 D4 E4 E4:1.5 D4:.5 D4:2 E4:1 E4 F4 G4 G4 F4 E4 D4 C4 C4 D4 E4 D4:1.5 C4:.5 C4:2 D4:1 D4 E4 C4 D4 E4:.5 F4 E4:1 C4 D4 E4:.5 F4 E4:1 D4 C4 D4 G3:2 E4:1 E4 F4 G4 G4 F4 E4 D4 C4 C4 D4 E4 D4:1.5 C4:.5 C4:2"],
+ ["Happy Birthday","Mildred and Patty Hill, 1893",110,"G4:.75 G4:.25 A4:1 G4 C5 B4:2 G4:.75 G4:.25 A4:1 G4 D5 C5:2 G4:.75 G4:.25 G5:1 E5 C5 B4 A4:2 F5:.75 F5:.25 E5:1 C5 D5 C5:2"],
+ ["Jingle Bells","James Lord Pierpont, 1857",120,"E4:1 E4 E4:2 E4:1 E4 E4:2 E4:1 G4 C4:1.5 D4:.5 E4:4 F4:1 F4 F4:1.5 F4:.5 F4:1 E4 E4 E4:.5 E4 E4:1 D4 D4 E4 D4:2 G4 E4:1 E4 E4:2 E4:1 E4 E4:2 E4:1 G4 C4:1.5 D4:.5 E4:4 F4:1 F4 F4 F4 F4 E4 E4 E4:.5 E4 G4:1 G4 F4 D4 C4:4"],
+ ["When the Saints Go Marching In","Traditional",130,"C4:1 E4 F4 G4:4 C4:1 E4 F4 G4:4 C4:1 E4 F4 G4:2 E4 C4 E4 D4:4 E4:1 E4 D4 C4:3 C4:1 E4:2 G4 G4:1 F4:3 E4:1 F4 G4:2 E4 C4 D4 C4:4"],
+ ["Brahms' Lullaby","Johannes Brahms, 1868",90,"E4:.5 E4 G4:2 E4:.5 E4 G4:2 E4:.5 G4 C5:2 B4:1.5 A4:.5 A4:1 G4 D4:.5 E4 F4:1 D4 D4:.5 E4 F4:2 D4:.5 F4 B4:1 A4 G4 B4 C5:3"],
+ ["Minuet in G","Christian Petzold, 1725",110,"D5:1 G4:.5 A4 B4 C5 D5:1 G4 G4 E5:1 C5:.5 D5 E5 F#5 G5:1 G4 G4 C5:1 D5:.5 C5 B4 A4 B4:1 C5:.5 B4 A4 G4 F#4:1 G4:.5 A4 B4 G4 A4:3"],
+ ["In the Hall of the Mountain King","Edvard Grieg, 1875",110,"A3:.5 B3 C4 D4 E4 C4 E4:1 D#4:.5 B3 D#4:1 D4:.5 A#3 D4:1 A3:.5 B3 C4 D4 E4 C4 E4 A4 G4 E4 C4 E4 G4:2 A3:.5 B3 C4 D4 E4 C4 E4:1 D#4:.5 B3 D#4:1 D4:.5 A#3 D4:1 A3:.5 B3 C4 D4 E4 C4 E4 A4 G4 E4 C4 E4 A4:2"],
+ ["Für Elise","Ludwig van Beethoven, 1810",60,"E5:.5 D#5 E5 D#5 E5 B4 D5 C5 A4:1 C4:.5 E4 A4 B4:1 E4:.5 G#4 B4 C5:1 E4:.5 E5 D#5 E5 D#5 E5 B4 D5 C5 A4:1 C4:.5 E4 A4 B4:1 E4:.5 C5 B4 A4:2"],
+ ["The Entertainer","Scott Joplin, 1902",70,"D4:.25 D#4 E4 C5:.5 E4:.25 C5:.5 E4:.25 C5:1.5 C5:.25 D5 D#5 E5 C5 D5 E5:.5 B4:.25 D5:.5 C5:2 D4:.25 D#4 E4 C5:.5 E4:.25 C5:.5 E4:.25 C5:1.5 A4:.25 G4 F#4 A4 C5 E5:.5 D5:.25 C5 A4 D5:2"],
+ ["Turkish March","Wolfgang Amadeus Mozart, 1783",70,"B4:.25 A4 G#4 A4 C5:1 D5:.25 C5 B4 C5 E5:1 F5:.25 E5 D#5 E5 B5 A5 G#5 A5 B5 A5 G#5 A5 C6:2 A5:.5 C6 B5 A5 G5 A5 B5 A5 G5 A5 B5 A5 G5 F#5 E5:2"],
+ ["This Old Man","Traditional",110,"G4:1 E4 G4:2 G4:1 E4 G4:2 A4:1 G4 F4 E4 D4 E4 F4:2 E4:1 F4 G4 C4 C4 C4:.5 C4 C4:1 D4:.5 E4 F4 G4 G4:1 D4 D4 F4 E4 D4 C4:2"],
+ ["Oh! Susanna","Stephen Foster, 1848",120,"C4:.5 D4 E4:1 G4 G4:1.5 A4:.5 G4:1 E4 C4:1.5 D4:.5 E4:1 E4 D4 C4 D4:3 C4:.5 D4 E4:1 G4 G4:1.5 A4:.5 G4:1 E4 C4:1.5 D4:.5 E4:1 E4 D4 D4 C4:3 R:1 F4:2 F4:1 A4 A4:2 G4:1 G4 E4 C4 D4:3 C4:.5 D4 E4:1 G4 G4:1.5 A4:.5 G4:1 E4 C4:1.5 D4:.5 E4:1 E4 D4 D4 C4:4"],
+ ["Clementine","Traditional, 1884",110,"C4:.75 C4:.25 C4:1 G3 E4:.75 E4:.25 E4:1 C4 C4:.75 E4:.25 G4:1.5 G4:.5 F4 E4 D4:2 D4:.75 E4:.25 F4:1 F4 E4:.75 D4:.25 E4:1 C4 C4:.75 E4:.25 D4:1.5 G3:.5 B3 D4 C4:2"],
+ ["My Bonnie Lies over the Ocean","Traditional, 1881",120,"G4:1 E5:1.5 D5:.5 C5:1 D5 C5 A4 G4 E4:3 G4:1 E5:1.5 D5:.5 C5:1 C5 B4 C5 D5:5 G4:1 E5:1.5 D5:.5 C5:1 D5 C5 A4 G4 E4:3 G4:1 A4 D5 C5 B4 A4 B4 C5:5"],
+ ["Canon in D","Johann Pachelbel, about 1680",80,"F#5:2 E5 D5 C#5 B4 A4 B4 C#5 D5:1 C#5 B4 A4 G4 F#4 G4 E4 D4:.5 F#4 A4 G4 F#4 D4 F#4 E4 D4 B3 D4 A4 G4 B4 A4 G4 F#4:4"],
+ ["Morning Mood","Edvard Grieg, 1875",80,"G5:.5 E5 D5 C5 D5 E5 G5 E5 D5 C5 D5:.25 E5 D5:.5 E5 G5 E5 G5 A5 E5 A5 G5 E5 D5 C5:2"],
+ ["Eine kleine Nachtmusik","Wolfgang Amadeus Mozart, 1787",90,"G4:1 D4:.5 G4:1 D4:.5 G4:.5 D4 G4 B4 D5:2 C5:1 A4:.5 C5:1 A4:.5 C5:.5 A4 F#4 A4 D4:2"]];
+const CAROLS=[
+ ["Jingle Bells","James Lord Pierpont, 1857",120,"E4:1 E4 E4:2 E4:1 E4 E4:2 E4:1 G4 C4:1.5 D4:.5 E4:4 F4:1 F4 F4:1.5 F4:.5 F4:1 E4 E4 E4:.5 E4 E4:1 D4 D4 E4 D4:2 G4 E4:1 E4 E4:2 E4:1 E4 E4:2 E4:1 G4 C4:1.5 D4:.5 E4:4 F4:1 F4 F4 F4 F4 E4 E4 E4:.5 E4 G4:1 G4 F4 D4 C4:4"],
+ ["We Wish You a Merry Christmas","Traditional English",120,"D4:1 G4 G4:.5 A4 G4 F#4 E4:1 E4 E4 A4 A4:.5 B4 A4 G4 F#4:1 D4 D4 B4 B4:.5 C5 B4 A4 G4:1 E4 D4:.5 D4 E4:1 A4 F#4 G4:2 D4:1 G4 G4 G4 F#4:2 F#4:1 G4 F#4 E4 D4:2 A4:1 B4 A4:.5 A4 G4 G4 D5:1 D4 D4:.5 D4 E4:1 A4 F#4 G4:2"],
+ ["Deck the Halls","Traditional Welsh",120,"G4:1.5 F4:.5 E4:1 D4 C4 D4 E4 C4 D4:.5 E4 F4 D4 E4:1.5 D4:.5 C4:1 B3 C4:2 G4:1.5 F4:.5 E4:1 D4 C4 D4 E4 C4 D4:.5 E4 F4 D4 E4:1.5 D4:.5 C4:1 B3 C4:2 D4:1.5 E4:.5 F4:1 D4 E4:1.5 F4:.5 G4:1 D4 E4:.5 F#4 G4:1 A4:.5 B4 C5:1 B4 A4 G4:2 G4:1.5 F4:.5 E4:1 D4 C4 D4 E4 C4 A4:.5 A4 A4 A4 G4:1.5 F4:.5 E4:1 D4 C4:2"],
+ ["Silent Night","Franz Gruber, 1818",80,"G4:1.5 A4:.5 G4:1 E4:3 G4:1.5 A4:.5 G4:1 E4:3 D5:2 D5:1 B4:3 C5:2 C5:1 G4:3 A4:2 A4:1 C5:1.5 B4:.5 A4:1 G4:1.5 A4:.5 G4:1 E4:3 A4:2 A4:1 C5:1.5 B4:.5 A4:1 G4:1.5 A4:.5 G4:1 E4:3 D5:2 D5:1 F5:1.5 D5:.5 B4:1 C5:3 E5:3 C5:1 G4 E4 G4:1.5 F4:.5 D4:1 C4:6"],
+ ["O Christmas Tree","Traditional German",100,"G3:1 C4:.75 C4:.25 C4:1.5 D4:.5 E4:.75 E4:.25 E4:1.5 E4:.5 D4 E4 F4:1 B3 D4 C4:2 G3:1 C4:.75 C4:.25 C4:1.5 D4:.5 E4:.75 E4:.25 E4:1.5 E4:.5 D4 E4 F4:1 B3 D4 C4:2 G4:.5 G4 E4 A4:1.5 G4:.5 G4 F4 F4:1.5 F4:.5 F4 D4 G4:1.5 F4:.5 F4 E4 E4:1.5 G3:.5 C4:.75 C4:.25 C4:1.5 D4:.5 E4:.75 E4:.25 E4:1.5 E4:.5 D4 E4 F4:1 B3 D4 C4:3"],
+ ["Joy to the World","Lowell Mason, 1839",100,"C5:1 B4:.75 A4:.25 G4:1.5 F4:.5 E4:1 D4 C4:1.5 G4:.5 A4:1.5 A4:.5 B4:1.5 B4:.5 C5:3 C5:.5 C5 B4 A4 G4 G4:.75 F4:.25 E4:.5 C5 C5 B4 A4 G4 G4:.75 F4:.25 E4:.5 E4 E4 E4 E4 E4:.25 F4 G4:1.5 F4:.25 E4 D4:.5 D4 D4 D4:.25 E4 F4:1.5 E4:.25 D4 C4:.5 C5:1 A4:.5 G4:.75 F4:.25 E4:.5 F4 E4:1 D4 C4:2"],
+ ["Good King Wenceslas","Traditional, 1582",110,"G4:1 G4 G4 A4 G4 G4 D4:2 E4:1 D4 E4 F4 G4:2 G4 G4:1 G4 G4 A4 G4 G4 D4:2 E4:1 D4 E4 F4 G4:2 G4 D5:1 C5 B4 A4 B4 A4 G4:2 E4:1 D4 E4 F4 G4:2 G4 D4:1 D4 E4 F4 G4 G4 A4:2 D5:1 C5 B4 A4 G4:2 C5 G4:4"],
+ ["Angels We Have Heard on High","Traditional French",110,"E4:1 E4 E4 G4 G4:1.5 F4:.5 E4:2 E4:1 D4 E4 G4 E4:1.5 D4:.5 C4:2 E4:1 E4 E4 G4 G4:1.5 F4:.5 E4:2 E4:1 D4 E4 G4 E4:1.5 D4:.5 C4:2 G4:2 A4:.5 G4 F4 E4 F4:2 G4:.5 F4 E4 D4 E4:2 F4:.5 E4 D4 C4 D4:1.5 G3:.5 G3:1 C4 D4 C4:2 G4:2 A4:.5 G4 F4 E4 F4:2 G4:.5 F4 E4 D4 E4:2 F4:.5 E4 D4 C4 D4:1.5 G3:.5 G3:1 C4 D4 C4:4"],
+ ["The First Noel","Traditional English",100,"E4:.5 D4 C4:1.5 D4:.5 E4 F4 G4:2 A4:.5 B4 C5:1 B4 A4 G4:2 A4:.5 B4 C5:1 B4 A4 G4 A4 B4 C5 G4 F4 E4:2 E4:.5 D4 C4:1.5 D4:.5 E4 F4 G4:2 A4:.5 B4 C5:1 B4 A4 G4:2 A4:.5 B4 C5:1 B4 A4 G4 A4 B4 C5 G4 F4 E4:2 E4:.5 D4 C4:1.5 D4:.5 E4 F4 G4:2 C5:.5 B4 A4:2 A4:1 G4:3 C5:1 B4 A4 G4 A4 B4 C5 G4 F4 E4:3"],
+ ["Auld Lang Syne","Traditional Scottish (New Year)",90,"G4:1 C5:1.5 C5:.5 C5:1 E5 D5:1.5 C5:.5 D5:1 E5:.5 D5 C5:1.5 C5:.5 E5:1 G5 A5:3 A5:1 G5:1.5 E5:.5 E5:1 C5 D5:1.5 C5:.5 D5:1 E5:.5 D5 C5:1.5 A4:.5 A4:1 G4 C5:3"],
+ ["What Child Is This (Greensleeves)","Traditional English",90,"A4:.5 C5:1 D5:.5 E5:.75 F5:.25 E5:.5 D5:1 B4:.5 G4:.75 A4:.25 B4:.5 C5:1 A4:.5 A4:.75 G#4:.25 A4:.5 B4:1 G#4:.5 E4:1 A4:.5 C5:1 D5:.5 E5:.75 F5:.25 E5:.5 D5:1 B4:.5 G4:.75 A4:.25 B4:.5 C5:.75 B4:.25 A4:.5 G#4:.75 F#4:.25 G#4:.5 A4:1.5 G5:1.5 G5:.75 F#5:.25 E5:.5 D5:1 B4:.5 G4:.75 A4:.25 B4:.5 C5:1 A4:.5 A4:.75 G#4:.25 A4:.5 B4:1 G#4:.5 E4:1.5 G5:1.5 G5:.75 F#5:.25 E5:.5 D5:1 B4:.5 G4:.75 A4:.25 B4:.5 C5:.75 B4:.25 A4:.5 G#4:.75 F#4:.25 G#4:.5 A4:1.5"]];
+
+const NAMES=["C","C♯","D","D♯","E","F","F♯","G","G♯","A","A♯","B"];
+// a colour for each note name, like classroom bell sets, so kids start to link colours and notes
+const COL=["#e53935","#ef6c3a","#fb8c00","#f2b705","#e2c72a","#43a047","#1e9e8a","#1e88e5","#3949ab","#5e35b1","#8e24aa","#c2185b"];
+function parse(str){let dur=1;const out=[];let beat=0;
+  for(const tok of str.trim().split(/\s+/)){const m=tok.match(/^([A-GR])(#|b)?(\d)?(?::([\d.]+))?$/);if(!m)throw new Error("bad note "+tok);
+    if(m[4])dur=parseFloat(m[4]);
+    if(m[1]!=="R"){const pc={C:0,D:2,E:4,F:5,G:7,A:9,B:11}[m[1]]+(m[2]==="#"?1:m[2]==="b"?-1:0);out.push({m:12*(+m[3]+1)+pc,b:beat,d:dur})}
+    beat+=dur}
+  // lanes follow the tune: higher notes step right, lower notes step left, the same note stays put
+  let lane=1;out.forEach((n,i)=>{if(i){const dm=n.m-out[i-1].m;if(dm){const st=Math.sign(dm)*(Math.abs(dm)>4?2:1);let l=lane+st;if(l<0||l>3)l=lane-st;lane=Math.max(0,Math.min(3,l))}}n.lane=lane});
+  return out}
+/* Two songbooks share this page: games/tunes and games/carols (Christmas Tunes, cheaper so the carols are reachable by December). */
+const BOOK=/\/carols\//.test(location.pathname)?"carols":"tunes";
+const LIST=(BOOK==="carols"?CAROLS:SONGS).map(([title,by,bpm,notes])=>({title,by,bpm,notes:parse(notes)}));
+const OPT=TS.gameSave("tunes-options",{relaxed:null});
+const relaxed=()=>OPT.data.relaxed===null?K.age<=1:OPT.data.relaxed;
+/* Songs are a reward: the first is free, then each song needs 5 more 🎵.
+   A 🎵 comes from every level finished in the other games and every maths question answered right (TS.notes). */
+const PER=BOOK==="carols"?3:5,cost=n=>(n-1)*PER,locked=n=>TS.notes.count()<cost(n)?"🔒🎵"+cost(n):false;
+function earnLine(n){const have=TS.notes.count(),nx=n+1;if(nx>LIST.length)return"🎵 "+have+" · every song is open!";
+  return have>=cost(nx)?"🎵 "+have+" · next song is open":"🎵 "+have+" · "+(cost(nx)-have)+" more for the next song"}
+const SPEED=[.55,.62,.72,.82,.92,1,1.05,1.1];
+
+/* ---------- the piano ---------- */
+let AC=null,OUTG=null;
+function audio(){if(!AC){const C=window.AudioContext||window.webkitAudioContext;if(!C)return null;AC=new C();
+    const lp=AC.createBiquadFilter();lp.type="lowpass";lp.frequency.value=3200;OUTG=AC.createGain();OUTG.gain.value=.7;lp.connect(OUTG);OUTG.connect(AC.destination);OUTG.lp=lp}
+  if(AC.state==="suspended")AC.resume();return AC}
+function play(m,sec){const ac=audio();if(!ac)return;const t=ac.currentTime+.005,f=440*Math.pow(2,(m-69)/12),len=Math.max(.5,sec+.35);
+  [[f,"triangle",.32],[f*2,"sine",.08],[f*3,"sine",.03]].forEach(([fr,type,v])=>{const o=ac.createOscillator(),g=ac.createGain();o.type=type;o.frequency.value=fr;
+    g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(v,t+.006);g.gain.exponentialRampToValueAtTime(v*.35,t+.18);g.gain.exponentialRampToValueAtTime(.0001,t+len);
+    o.connect(g);g.connect(OUTG.lp);o.start(t);o.stop(t+len+.05)})}
+function buzz(){const ac=audio();if(!ac)return;const t=ac.currentTime,o=ac.createOscillator(),g=ac.createGain();o.type="square";o.frequency.value=110;
+  g.gain.setValueAtTime(.06,t);g.gain.exponentialRampToValueAtTime(.0001,t+.25);o.connect(g);g.connect(OUTG.lp);o.start(t);o.stop(t+.3)}
+
+/* ---------- the game ---------- */
+function start(n){const song=LIST[n-1];TS.music.hold(true);
+  if(S&&S.raf)cancelAnimationFrame(S.raf);
+  K.stage.insertAdjacentHTML("beforeend",'<p class="tt-song">'+song.title+"<small>"+song.by+" · "+earnLine(n)+"</small></p>"+
+    '<div class="tt-wrap"><canvas class="tt-cv" id="ttCv" aria-label="Tile lanes. Tap the coloured tiles."></canvas></div>'+
+    '<div class="tt-bar"><button type="button" id="ttRelax" aria-pressed="'+relaxed()+'">🐢 Wait for me</button><button type="button" id="ttNames" aria-pressed="true">🔤 Note names</button></div>');
+  const cv=document.getElementById("ttCv");
+  S={song,n,cv,ctx:cv.getContext("2d"),notes:song.notes.map(x=>({...x,hit:0,miss:0})),next:0,pos:song.notes[0].b,running:false,waiting:true,
+    hearts:K.age<=2?5:3,oops:0,slow:1,names:true,flash:[],last:performance.now(),done:false};
+  S.bps=song.bpm/60*SPEED[Math.min(7,K.age)];
+  document.getElementById("ttRelax").onclick=e=>{OPT.data.relaxed=!relaxed();OPT.save();e.currentTarget.setAttribute("aria-pressed",relaxed());K.tip(relaxed()?"🐢 Tiles will wait at the line for you.":"🐇 Tiles keep moving. Tap them in time!")};
+  document.getElementById("ttNames").onclick=e=>{S.names=!S.names;e.currentTarget.setAttribute("aria-pressed",S.names)};
+  cv.addEventListener("pointerdown",tap);
+  K.stat(S.hearts,"Hearts");K.sub();K.tip("Tap the first tile to start. Then tap each tile as it reaches the line!");
+  const loop=t=>{if(S.cv!==cv)return;frame(Math.min(.05,(t-S.last)/1000));S.last=t;S.raf=requestAnimationFrame(loop)};S.raf=requestAnimationFrame(loop)}
+function geom(){const cv=S.cv,r=cv.getBoundingClientRect(),dpr=window.devicePixelRatio||1;
+  if(cv.width!==Math.round(r.width*dpr)||cv.height!==Math.round(r.height*dpr)){cv.width=Math.round(r.width*dpr);cv.height=Math.round(r.height*dpr)}
+  const W=r.width,H=r.height;return{W,H,dpr,lw:W/4,line:H*.8,ppb:Math.max(90,H*.24)}}
+function frame(dt){const g=geom(),c=S.ctx,nx=S.notes[S.next];
+  if(S.running&&!S.waiting&&nx&&!S.done){S.pos+=dt*S.bps*S.slow;
+    if(relaxed()){if(S.pos>=nx.b){S.pos=nx.b;S.waiting=true}}
+    else if((S.pos-nx.b)*g.ppb>g.H-g.line-8){ // it slid past the bottom
+      nx.miss=1;S.pos=nx.b;S.waiting=true;lose(nx.lane,"Missed one! Tap it to keep going.")}}
+  c.setTransform(g.dpr,0,0,g.dpr,0,0);c.clearRect(0,0,g.W,g.H);
+  for(let l=0;l<4;l++){c.fillStyle=l%2?"#151a24":"#11151d";c.fillRect(l*g.lw,0,g.lw,g.H)}
+  S.flash=S.flash.filter(f=>f.t>0);S.flash.forEach(f=>{f.t-=dt;c.fillStyle="rgba(229,57,53,"+Math.max(0,f.t*1.4)+")";c.fillRect(f.l*g.lw,0,g.lw,g.H)});
+  c.fillStyle="rgba(255,255,255,.18)";c.fillRect(0,g.line,g.W,3);
+  // tiles
+  for(let i=Math.max(0,S.next-6);i<S.notes.length;i++){const n=S.notes[i],bot=g.line-(n.b-S.pos)*g.ppb,top=bot-n.d*g.ppb+4;
+    if(bot<-10)break;if(top>g.H)continue;if(n.hit>=1)continue;
+    const x=n.lane*g.lw+4,w=g.lw-8,pc=n.m%12;c.globalAlpha=n.hit?1-n.hit:1;
+    c.fillStyle=n.hit?"#ffffff":COL[pc];roundRect(c,x,Math.max(top,-20),w,bot-Math.max(top,-20)-2,12);c.fill();
+    if(!n.hit){c.fillStyle="rgba(0,0,0,.22)";roundRect(c,x,bot-10,w,8,6);c.fill()}
+    if(S.names&&!n.hit&&bot-top>26){c.fillStyle="#fff";c.font="800 "+Math.min(26,g.lw*.3)+"px system-ui,sans-serif";c.textAlign="center";c.textBaseline="bottom";c.fillText(NAMES[pc],x+w/2,bot-14)}
+    if(i===S.next&&!S.running){c.fillStyle="#fff";c.font="800 18px system-ui,sans-serif";c.textAlign="center";c.textBaseline="middle";c.fillText("TAP",x+w/2,(Math.max(top,0)+bot)/2-6)}
+    c.globalAlpha=1}
+  S.notes.forEach(n=>{if(n.hit&&n.hit<1)n.hit=Math.min(1,n.hit+dt*5)});
+  // progress along the top
+  c.fillStyle="rgba(255,255,255,.12)";c.fillRect(0,0,g.W,5);c.fillStyle="#f2c230";c.fillRect(0,0,g.W*S.next/S.notes.length,5)}
+function roundRect(c,x,y,w,h,r){h=Math.max(h,2);r=Math.min(r,h/2,w/2);c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath()}
+function tap(e){e.preventDefault();if(!S||S.done||K.busy)return;const g=geom(),r=S.cv.getBoundingClientRect(),lane=Math.max(0,Math.min(3,Math.floor((e.clientX-r.left)/g.lw)));hitLane(lane)}
+function hitLane(lane){const n=S.notes[S.next];if(!n)return;audio();
+  const bot=g2bot(n);
+  // the right lane counts even a little early (the tile may still be above the top); far too early is just ignored
+  if(lane===n.lane&&bot<-geom().H)return;
+  if(lane===n.lane){n.hit=.01;play(n.m,n.d/S.bps/S.slow);S.next++;
+    if(!S.running){S.running=true;K.tip("")}
+    // when the next tile is waiting at the line, tapping catches the song up
+    if(S.waiting){S.waiting=false}
+    if(S.next>=S.notes.length){S.done=true;setTimeout(()=>{[72,76,79,84].forEach((m,i)=>setTimeout(()=>play(m,.3),i*110));const st=S.oops===0?3:S.oops<=2?2:1;
+      const nx=S.n+1,need=nx<=LIST.length?cost(nx)-TS.notes.count():0;
+      K.win({stars:st,text:"You played "+S.song.title+(st===3?" without a mistake!":"!")+(need>0?" Earn "+need+" more 🎵 to open the next song: finish levels in other games and answer maths questions.":"")})},700)}
+    return}
+  if(!S.running)return;lose(lane,"Oops, wrong lane! Tap the coloured tile.")}
+function g2bot(n){const g=geom();return g.line-(n.b-S.pos)*g.ppb}
+function lose(lane,msg){if(S.done)return;S.oops++;S.hearts--;S.flash.push({l:lane,t:.5});buzz();K.stat(Math.max(0,S.hearts),"Hearts");K.sub("Oops "+S.oops);K.tip(msg);
+  if(S.hearts<=0){S.done=true;setTimeout(()=>K.fail({title:"Out of hearts",text:relaxed()?"Try again: take your time!":"Try again. Tip: turn on 🐢 Wait for me so the tiles wait for you."}),500)}}
+/* Hint: an extra heart and a slower song. */
+function hint(){if(!S||S.done)return;S.hearts=Math.min(9,S.hearts+1);S.slow=Math.max(.7,S.slow*.88);K.stat(S.hearts,"Hearts");K.tip("❤️ +1, and the song slows down a little.")}
+K=TS_KIT({id:BOOK,name:BOOK==="carols"?"Christmas Tunes":"Tile Tunes",levels:LIST.length,start,hint,locked,
+  howto:[["🎹","Coloured tiles slide down. Each one is a note of the song."],["👆","Tap each tile when it reaches the line. Tap the first tile to start."],["❤️","Wrong lane or a missed tile costs a heart."],["🐢","Turn on Wait for me and the tiles stop at the line until you tap."],["🎵","New songs open as you earn 🎵: finish levels in other games and answer maths questions."]],
+  label:n=>LIST[n-1].title.length>14?LIST[n-1].title.slice(0,13)+"…":LIST[n-1].title});
+window.__game={get S(){return S},K,LIST,BOOK,PER,parse,hitLane,relaxed,cost,locked};// for tools/test_tunes.py
+K.start();
+})();
+</script>
+</body>
+</html>

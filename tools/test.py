@@ -62,7 +62,7 @@ with sync_playwright() as p:
     add_player(pg, "Mia", 3, 3)
     check(pg.is_visible("#viewGames") and "Hi Mia!" in pg.text_content("#hello"), "saving a player goes to the game grid")
     live = len([d for d in (ROOT / "games").iterdir() if (d / "index.html").exists()])
-    check(pg.locator(".game:not(.soon)").count() == live and pg.locator(".game").count() == 46, f"{live} games playable, the rest say coming soon")
+    check(pg.locator(".game:not(.soon)").count() == live and pg.locator(".game").count() == 47, f"{live} games playable, the rest say coming soon")
     pg.screenshot(path=str(OUT / "shot-games.png"))
 
     # ---- Car game ----

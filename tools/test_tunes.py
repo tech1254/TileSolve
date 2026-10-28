@@ -88,7 +88,7 @@ with sync_playwright() as p:
         wins.append(pg.is_visible("#kSheetWin"))
     check(all(wins), f"every song can be played to the end ({sum(wins)}/{len(wins)})")
     pg.click("#kReplay"); pg.wait_for_timeout(300)
-    check("Turkish March" in pg.text_content(".tt-song") and "Mozart" in pg.text_content(".tt-song"), "each song shows its name and composer")
+    check("Eine kleine" in pg.text_content(".tt-song") and "Mozart" in pg.text_content(".tt-song"), "each song shows its name and composer")
     ctx.close()
 
     # iPad touch on the canvas
@@ -101,6 +101,28 @@ with sync_playwright() as p:
     check(tp.evaluate("__game.S.next") == 3 and tp.evaluate("__game.S.oops") == 0, "touch: tapping the right lanes plays the notes")
     tp.screenshot(path=str(OUT / "tunes-ipad.png"))
     tctx.close()
+
+    # ---------- Christmas Tunes: its own songbook, progress and cheaper 🎵 ----------
+    cctx = b.new_context(viewport={"width": 390, "height": 844}); cctx.add_init_script(player(2, "cc"))
+    cp = watch_errors(cctx.new_page(), errors); cp.goto(URL("carols")); cp.wait_for_function("window.__game && __game.S", timeout=10000)
+    titles = cp.evaluate("__game.LIST.map(s=>s.title)")
+    check(cp.evaluate("__game.BOOK") == "carols" and "Silent Night" in titles and "Deck the Halls" in titles and len(titles) >= 10, f"Christmas Tunes has {len(titles)} carols")
+    bad = cp.evaluate("__game.LIST.filter(s=>!(s.notes.length>=10&&s.notes.every(x=>x.m>=48&&x.m<=96&&x.d>0))).map(s=>s.title)")
+    check(not bad, f"every carol is well formed {bad}")
+    check(cp.evaluate("__game.PER") == 3 and cp.evaluate("__game.cost(2)") == 3, "carols cost 3 🎵 each")
+    cp.evaluate("localStorage.setItem('tilesolve:p:cc:carols',JSON.stringify({grades:{2:{unlocked:9,stars:{1:3,2:3,3:3,4:3,5:3,6:3,7:3,8:3},last:1}},all:false}))")
+    check(cp.evaluate("TS.notes.count()") == 0, "playing carols doesn't earn 🎵 (only other games do)")
+    cp.evaluate("(()=>{const k='tilesolve:p:cc:carols',s=JSON.parse(localStorage.getItem(k));s.all=true;localStorage.setItem(k,JSON.stringify(s))})()")
+    wins = []
+    for lv in range(1, len(titles) + 1):
+        cp.evaluate(f"__game.K.load({lv})"); cp.wait_for_timeout(150)
+        if cp.is_visible(".prob"): solve_math(cp)
+        cp.evaluate("(()=>{const S=__game.S;while(S.next<S.notes.length&&!S.done){S.pos=Math.max(S.pos,S.notes[S.next].b-1);__game.hitLane(S.notes[S.next].lane)}})()"); cp.wait_for_timeout(1600)
+        wins.append(cp.is_visible("#kSheetWin"))
+    check(all(wins), f"every carol can be played to the end ({sum(wins)}/{len(wins)})")
+    cp.goto(HOME_URL); cp.wait_for_timeout(300)
+    check(cp.locator(".game[data-game='carols']").count() == 1, "Christmas Tunes is on the home screen")
+    cctx.close()
 
     check(not errors, "no JavaScript errors" + ("" if not errors else ": " + "; ".join(errors[:3])))
     b.close()

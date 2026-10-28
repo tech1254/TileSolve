@@ -41,7 +41,7 @@ const crypto=require('crypto'),h=crypto.createHash('sha1');
 for(const f of fs.readdirSync(path.join(ROOT,'shared')).sort())h.update(fs.readFileSync(path.join(ROOT,'shared',f)));
 const V=h.digest('hex').slice(0,8);
 // Pages built with the game kit: every src/<game>.html that isn't listed above becomes games/<game>/index.html.
-const PAGES=[['src/home.html','index.html'],['src/car.html','games/car/index.html'],['src/picture.html','games/picture/index.html']];
+const PAGES=[['src/home.html','index.html'],['src/car.html','games/car/index.html'],['src/picture.html','games/picture/index.html'],['src/tunes.html','games/carols/index.html']];
 for(const f of fs.readdirSync(path.join(ROOT,'src')).sort()){const g=f.replace(/\.html$/,'');
   if(f.endsWith('.html')&&!['home','car','picture'].includes(g))PAGES.push(['src/'+f,'games/'+g+'/index.html'])}
 // <!--HEAD:Title--> expands to the standard game-page head; <!--KIT--> to the shared scripts.

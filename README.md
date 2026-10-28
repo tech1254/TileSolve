@@ -63,6 +63,8 @@ Each game here has a grade range and only shows for players in it. Content again
 
 Coloured tiles slide down four lanes; tapping each one plays the next note of a song on a built-in Web Audio piano. There are no recordings: the 20 songs are public-domain melodies (traditional tunes, Beethoven, Mozart, Brahms, Grieg, Joplin and others) written out note by note in `src/tunes.html`. Each note name has its own colour, and note names can be shown on the tiles. A wrong lane or a missed tile costs a heart. "🐢 Wait for me" (on by default for Kindergarten and grade 1) stops each tile at the line until it's tapped. Speed is set by grade.
 
+**Christmas Tunes** (🎄 on the home screen) is a second songbook from the same page (`games/carols`): Jingle Bells, We Wish You a Merry Christmas, Deck the Halls, Silent Night, O Christmas Tree, Joy to the World, Good King Wenceslas, Angels We Have Heard on High, The First Noel, Auld Lang Syne and What Child Is This, all written before 1929 so the melodies are public domain. Carols cost 3 🎵 each.
+
 Songs are earned: the first is free, then each song needs 5 more 🎵. Players earn a 🎵 for every level finished in any other game and for every maths question answered right (`TS.notes`).
 
 ## Puzzle games

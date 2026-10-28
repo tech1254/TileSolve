@@ -261,7 +261,7 @@ const notes={
   /* one per level finished (any grade) in every game except Tile Tunes, plus one per maths question answered right */
   count(){const p=players.current();if(!p)return 0;const pre="tilesolve:p:"+p.id+":";let n=(store.get(pre+"notes",{math:0}).math)||0;
     try{for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(!k||!k.startsWith(pre))continue;const g=k.slice(pre.length);
-      if(/^(tunes|tunes-options|notes|seen)$/.test(g))continue;const d=store.get(k,null);
+      if(/^(tunes|carols|tunes-options|notes|seen)$/.test(g))continue;const d=store.get(k,null);
       if(d&&d.grades)for(const a in d.grades){const st=d.grades[a]&&d.grades[a].stars;if(st)n+=Object.keys(st).length}}}catch(e){}
     return n}};
 return{HOME,rngFrom,store,players,requirePlayer,gameSave,music,notes,MUSIC_SVG,math,problem,gate,howto,point,talk,say:t=>talk.say(t)}})();
