@@ -65,6 +65,8 @@ Coloured tiles slide down four lanes; tapping each one plays the next note of a 
 
 **Christmas Tunes** (🎄 on the home screen) is a second songbook from the same page (`games/carols`): Jingle Bells, We Wish You a Merry Christmas, Deck the Halls, Silent Night, O Christmas Tree, Joy to the World, Good King Wenceslas, Angels We Have Heard on High, The First Noel, Auld Lang Syne and What Child Is This, all written before 1929 so the melodies are public domain. Carols cost 3 🎵 each.
 
+**🎼 My songs (Make a Song):** tap a tune on a 17-key piano and it becomes a playable song. Timing comes from the taps (the usual gap is one beat; lengths round to ½, 1, 1½, 2, 3 or 4 beats). Songs are saved on the device for every player, are free to play, and can be moved to another device with a song code (📋 to copy, 📥 to add).
+
 Songs are earned: the first is free, then each song needs 5 more 🎵. Players earn a 🎵 for every level finished in any other game and for every maths question answered right (`TS.notes`).
 
 ## Puzzle games
