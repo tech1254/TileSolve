@@ -64,6 +64,18 @@ window.TS_LEARN=function(o){
           x.onclick=()=>{if(R.done||K.busy||x.classList.contains("found"))return;if(c.ok){x.classList.add("found");TS.music.fx("tap");if(--R.left===0)roundDone()}else oops(x)};b.appendChild(x)})},
       target(b){const k=R.cells.findIndex((c,i)=>c.ok&&!b.children[i].classList.contains("found"));return k<0?null:b.children[k]},
       hint(b){flash(this.target(b))},solve(b){let t;while(!R.done&&(t=this.target(b)))t.click()}},
+    /* meet {type:"meet", up, low, pic, word, say, tapSay}: a big letter card; tapping it says its name and sound */
+    meet:{draw(b){const x=document.createElement("button");x.type="button";x.className="lr-mcard";x.setAttribute("aria-label",R.up);
+        const w=R.word||"";x.innerHTML='<span class="lr-mbig">'+R.up+'<i>'+R.low+'</i></span><span class="lr-mpic">'+(R.pic||"")+'</span><span class="lr-mword"><b>'+w.slice(0,1)+"</b>"+w.slice(1)+'</span><span class="lr-mtap">👆 Tap me!</span>';
+        x.onclick=()=>{if(R.done||K.busy)return;TS.say(R.tapSay||R.say);TS.music.fx("tap");x.classList.add("on");clearTimeout(R.t);R.t=setTimeout(()=>roundDone(),1600)};b.appendChild(x)},
+      target:b=>b.querySelector(".lr-mcard"),hint(b){flash(this.target(b))},solve(b){this.target(b).click();clearTimeout(R.t);roundDone()}},
+    /* sing {type:"sing", letters:[...], notes:[midi...]}: tap the glowing letters in order; each tap plays the next note of the alphabet song */
+    sing:{draw(b){R.pos=0;b.style.setProperty("--cols",Math.min(7,R.letters.length));
+        R.letters.forEach((l,k)=>{const x=document.createElement("button");x.type="button";x.className="lr-sl"+(k===0?" glow":"");x.textContent=l;x.dataset.k=k;x.setAttribute("aria-label",l);
+          x.onclick=()=>{if(R.done||K.busy)return;if(k!==R.pos){x.classList.remove("lr-no");void x.offsetWidth;x.classList.add("lr-no");return}
+            note(R.notes[k],k===R.letters.length-1?.9:.45);TS.say(l);x.classList.remove("glow");x.classList.add("sung");R.pos++;
+            const nx=b.children[R.pos];if(nx)nx.classList.add("glow");else setTimeout(roundDone,500)};b.appendChild(x)})},
+      target:b=>b.querySelector(".lr-sl.glow"),hint(b){flash(this.target(b))},solve(b){let t;while(!R.done&&(t=this.target(b)))t.click()}},
     fill:{draw(b){const n=R.size||10;R.on=new Set();
         b.innerHTML='<div class="lr-frames"></div><div class="lr-count"><b id="lrCount">0</b> / '+R.target+"</div>";const fr=b.firstChild;
         for(let f=0;f<n/10;f++){const g=document.createElement("div");g.className="lr-frame";
@@ -100,6 +112,10 @@ window.TS_LEARN=function(o){
         const step=()=>{if(R.done||!d.isConnected){d.hidden=true;return}k+=1;if(k>=P.length){if(++rep>=2){d.hidden=true;return}k=R.pi}
           d.setAttribute("cx",P[k][0]);d.setAttribute("cy",P[k][1]);setTimeout(step,28)};step();K.tip("Follow the moving dot!")},
       solve(b){while(R.si<R.strokes.length){R.pi=R.strokes[R.si].length-1;this.ink(b);R.si++;R.pi=0}roundDone()}}};
+  /* a soft piano note for the alphabet song (quiet when all sound is off) */
+  let AC=null;function note(m,sec){if(TS.music.muted)return;try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();if(AC.state==="suspended")AC.resume();
+    const t=AC.currentTime+.01,o=AC.createOscillator(),g=AC.createGain();o.type="triangle";o.frequency.value=440*Math.pow(2,(m-69)/12);
+    g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.25,t+.01);g.gain.exponentialRampToValueAtTime(.0001,t+sec+.3);o.connect(g);g.connect(AC.destination);o.start(t);o.stop(t+sec+.35)}catch(e){}}
   function flash(el){if(!el)return;el.classList.remove("lr-hint");void el.offsetWidth;el.classList.add("lr-hint")}
 
   /* ---------- sorting: drag an item onto a bin, or tap the item then the bin ---------- */

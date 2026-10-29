@@ -8,12 +8,16 @@
 <!--LEARN-->
 <script>
 (()=>{const U=TS_LEARN.util;
-TS_LEARN({id:"moreless",name:"More or Less",howto:[["⚖️", "Look at both sides."], ["👂", "Listen: is it asking for more, or fewer?"], ["👆", "Tap the right one."], ["🔊", "Tap the speaker to hear it again."]],
+
+TS_LEARN({id:"moreless",name:"More or Less",howto:[["⚖️", "Look at both sides."], ["👂", "Listen: is it asking for the MOST, or the LEAST?"], ["👆", "Tap the right one."], ["🔊", "Tap the speaker to hear it again."]],
 make(n,i,r,a){
-  if(a<=0){const EM=["🍎","⭐","🐟","🎈","🐞","🍪","🦆","🍓"],em=U.pick(r,EM),gap=a<0||n<=15?2:1,hi=a<0?5:7;let x,y;do{x=U.ri(r,1,hi);y=U.ri(r,1,hi)}while(Math.abs(x-y)<gap);
-    const fewer=a===0&&n>20&&i%2===1,ans=(fewer?x<y:x>y)?"L":"R";
-    return{type:"pick",cols:2,say:fewer?"Which group has fewer?":"Which group has more?",prompt:'<span class="ask">Which has '+(fewer?"fewer":"more")+"?</span>",
-      options:[{key:"L",html:U.cluster(em,x,3),aria:x+" pictures"},{key:"R",html:U.cluster(em,y,3),aria:y+" pictures"}],answer:ans}}
+  if(a<=0){ // groups of pictures: 2 at first, then 3, then 4; sometimes asks for the group with the LEAST
+    const EM=["🍎","⭐","🐟","🎈","🐞","🍪","🦆","🍓"],em=U.pick(r,EM),k=a<0?(n<=4?2:3):(n<=10?3:4),gap=a<0||n<=15?2:1,hi=a<0?7:9;
+    let xs;do{xs=Array.from({length:k},()=>U.ri(r,1,hi))}while(xs.some((x,j)=>xs.some((y,m)=>m!==j&&Math.abs(x-y)<gap)));
+    const least=(a<0?n>3&&i%3===2:i%2===1),ans=xs.indexOf(least?Math.min(...xs):Math.max(...xs)),two=k===2;
+    const w=least?(two?"less":"the least"):(two?"more":"the most");
+    return{type:"pick",cols:2,say:"Which group has "+w+"?",prompt:'<span class="ask">Which group has <b>'+w.replace("the ","")+"</b>"+(two?"":" of all")+"?</span>",
+      options:xs.map((x,j)=>({key:"g"+j,html:U.cluster(em,x,3),aria:x+" pictures"})),answer:"g"+ans}}
   const k=n>20?3:2,big=i%2===0;let nums;
   if(a===1){const s=new Set(),hi=n>25?100:20;while(s.size<k)s.add(U.ri(r,1,hi));nums=[...s]}
   else if(a>=2&&n>25){const s=new Set(),b=U.ri(r,100,989);s.add(b);while(s.size<k)s.add(Math.max(100,Math.min(999,b+U.pick(r,[-100,100,-10,10,-1,1,90,-90]))));nums=[...s]}

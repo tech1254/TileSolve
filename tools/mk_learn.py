@@ -2,27 +2,53 @@ import pathlib, json
 SRC = pathlib.Path(__file__).resolve().parent.parent / "src"
 G = {}
 
-G["abc"] = ("ABC Order", [["🔤","Letters are mixed up."],["👆","Tap the letters in ABC order: A, then B, then C..."],["✅","Fill every box to finish the round."],["🔊","Tap the speaker to hear it again."]],
-r'''label:n=>"",
-make(n,i,r,a){const UP="ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-  if(a>=2&&n>15){ // putting words in ABC order
-    const W=[["ant","🐜"],["apple","🍎"],["bat","🦇"],["bear","🐻"],["bed","🛏️"],["bus","🚌"],["cat","🐱"],["cake","🎂"],["cup","☕"],["dog","🐶"],["duck","🦆"],["egg","🥚"],
-      ["fish","🐟"],["fox","🦊"],["frog","🐸"],["goat","🐐"],["gift","🎁"],["hat","🎩"],["hen","🐔"],["jet","✈️"],["kite","🪁"],["key","🔑"],["lamp","💡"],["lion","🦁"],
-      ["map","🗺️"],["moon","🌙"],["nest","🪺"],["nut","🥜"],["owl","🦉"],["pig","🐷"],["pear","🍐"],["queen","👸"],["rain","🌧️"],["ring","💍"],["sun","☀️"],["sock","🧦"],
-      ["tree","🌳"],["tent","⛺"],["van","🚐"],["web","🕸️"],["yarn","🧶"],["zebra","🦓"]];
-    const k=U.ramp(n,16,40,3,5),same=n>30;let ws;
-    for(let t=0;t<50;t++){ws=U.sample(r,W,k);if(same||new Set(ws.map(w=>w[0][0])).size===k)break}
-    ws.sort((x,y)=>x[0]<y[0]?-1:1);const ans=ws.map(w=>w[0]);   // mix() shuffles away from the sorted order
-    return{type:"order",wide:true,say:"Put the words in A B C order.",prompt:'<span class="ask">Put the words in ABC order</span>',
-      tiles:U.mix(r,ws).map(w=>({key:w[0],html:w[1]+" "+w[0],say:w[0]})),answer:ans}}
-  let len,start,lower;
-  if(a<0){len=n<=20?3:n<=32?4:5;start=0;lower=false}
-  else if(a===0){len=Math.min(7,3+Math.floor((n-1)/8));start=n<=12?0:U.ri(r,0,26-len);lower=false}
-  else if(a===1){len=Math.min(10,5+Math.floor((n-1)/8));start=U.ri(r,0,26-len);lower=n>20}
-  else{len=U.ri(r,8,10);start=U.ri(r,0,26-len);lower=n>8}
-  const seq=UP.slice(start,start+len).split("").map(c=>lower?c.toLowerCase():c);
-  return{type:"order",say:"Put the letters in A B C order."+(start===0?" Start with A.":""),prompt:'<span class="ask">Put the letters in ABC order</span>',
-    tiles:U.mix(r,seq).map(c=>({key:c,html:c,say:c})),answer:seq}}''')
+G["abc"] = ("My ABCs", [["🔤","Each level is a new letter. The letters in YOUR name come first!"],["👂","Meet the letter: hear its name and its sound."],["🔍","Then find it, match big and little, trace it, and hear it in words."],["🎵","Finish by singing the ABC song: tap the glowing letters."]],
+r"""rounds:()=>6,
+label:n=>{const q=ABC.seq();return n<=26?q[n-1]:"⭐"},
+make(n,i,r,a){
+  /* Built on research about how young children learn the alphabet:
+     letters of the child's own name first, then the rest; one new letter per level with review of earlier ones;
+     letter names linked to their sounds and a keyword picture; many kinds of practice; the alphabet song for order. */
+  const UP=ABC.UP,SEQ=ABC.seq(),pr=TS.rngFrom(n*7919+(a+2)*104729),review=n>26;
+  const L=review?U.pick(r,ABC.HARD):SEQ[n-1],known=review?SEQ:SEQ.slice(0,n-1);
+  // the plan for this level: meet (new letters only), then a mix, then the song
+  const mix=["find","hunt","sound","match","trace"].concat(a>=0?["next"]:[]).filter(k=>!(k==="match"&&a<0&&n<6)&&!(k==="sound"&&L==="X"));
+  const pickN=(arr,k)=>{const c=arr.slice(),o=[];while(o.length<k&&c.length)o.push(c.splice(Math.floor(pr()*c.length),1)[0]);return o};
+  // four practice rounds in a different mix and order each level (always including "find")
+  const mid=["find"].concat(pickN(mix.filter(k=>k!=="find"),3));for(let k=mid.length-1;k>0;k--){const j=Math.floor(pr()*(k+1));[mid[k],mid[j]]=[mid[j],mid[k]]}
+  const plan=review?pickN(["find","hunt","match","sound","trace"].concat(a>=0?["next"]:[]),5).concat(["sing"]):["meet"].concat(mid,["sing"]);
+  while(plan.length<6)plan.splice(plan.length-1,0,"find");
+  const kind=plan[i];
+  // a review round now and then: practise a letter learned earlier
+  const T=(kind==="find"||kind==="hunt")&&i>=3&&known.length>=2?U.pick(r,known.slice(-4)):L;
+  const t=T.toLowerCase(),[word,pic]=ABC.word(T,r),snd=ABC.SND[T],lowCase=a>=0&&r()<.5;
+  const others=(k,avoid)=>{const pool=(known.length>=k?known:UP.split("")).filter(c=>c!==T&&!(avoid||[]).includes(c));
+    const extra=a>=1?ABC.CONF[T]||[]:[];const out=U.shuffle(r,extra.filter(c=>c!==T)).slice(0,1);
+    for(const c of U.shuffle(r,pool.concat(UP.split("").filter(c=>!pool.includes(c)))))if(out.length<k&&c!==T&&!out.includes(c))out.push(c);return out};
+  const big=(c,low)=>'<span style="font-family:var(--font-kid)">'+(low?c.toLowerCase():c)+"</span>";
+  if(kind==="meet")return{type:"meet",up:T,low:t,pic,word,say:"This is the letter "+T+". "+T+" says "+snd+", like "+word+"! Tap it.",tapSay:T+". "+snd+". "+word+"!",
+    prompt:'<span class="ask">Meet the letter '+T+"!</span>",text:"Tap the big letter to hear it."};
+  if(kind==="find"){const k=a<0?3:4,opts=[T].concat(others(k-1));
+    return{type:"pick",cols:k,say:"Which one is "+(lowCase?"little ":"")+T+"?",prompt:'<span class="ask">Which one is '+(lowCase?"little ":"")+T+"?</span>",
+      options:U.shuffle(r,opts).map(c=>({key:c,html:big(c,lowCase),say:c})),answer:T}}
+  if(kind==="hunt"){const cols=4,cnt=a<0?8:12,hits=a<0?3:4,dis=others(3);const cells=[];
+    for(let k=0;k<hits;k++)cells.push({html:big(T,a>=0&&k%2===1),ok:true,aria:T});
+    while(cells.length<cnt){const c=U.pick(r,dis);cells.push({html:big(c,a>=0&&r()<.5),ok:false,aria:c})}
+    return{type:"hunt",cols,say:"Find every "+T+(a>=0?", big and little":"")+"!",prompt:'<span class="ask">Find every '+T+(a>=0?" and "+t:"")+"!</span>",cells:U.shuffle(r,cells)}}
+  if(kind==="sound"){const k=a<0?3:4,opts=[[word,pic]];for(const c of others(k+2,["X"]))if(opts.length<k){const w=ABC.word(c,r);if(!opts.some(o=>o[0][0]===w[0][0]))opts.push(w)}
+    return{type:"pick",cols:2,say:"Which one starts with "+T+"? "+T+" says "+snd+".",prompt:'<span class="ask">Which starts with '+big(T)+"?</span>",
+      options:U.shuffle(r,opts).map(([w,e])=>({key:w,html:'<span class="lr-word"><b>'+e+"</b>"+w+"</span>",say:w,aria:w})),answer:word}}
+  if(kind==="match"){const k=a<0?3:4,opts=[T].concat(others(k-1));
+    return{type:"pick",cols:k,say:"Find little "+T+". It goes with big "+T+".",prompt:'<span class="ask">Which is little '+T+"?</span>"+'<span class="big l">'+T+"</span>",
+      options:U.shuffle(r,opts).map(c=>({key:c,html:big(c,true),say:c})),answer:T}}
+  if(kind==="trace")return{type:"trace",ch:T,say:"Trace the letter "+T+". Start at the green dot.",prompt:'<span class="ask">Trace the letter '+T+"</span>"};
+  if(kind==="next"){const ix=UP.indexOf(T),after=ix<25&&(ix===0||r()<.6),ans=after?UP[ix+1]:UP[ix-1],opts=[ans].concat(U.shuffle(r,UP.split("").filter(c=>c!==ans&&c!==T)).slice(0,3));
+    return{type:"pick",cols:4,say:"What comes "+(after?"after ":"before ")+T+"? Sing the ABCs if you need to!",prompt:'<span class="ask">What comes '+(after?"after":"before")+'</span><span class="big l">'+T+"</span>",
+      options:U.shuffle(r,opts).map(c=>({key:c,html:big(c),say:c})),answer:ans}}
+  // sing: the part of the alphabet song with this letter in it (the whole song for bigger kids and review levels)
+  const seg=a>=1||review?[0,26]:ABC.SEGS.find(([s,e])=>UP.indexOf(L)>=s&&UP.indexOf(L)<e),letters=UP.slice(seg[0],seg[1]).split("");
+  return{type:"sing",letters,notes:letters.map(c=>ABC.NOTE[UP.indexOf(c)]),say:"Let's sing the ABCs! Tap the glowing letters.",prompt:'<span class="ask">🎵 Sing the ABCs! Tap the glowing letter.</span>'}}
+""")
 
 G["missletter"] = ("Missing Letter", [["🔤","Some letters are in ABC order."],["❓","One letter is missing."],["👆","Tap the letter that goes in the box."],["🔊","Tap the speaker to hear it again."]],
 r'''make(n,i,r,a){const UP="ABCDEFGHIJKLMNOPQRSTUVWXYZ",len=a<0?3:a===0?4:a===1?5:6,lower=(a===1&&n>20)||(a>=2&&n>8),back=a>=2&&n>20&&i%2===1;
@@ -93,12 +119,15 @@ r'''make(n,i,r,a){const range=(s,len,step)=>Array.from({length:len},(_,k)=>s+k*s
   return{type:"order",say:desc?"Put the numbers in order from biggest to smallest.":"Put the numbers in order from smallest to biggest.",
     prompt:'<span class="ask">'+(desc?"Biggest to smallest ⬇️":"Smallest to biggest ⬆️")+"</span>",tiles:U.mix(r,ans).map(v=>({key:v,html:v,say:v})),answer:ans}}''')
 
-G["moreless"] = ("More or Less", [["⚖️","Look at both sides."],["👂","Listen: is it asking for more, or fewer?"],["👆","Tap the right one."],["🔊","Tap the speaker to hear it again."]],
+G["moreless"] = ("More or Less", [["⚖️","Look at both sides."],["👂","Listen: is it asking for the MOST, or the LEAST?"],["👆","Tap the right one."],["🔊","Tap the speaker to hear it again."]],
 r'''make(n,i,r,a){
-  if(a<=0){const EM=["🍎","⭐","🐟","🎈","🐞","🍪","🦆","🍓"],em=U.pick(r,EM),gap=a<0||n<=15?2:1,hi=a<0?5:7;let x,y;do{x=U.ri(r,1,hi);y=U.ri(r,1,hi)}while(Math.abs(x-y)<gap);
-    const fewer=a===0&&n>20&&i%2===1,ans=(fewer?x<y:x>y)?"L":"R";
-    return{type:"pick",cols:2,say:fewer?"Which group has fewer?":"Which group has more?",prompt:'<span class="ask">Which has '+(fewer?"fewer":"more")+"?</span>",
-      options:[{key:"L",html:U.cluster(em,x,3),aria:x+" pictures"},{key:"R",html:U.cluster(em,y,3),aria:y+" pictures"}],answer:ans}}
+  if(a<=0){ // groups of pictures: 2 at first, then 3, then 4; sometimes asks for the group with the LEAST
+    const EM=["🍎","⭐","🐟","🎈","🐞","🍪","🦆","🍓"],em=U.pick(r,EM),k=a<0?(n<=4?2:3):(n<=10?3:4),gap=a<0||n<=15?2:1,hi=a<0?7:9;
+    let xs;do{xs=Array.from({length:k},()=>U.ri(r,1,hi))}while(xs.some((x,j)=>xs.some((y,m)=>m!==j&&Math.abs(x-y)<gap)));
+    const least=(a<0?n>3&&i%3===2:i%2===1),ans=xs.indexOf(least?Math.min(...xs):Math.max(...xs)),two=k===2;
+    const w=least?(two?"less":"the least"):(two?"more":"the most");
+    return{type:"pick",cols:2,say:"Which group has "+w+"?",prompt:'<span class="ask">Which group has <b>'+w.replace("the ","")+"</b>"+(two?"":" of all")+"?</span>",
+      options:xs.map((x,j)=>({key:"g"+j,html:U.cluster(em,x,3),aria:x+" pictures"})),answer:"g"+ans}}
   const k=n>20?3:2,big=i%2===0;let nums;
   if(a===1){const s=new Set(),hi=n>25?100:20;while(s.size<k)s.add(U.ri(r,1,hi));nums=[...s]}
   else if(a>=2&&n>25){const s=new Set(),b=U.ri(r,100,989);s.add(b);while(s.size<k)s.add(Math.max(100,Math.min(999,b+U.pick(r,[-100,100,-10,10,-1,1,90,-90]))));nums=[...s]}
@@ -117,7 +146,7 @@ r'''make(n,i,r,a){let len,step,s,hole,count;
   const seq=Array.from({length:len},(_,k)=>s+k*step),ans=seq[hole],m=Math.abs(step),opts=new Set([ans]);
   for(const d of U.shuffle(r,[m,-m,1,-1,2*m,-2*m,2,-2]))if(opts.size<count&&ans+d>=0)opts.add(ans+d);
   return{type:"pick",say:"What number is missing?"+(step<0?" These count backwards!":""),
-    prompt:'<span class="ask">What number is missing?</span><span class="seq">'+seq.map((v,k)=>k===hole?'<b class="q">?</b>':"<b>"+v+"</b>").join("")+"</span>",
+    prompt:'<span class="ask">What number is missing?</span><span class="seq">'+seq.map((v,k)=>k===hole?'<b class="q">?</b>':"<b"+(String(v).length>2?' class="sm"':"")+">"+v+"</b>").join("")+"</span>",
     options:U.shuffle(r,[...opts]).map(v=>({key:v,html:String(v),say:String(v)})),answer:ans}}''')
 
 G["tenframe"] = ("Ten Frame", [["🔟","A ten frame has 10 boxes."],["👆","Tap boxes to put in dots. Tap again to take one out."],["🧮","Some rounds ask how many dots, or how many more make 10."],["🔊","Tap the speaker to hear it again."]],
@@ -182,16 +211,69 @@ r'''make(n,i,r,a){const COL=U.COLOURS,K=["circle","square","triangle","star","he
   return{type:"sort",say:"Put each shape in the basket with the same colour.",prompt:'<span class="ask">Match the colours</span>',
     bins:bins.map(c=>({key:c,html:'<span class="swatch" style="background:'+COL[c]+'"></span>',label:c})),items}}''')
 
-G["sizeorder"] = ("Size Order", [["📏","The pictures are different sizes."],["👂","Listen: smallest first, or biggest first?"],["👆","Tap them in that order."],["🔊","Tap the speaker to hear it again."]],
-r'''make(n,i,r,a){const k=a<0?(n<=15?2:3):a===0?(n<=20?3:4):a===1?(n<=15?4:5):(n<=15?5:6),desc=((a<=0&&n>25)||(a>=1&&n>10))&&i%2===1;
-  const step=a<0?.32:a===0?.22:a===1?.13:.09,grid=[];for(let v=.3;v<=1.0001;v+=step)grid.push(+v.toFixed(3));
-  const vals=U.sample(r,grid,Math.min(k,grid.length)),mode=a<=0?"emoji":a===1?(i%2===0?"emoji":"bar"):(i%2===0?"bar":"vbar");
-  const em=U.pick(r,["🐘","🍎","⭐","🐻","🌳","🎈","🐟","🏠"]),col=U.pick(r,U.SHAPE_COLS);
+G["sizeorder"] = ("Size Order", [["📏","Things come in different sizes."],["👂","Listen to the question: biggest? smallest? heavier?"],["🐘","Some rounds ask about REAL life: is a mouse bigger than an elephant?"],["👆","Tap the answer, or tap things in order."]],
+r'''rounds:a=>a<=0?5:6,
+make(n,i,r,a){
+  /* Many kinds of size thinking, mixed differently each level: comparing (biggest/smallest), ordering (both directions),
+     real-world size (pictures drawn the same size), heavier/lighter, and for older kids "which one is out of order?". */
+  const pr=TS.rngFrom(n*131+(a+3)*7);
+  const pool=a<0?["compare","order","compare","real"].concat(n>8?["order"]:[]):a===0?["compare","order","real","realorder","heavy"]:["order","realorder","heavy","wrong","compare","real"];
+  for(let k=pool.length-1;k>0;k--){const j=Math.floor(pr()*(k+1));[pool[k],pool[j]]=[pool[j],pool[k]]}
+  const kind=pool[(i+n)%pool.length];
+  const REAL=[["ant","🐜",1],["ladybug","🐞",1],["strawberry","🍓",1.5],["mouse","🐭",2],["apple","🍎",2],["frog","🐸",2],["cat","🐱",3],["watermelon","🍉",3.5],["dog","🐶",4],
+    ["bike","🚲",5],["horse","🐴",6],["car","🚗",6.5],["giraffe","🦒",7],["elephant","🐘",7.5],["bus","🚌",8],["house","🏠",8.5],["airplane","✈️",9],["whale","🐋",9.5]];
+  const HEAVY=[["feather","🪶",.1],["leaf","🍃",.2],["balloon","🎈",.3],["sock","🧦",.5],["banana","🍌",1],["book","📖",2],["rock","🪨",4],["bowling ball","🎳",6],["watermelon","🍉",5],
+    ["cat","🐱",7],["dog","🐶",8],["car","🚗",9],["elephant","🐘",10]];
+  const card=(x)=>({key:x[0],html:'<span class="lr-word"><b>'+x[1]+"</b>"+x[0]+"</span>",say:x[0],aria:x[0]});
+  const pickSpread=(L,k,gap)=>{let s;do s=U.sample(r,L,k);while(s.some((x,j)=>s.some((y,m)=>m!==j&&Math.abs(x[2]-y[2])<gap)));return s};
+  if(kind==="real"){const k=a<0?2:3,s=pickSpread(REAL,k,a<0?3:1.5),big=a<0||r()<.6,ans=s.reduce((p,q)=>(big?q[2]>p[2]:q[2]<p[2])?q:p);
+    const w=k===2?(big?"bigger":"smaller"):(big?"the biggest":"the smallest");
+    return{type:"pick",cols:k,say:"Which is "+w+" in real life?",prompt:'<span class="ask">Which is '+w+" in <b>real life</b>?</span>",options:U.shuffle(r,s).map(card),answer:ans[0]}}
+  if(kind==="realorder"){const k=a<=0?3:4,s=pickSpread(REAL,k,1.5).sort((x,y)=>x[2]-y[2]),desc=r()<.4;if(desc)s.reverse();
+    const w=desc?"biggest to smallest":"smallest to biggest";
+    return{type:"order",wide:true,say:"Put them in order from "+w+", in real life.",prompt:'<span class="ask">Real life: '+w+"</span>",tiles:U.mix(r,s.map(card)),answer:s.map(x=>x[0])}}
+  if(kind==="heavy"){const k=a<=0?2:3,s=pickSpread(HEAVY,k,1.5),hv=r()<.6,ans=s.reduce((p,q)=>(hv?q[2]>p[2]:q[2]<p[2])?q:p);
+    const w=k===2?(hv?"heavier":"lighter"):(hv?"the heaviest":"the lightest");
+    return{type:"pick",cols:k,say:"Which is "+w+"?",prompt:'<span class="ask">⚖️ Which is '+w+"?</span>",options:U.shuffle(r,s).map(card),answer:ans[0]}}
+  // drawn sizes: emoji, long bars or tall bars
+  const mode=a<=0?"emoji":U.pick(r,["emoji","bar","vbar"]),em=U.pick(r,["🐘","🍎","⭐","🐻","🌳","🎈","🐟","🏠","🐢","🌻","🚗","🧸"]),col=U.pick(r,U.SHAPE_COLS);
   const html=v=>mode==="emoji"?'<span class="sz" style="font-size:calc(var(--ts) * '+(v*.78).toFixed(2)+')">'+em+"</span>":mode==="bar"?'<span class="sz"><i class="bar" style="width:'+Math.round(v*92)+"%;--c:"+col+'"></i></span>':
     '<span class="sz" style="display:flex;justify-content:center"><i class="vbar" style="height:'+Math.round(v*84)+"%;--c:"+col+'"></i></span>';
-  const sorted=vals.map((v,j)=>({key:"v"+j,v,html:html(v)})).sort((x,y)=>desc?y.v-x.v:x.v-y.v),ans=sorted.map(t=>t.key),tiles=sorted; // mixed below
-  const words=mode==="emoji"?["smallest","biggest"]:mode==="bar"?["shortest","longest"]:["shortest","tallest"],w=desc?words[1]+" to "+words[0]:words[0]+" to "+words[1];
-  return{type:"order",size:86,say:"Put them in order from "+w+".",prompt:'<span class="ask">'+w[0].toUpperCase()+w.slice(1)+"</span>",tiles:U.mix(r,tiles),answer:ans}}''')
+  const words=mode==="emoji"?["smallest","biggest"]:mode==="bar"?["shortest","longest"]:["shortest","tallest"];
+  const step=a<0?.3:a===0?.2:a===1?.13:.09,grid=[];for(let v=.3;v<=1.0001;v+=step)grid.push(+v.toFixed(3));
+  if(kind==="compare"){const k=Math.min(grid.length,a<0?3:4),vals=U.sample(r,grid,k),big=r()<.5,ans=vals.indexOf(big?Math.max(...vals):Math.min(...vals));
+    return{type:"pick",cols:k,say:"Which one is the "+(big?words[1]:words[0])+"?",prompt:'<span class="ask">Which is the '+(big?words[1]:words[0])+"?</span>",
+      options:vals.map((v,j)=>({key:"v"+j,html:html(v),aria:"size "+Math.round(v*10)})),answer:"v"+ans}}
+  const k=Math.min(grid.length,a<0?(n<=15?3:3):a===0?(n<=20?3:4):a===1?(n<=15?4:5):(n<=15?5:6));
+  if(kind==="wrong"){const vals=U.sample(r,grid,Math.max(4,k)).sort((x,y)=>x-y);let from,to;do{from=U.ri(r,0,vals.length-1);to=U.ri(r,0,vals.length-1)}while(Math.abs(from-to)<2);
+    const row=vals.slice();const [mv]=row.splice(from,1);row.splice(to,0,mv);
+    return{type:"pick",cols:row.length,say:"These go from "+words[0]+" to "+words[1]+", but one is in the wrong place. Which one?",prompt:'<span class="ask">'+words[0][0].toUpperCase()+words[0].slice(1)+" → "+words[1]+": which one is in the wrong place?</span>",
+      options:row.map((v,j)=>({key:"w"+j,html:html(v),aria:"size "+Math.round(v*10)})),answer:"w"+to}}
+  const vals=U.sample(r,grid,k),desc=a<0?n>8&&r()<.4:r()<.5;
+  const sorted=vals.map((v,j)=>({key:"v"+j,v,html:html(v)})).sort((x,y)=>desc?y.v-x.v:x.v-y.v),w=desc?words[1]+" to "+words[0]:words[0]+" to "+words[1];
+  return{type:"order",size:86,say:"Put them in order from "+w+".",prompt:'<span class="ask">'+w[0].toUpperCase()+w.slice(1)+"</span>",tiles:U.mix(r,sorted),answer:sorted.map(t=>t.key)}}''')
+
+
+# Extra script a game needs before TS_LEARN runs.
+PRE = {"abc": r"""const ABC={UP:"ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+  // letters of the player's own name come first (children learn their name letters most easily), then the rest A to Z
+  seq(){const nm=((TS.players.current()||{}).name||"").toUpperCase().replace(/[^A-Z]/g,""),first=[...new Set(nm.split(""))].slice(0,6);
+    return first.concat(this.UP.split("").filter(c=>!first.includes(c)))},
+  HARD:"BDPQEIOUHWYCGMNVX".split(""), // the letters young children find hardest, for review levels
+  SND:{A:"ah",B:"buh",C:"kuh",D:"duh",E:"eh",F:"fff",G:"guh",H:"huh",I:"ih",J:"juh",K:"kuh",L:"lll",M:"mmm",N:"nnn",O:"aw",P:"puh",Q:"kwuh",R:"rrr",S:"sss",T:"tuh",U:"uh",V:"vvv",W:"wuh",X:"ks",Y:"yuh",Z:"zzz"},
+  W:{A:[["apple","🍎"],["ant","🐜"],["alligator","🐊"]],B:[["ball","⚽"],["bear","🐻"],["banana","🍌"],["bus","🚌"]],C:[["cat","🐱"],["car","🚗"],["cake","🎂"]],D:[["dog","🐶"],["duck","🦆"],["drum","🥁"]],
+    E:[["egg","🥚"],["elephant","🐘"]],F:[["fish","🐟"],["frog","🐸"],["fox","🦊"]],G:[["goat","🐐"],["grapes","🍇"],["gift","🎁"]],H:[["hat","🎩"],["horse","🐴"],["house","🏠"]],
+    I:[["iguana","🦎"],["igloo","🧊"]],J:[["jellyfish","🪼"],["juice","🧃"],["jeans","👖"]],K:[["kite","🪁"],["key","🔑"],["kangaroo","🦘"]],L:[["lion","🦁"],["leaf","🍃"],["lemon","🍋"]],
+    M:[["moon","🌙"],["mouse","🐭"],["monkey","🐵"]],N:[["nest","🪺"],["nose","👃"],["nut","🥜"]],O:[["octopus","🐙"],["otter","🦦"]],P:[["pig","🐷"],["pizza","🍕"],["panda","🐼"]],
+    Q:[["queen","👸"]],R:[["rabbit","🐰"],["rainbow","🌈"],["robot","🤖"]],S:[["sun","☀️"],["snake","🐍"],["sock","🧦"]],T:[["tiger","🐯"],["tree","🌳"],["train","🚆"]],
+    U:[["umbrella","☂️"],["up","⬆️"]],V:[["van","🚐"],["violin","🎻"],["volcano","🌋"]],W:[["whale","🐳"],["watermelon","🍉"],["worm","🪱"]],X:[["fox","🦊"],["box","📦"]],
+    Y:[["yo-yo","🪀"],["yak","🐃"],["yarn","🧶"]],Z:[["zebra","🦓"],["zipper","🤐"],["zero","0️⃣"]]},
+  word(c,r){const l=this.W[c];return l[Math.floor(r()*l.length)]},
+  CONF:{B:["D","P"],D:["B"],P:["Q","B"],Q:["P","O"],M:["N","W"],N:["M"],W:["M"],E:["F"],F:["E"],O:["Q","C"],C:["O","G"],G:["C"],I:["L","J"],L:["I"],U:["V"],V:["U"]},
+  // the alphabet song: A-G, H-P, Q-V, W-Z, and the note each letter is sung on
+  SEGS:[[0,7],[7,16],[16,22],[22,26]],
+  NOTE:[60,60,67,67,69,69,67,65,65,64,64,62,62,62,62,60,67,67,65,64,64,62,67,65,64,60]};
+"""}
 
 for gid,(name,howto,body) in G.items():
     html = f'''<!DOCTYPE html>
@@ -204,6 +286,7 @@ for gid,(name,howto,body) in G.items():
 <!--LEARN-->
 <script>
 (()=>{{const U=TS_LEARN.util;
+{PRE.get(gid,'')}
 TS_LEARN({{id:{json.dumps(gid)},name:{json.dumps(name)},howto:{json.dumps(howto,ensure_ascii=False)},
 {body}}});
 }})();

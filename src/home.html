@@ -187,7 +187,7 @@ const GAMES=[
   {id:"robot",name:"Code the Robot",desc:"Plan the moves, press Go",art:"🤖",href:"games/robot/index.html",g:["#3b6fd9","#1d3d85"],group:"explore",grades:[1,7]}];
 
 let editing=false,prev=null; // prev: the player whose games we came from, for the Back button
-music.button($("btnMusic"));$("btnMusic").innerHTML=TS.MUSIC_SVG;
+music.button($("btnMusic"));
 
 function show(){const cur=players.current();
   $("viewPlayers").hidden=!!cur;$("viewGames").hidden=!cur;$("btnMe").hidden=!cur;

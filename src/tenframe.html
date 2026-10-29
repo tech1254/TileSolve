@@ -8,6 +8,7 @@
 <!--LEARN-->
 <script>
 (()=>{const U=TS_LEARN.util;
+
 TS_LEARN({id:"tenframe",name:"Ten Frame",howto:[["🔟", "A ten frame has 10 boxes."], ["👆", "Tap boxes to put in dots. Tap again to take one out."], ["🧮", "Some rounds ask how many dots, or how many more make 10."], ["🔊", "Tap the speaker to hear it again."]],
 make(n,i,r,a){const size=a>=2?20:10;
   if(i%2===0){const t=a<0?U.ri(r,1,n<=20?3:5):a===0?(n<=15?U.ri(r,1,5):U.ri(r,3,10)):a===1?U.ri(r,3,10):U.ri(r,11,20);

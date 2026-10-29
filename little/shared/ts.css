@@ -87,3 +87,9 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--paint);outline-
 .ts-count span{position:relative;transition:transform .2s}
 .ts-count span.lit{transform:scale(1.18)}
 .ts-count span.lit::after{content:attr(data-n);position:absolute;left:50%;top:-.7em;transform:translateX(-50%);font:700 14px "Andika","Verdana",sans-serif;color:var(--paint)}
+
+/* sound button states and its little label */
+.chip.icon[data-snd="sfx"],.chip.icon[data-snd="mute"]{color:var(--muted)}
+.ts-toast{position:fixed;z-index:99;background:var(--night,#161b21);color:var(--text);border:1px solid var(--lane);border-radius:10px;padding:6px 10px;font:700 14px var(--font-body);
+  opacity:0;transform:translateY(-4px);transition:opacity .2s,transform .2s;pointer-events:none}
+.ts-toast.show{opacity:1;transform:none}

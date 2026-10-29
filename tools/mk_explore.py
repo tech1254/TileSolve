@@ -30,7 +30,7 @@ make(n,i,r,a){
   const mx=a===3?10:12,x=U.ri(r,2,n<=10?5:mx),y=U.ri(r,2,mx),div=a>=4&&i%3===2,ans=div?x:x*y,o=new Set([ans]);  // grade 3: to 10x10; grade 4+: to 12x12
   for(const d of U.shuffle(r,div?[1,-1,2,-2,y]:[x,-x,y,-y,1,-1,10]))if(o.size<4&&ans+d>0)o.add(ans+d);
   return{type:"pick",say:div?"What is "+x*y+" divided by "+y+"?":"What is "+x+" times "+y+"?",
-    prompt:'<span class="seq"><b>'+(div?x*y+" ÷ "+y:x+" × "+y)+'</b><b class="q">?</b></span>',options:U.shuffle(r,[...o]).map(v=>({key:v,html:String(v)})),answer:ans}}''', [3,7])
+    prompt:'<span class="seq"><b class="w">'+(div?x*y+" ÷ "+y:x+" × "+y)+'</b><b class="q">?</b></span>',options:U.shuffle(r,[...o]).map(v=>({key:v,html:String(v)})),answer:ans}}''', [3,7])
 
 G["fractions"] = ("Fraction Pizza", [["🍕","Pizzas are cut into equal slices."],["👀","Look at how many slices there are, and how many are coloured."],["👆","Tap the right fraction or pizza."],["🔊","Tap the speaker to hear it again."]],
 r'''make(n,i,r,a){const F=(x,y)=>U.frac(x,y),key=(x,y)=>x+"/"+y;
@@ -125,7 +125,7 @@ r'''make(n,i,r,a){let lo=0,hi,tick,label,unit,fmt=v=>String(v),s,j;
 
 G["patterns"] = ("Pattern Next", [["🔁","Patterns repeat or grow in a special way."],["👀","Look for the rule."],["👆","Tap what comes next."],["🔊","Tap the speaker to hear it again."]],
 r'''make(n,i,r,a){const SETS=[["🔴","🔵","🟡","🟢"],["🐶","🐱","🐭","🐰"],["⭐","🌙","☀️","☁️"],["🍎","🍌","🍇","🍓"],["🔺","🟦","🟣","🔶"]];
-  const seqHtml=(xs)=>'<span class="ask">What comes next?</span><span class="seq">'+xs.map(x=>"<b>"+x+"</b>").join("")+'<b class="q">?</b></span>';
+  const seqHtml=(xs)=>'<span class="ask">What comes next?</span><span class="seq">'+xs.map(x=>"<b"+(String(x).length>2?' class="sm"':"")+">"+x+"</b>").join("")+'<b class="q">?</b></span>';
   if(a<=1){ // pre-K/K: repeating patterns (up to 3 in the core); grade 1: up to 4
     const core=U.pick(r,a<0?["AB"]:a===0?["AB","AAB","ABC","ABB"]:["ABC","AABB","ABCD","ABBC","AAB"]),set=U.shuffle(r,U.pick(r,SETS)),L=core.length;
     const len=Math.max(L*2,a<0?4:6)+U.ri(r,0,L-1),xs=Array.from({length:len},(_,k)=>set["ABCD".indexOf(core[k%L])]),ans=set["ABCD".indexOf(core[len%L])];

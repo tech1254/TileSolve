@@ -20,7 +20,7 @@ make(n,i,r,a){
   const mx=a===3?10:12,x=U.ri(r,2,n<=10?5:mx),y=U.ri(r,2,mx),div=a>=4&&i%3===2,ans=div?x:x*y,o=new Set([ans]);  // grade 3: to 10x10; grade 4+: to 12x12
   for(const d of U.shuffle(r,div?[1,-1,2,-2,y]:[x,-x,y,-y,1,-1,10]))if(o.size<4&&ans+d>0)o.add(ans+d);
   return{type:"pick",say:div?"What is "+x*y+" divided by "+y+"?":"What is "+x+" times "+y+"?",
-    prompt:'<span class="seq"><b>'+(div?x*y+" ÷ "+y:x+" × "+y)+'</b><b class="q">?</b></span>',options:U.shuffle(r,[...o]).map(v=>({key:v,html:String(v)})),answer:ans}}});
+    prompt:'<span class="seq"><b class="w">'+(div?x*y+" ÷ "+y:x+" × "+y)+'</b><b class="q">?</b></span>',options:U.shuffle(r,[...o]).map(v=>({key:v,html:String(v)})),answer:ans}}});
 })();
 </script>
 </body>

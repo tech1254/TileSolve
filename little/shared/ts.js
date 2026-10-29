@@ -77,14 +77,14 @@ const music=(()=>{
       next+=E;step++}}
   const api={
     get on(){return data.music!==false},
-    start(){if(!api.on||held)return;if(!ctx&&!init())return;if(ctx.state==="suspended")ctx.resume();if(timer)return;
+    start(){if(!api.on||held||data.mute)return;if(!ctx&&!init())return;if(ctx.state==="suspended")ctx.resume();if(timer)return;
       next=ctx.currentTime+.08;master.gain.cancelScheduledValues(ctx.currentTime);master.gain.setTargetAtTime(.55,ctx.currentTime,.8);
       timer=setInterval(tick,60);tick()},
     stop(){if(!timer)return;clearInterval(timer);timer=null;master.gain.cancelScheduledValues(ctx.currentTime);master.gain.setTargetAtTime(0,ctx.currentTime,.12)},
     set(v){data.music=v;persist();v?api.start():api.stop()},
     /* A game that makes its own music (Tile Tunes) holds the background tune off while it plays. */
     hold(v){held=!!v;v?api.stop():api.start()},
-    fx(kind){if(!api.on||!ctx||ctx.state!=="running")return;const t=ctx.currentTime+.02;
+    fx(kind){if(api.muted)return;if(!ctx&&!init())return;if(ctx.state==="suspended")ctx.resume();if(ctx.state!=="running")return;const t=ctx.currentTime+.02;
       if(timer===null){master.gain.cancelScheduledValues(t);master.gain.setValueAtTime(.55,t)}
       if(kind==="win")[72,76,79,84].forEach((m,i)=>tone(m,t+i*.11,.55,"triangle",.1,.005));
       else if(kind==="good")[76,84].forEach((m,i)=>tone(m,t+i*.1,.4,"triangle",.1,.005));
@@ -92,14 +92,26 @@ const music=(()=>{
       else if(kind==="tap")tone(84,t,.12,"sine",.05,.004)},
     pause(){if(ctx&&ctx.state==="running")ctx.suspend()},
     resume(){if(ctx&&api.on&&timer)ctx.resume()},
-    /* Wire a music toggle button (uses .chip.icon markup with .on/.off svgs). */
-    button(el){const sync=()=>{el.setAttribute("aria-pressed",String(api.on));el.setAttribute("aria-label",api.on?"Music on":"Music off")};
-      el.addEventListener("click",()=>{api.set(!api.on);sync()});sync()}};
+    /* All sound off (music, tap sounds, the voice and the Tile Tunes piano). */
+    get muted(){return data.mute===true},
+    /* The sound button cycles: 🎵 everything on → music off (sounds and voice stay) → 🔇 all sound off. */
+    button(el){const ST={all:["Music and sounds on",SND.all],sfx:["Music off · sounds on",SND.sfx],mute:["All sound off",SND.mute]};
+      const state=()=>data.mute?"mute":api.on?"all":"sfx";
+      const sync=()=>{const s=state();el.innerHTML=ST[s][1];el.dataset.snd=s;el.removeAttribute("aria-pressed");el.setAttribute("aria-label",ST[s][0]);el.title=ST[s][0]};
+      el.addEventListener("click",()=>{const s=state(),next=s==="all"?"sfx":s==="sfx"?"mute":"all";
+        data.mute=next==="mute";persist();if(next==="all")api.set(true);else api.set(false);if(next==="mute")try{speechSynthesis.cancel()}catch(e){}
+        sync();toast(el,ST[next][0]);if(next!=="mute")api.fx("tap")});sync()}};
+  function toast(el,text){let t=document.getElementById("tsSndToast");if(!t){t=document.createElement("div");t.id="tsSndToast";t.className="ts-toast";document.body.appendChild(t)}
+    const r=el.getBoundingClientRect();t.textContent=text;t.style.left=Math.max(8,r.left)+"px";t.style.top=(r.bottom+8)+"px";t.classList.add("show");clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove("show"),1600)}
   // Browsers only allow sound after the player touches something.
   addEventListener("pointerdown",()=>api.start(),true);
   addEventListener("keydown",()=>api.start(),true);
   document.addEventListener("visibilitychange",()=>document.hidden?api.pause():api.resume());
   return api})();
+const SV=p=>'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+p+"</svg>";
+const SND={all:SV('<path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/>'),
+  sfx:SV('<path d="M11 5L6 9H3v6h3l5 4z"/><path d="M15.5 9.5a4 4 0 0 1 0 5"/>'),
+  mute:SV('<path d="M11 5L6 9H3v6h3l5 4z"/><path d="M16 9l6 6M22 9l-6 6"/>')};
 const MUSIC_SVG='<svg class="on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg>'+
   '<svg class="off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/><path d="M3 3l18 18"/></svg>';
 
@@ -242,7 +254,7 @@ const talk=(()=>{let unlocked=false,pending=null,voice=null;
     u.rate=.92;u.pitch=1;speechSynthesis.speak(u)}catch(e){}}
   const api={get on(){return data.talk!==false},
     set(on){data.talk=!!on;persist();if(!on)try{speechSynthesis.cancel()}catch(e){}},
-    say(t){api.last=t;if(!t||!api.on||!ok())return;if(!unlocked){pending=t;return}speak(t)},last:"",
+    say(t){api.last=t;if(!t||!api.on||!ok()||music.muted)return;if(!unlocked){pending=t;return}speak(t)},last:"",
     voices:()=>list().map(v=>({uri:v.voiceURI,name:v.name,lang:v.lang})),
     get voice(){const v=pickVoice();return v?v.voiceURI:""},
     setVoice(uri){data.voice=uri||null;persist();voice=null},

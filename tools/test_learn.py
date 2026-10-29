@@ -23,6 +23,8 @@ VALIDATE = """(()=>{const bad=[],TR=TS_LEARN.TRACE;let rounds=0;
     else if(R.type==='hunt'){if(!R.cells.some(c=>c.ok))bad.push(id+' nothing to find');if(R.cells.every(c=>c.ok))bad.push(id+' all targets')}
     else if(R.type==='fill'){if(!(R.target>=1&&R.target<=(R.size||10)))bad.push(id+' bad target')}
     else if(R.type==='trace'){if(!TR[R.ch])bad.push(id+' no strokes for '+R.ch)}
+    else if(R.type==='meet'){if(!R.up||!R.pic||!R.word)bad.push(id+' meet missing letter/picture')}
+    else if(R.type==='sing'){if(!R.letters.length||R.letters.length!==R.notes.length||R.notes.some(m=>!(m>=48&&m<=84)))bad.push(id+' bad song')}
     else bad.push(id+' unknown type')}}
   return{bad:bad.slice(0,8),n:bad.length,rounds}})()"""
 
@@ -49,6 +51,16 @@ with sync_playwright() as p:
             check("Oops 1" in pg.text_content("#kSub"), f"{g}: a wrong answer counts an oops")
         check(win_level(pg), f"{g}: playing every round wins the level")
         pg.close()
+
+    # My ABCs: the child's name letters first, a new letter each level, many kinds of rounds, ending with the song
+    pg = watch_errors(ctx.new_page(), errors); pg.goto(URL("abc")); pg.wait_for_function("window.__learn && __learn.R", timeout=10000)
+    seq = pg.evaluate("Array.from({length:26},(_,k)=>__learn.K&&1).length") and pg.evaluate("(()=>{const out=[];for(let n=1;n<=26;n++){const R=__learn.make(n,0,TS.rngFrom(n),-1);out.push(R.up)}return out})()")
+    check(seq[:2] == ["K", "I"] and sorted(seq) == sorted("ABCDEFGHIJKLMNOPQRSTUVWXYZ"), f"levels 1-26 teach every letter once, the player's name (Kid) first: {''.join(seq)}")
+    kinds = pg.evaluate("(()=>{const ks=new Set(),per=[];for(let n=1;n<=26;n++){const r=TS.rngFrom(n*3),t=[];for(let i=0;i<6;i++){const R=__learn.make(n,i,r,-1);t.push(R.type==='pick'?R.prompt.replace(/<[^>]+>/g,'').split(' ').slice(0,2).join(' '):R.type);ks.add(t[i])}per.push(t)}return{ks:[...ks],first:per.map(t=>t[0]),last:per.map(t=>t[5]),distinct:new Set(per.map(t=>t.join())).size}})()")
+    check(set(kinds["first"]) == {"meet"} and set(kinds["last"]) == {"sing"} and len(kinds["ks"]) >= 6 and kinds["distinct"] >= 12,
+          f"every level starts by meeting the letter and ends with the ABC song, with varied rounds between ({len(kinds['ks'])} kinds, {kinds['distinct']} different level plans)")
+    pg.screenshot(path=str(OUT / "abc-meet.png"))
+    pg.close()
 
     # A level for each grade plays through
     for grade in (1, 2):
@@ -110,8 +122,15 @@ with sync_playwright() as p:
     tap_center(tp, f".lr-opt[data-key='{tp.evaluate('__learn.R.answer')}']"); tp.wait_for_timeout(200)
     check(tp.evaluate("__learn.S.i") == 1 or tp.evaluate("__learn.R.done"), "touch: tapping the right answer finishes the round")
     tp.goto(URL("abc")); tp.wait_for_timeout(400)
-    for k in tp.evaluate("__learn.R.answer"): tap_center(tp, f".lr-tile[data-key='{k}']")
-    check(tp.evaluate("__learn.R.done") or tp.evaluate("__learn.S.i") == 1, "touch: tapping letters in ABC order")
+    tap_center(tp, ".lr-meet"); tp.wait_for_timeout(2700)
+    check(tp.evaluate("__learn.S.i") == 1, "touch: tapping the big letter card meets the letter")
+    for _ in range(4):
+        if tp.evaluate("__learn.R.type") == "sing": break
+        tp.evaluate("__learn.solve()"); tp.wait_for_timeout(1000)
+    n = tp.evaluate("__learn.R.letters.length")
+    for k in range(n): tap_center(tp, ".lr-sl.glow"); tp.wait_for_timeout(60)
+    tp.wait_for_timeout(700)
+    check(tp.evaluate("__learn.S.i") == 6 or tp.is_visible("#kSheetWin"), f"touch: singing the ABCs by tapping the glowing letters ({n} letters)")
     tp.goto(URL("shapesort")); tp.wait_for_timeout(400)
     left0 = tp.evaluate("__learn.R.left")
     item = tp.locator(".lr-tray .lr-item").first; key = tp.evaluate("__learn.R.items[+document.querySelector('.lr-tray .lr-item').dataset.k].key")

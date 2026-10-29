@@ -8,6 +8,7 @@
 <!--LEARN-->
 <script>
 (()=>{const U=TS_LEARN.util;
+
 TS_LEARN({id:"numorder",name:"Number Order",howto:[["🔢", "Numbers are mixed up."], ["👆", "Tap them in order, smallest first."], ["⬇️", "Later, some rounds go from biggest to smallest. Listen!"], ["🔊", "Tap the speaker to hear it again."]],
 make(n,i,r,a){const range=(s,len,step)=>Array.from({length:len},(_,k)=>s+k*step);let nums,desc=false;
   if(a<0){const len=n<=15?3:n<=30?4:5;nums=range(1,len,1)}

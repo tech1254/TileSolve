@@ -15,27 +15,59 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Barlow:wght@400;600;700&display=swap">
-<link rel="stylesheet" href="../../shared/ts.css?v=adee6b7e">
-<link rel="stylesheet" href="../../shared/game.css?v=adee6b7e">
+<link rel="stylesheet" href="../../shared/ts.css?v=0cd547ed">
+<link rel="stylesheet" href="../../shared/game.css?v=0cd547ed">
 </head>
 <body>
-<script src="../../shared/ts.js?v=adee6b7e"></script>
-<script src="../../shared/kit.js?v=adee6b7e"></script>
+<script src="../../shared/ts.js?v=0cd547ed"></script>
+<script src="../../shared/kit.js?v=0cd547ed"></script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&display=swap">
-<link rel="stylesheet" href="../../shared/learn.css?v=adee6b7e">
-<script src="../../shared/learn.js?v=adee6b7e"></script>
+<link rel="stylesheet" href="../../shared/learn.css?v=0cd547ed">
+<script src="../../shared/learn.js?v=0cd547ed"></script>
 <script>
 (()=>{const U=TS_LEARN.util;
-TS_LEARN({id:"sizeorder",name:"Size Order",howto:[["📏", "The pictures are different sizes."], ["👂", "Listen: smallest first, or biggest first?"], ["👆", "Tap them in that order."], ["🔊", "Tap the speaker to hear it again."]],
-make(n,i,r,a){const k=a<0?(n<=15?2:3):a===0?(n<=20?3:4):a===1?(n<=15?4:5):(n<=15?5:6),desc=((a<=0&&n>25)||(a>=1&&n>10))&&i%2===1;
-  const step=a<0?.32:a===0?.22:a===1?.13:.09,grid=[];for(let v=.3;v<=1.0001;v+=step)grid.push(+v.toFixed(3));
-  const vals=U.sample(r,grid,Math.min(k,grid.length)),mode=a<=0?"emoji":a===1?(i%2===0?"emoji":"bar"):(i%2===0?"bar":"vbar");
-  const em=U.pick(r,["🐘","🍎","⭐","🐻","🌳","🎈","🐟","🏠"]),col=U.pick(r,U.SHAPE_COLS);
+
+TS_LEARN({id:"sizeorder",name:"Size Order",howto:[["📏", "Things come in different sizes."], ["👂", "Listen to the question: biggest? smallest? heavier?"], ["🐘", "Some rounds ask about REAL life: is a mouse bigger than an elephant?"], ["👆", "Tap the answer, or tap things in order."]],
+rounds:a=>a<=0?5:6,
+make(n,i,r,a){
+  /* Many kinds of size thinking, mixed differently each level: comparing (biggest/smallest), ordering (both directions),
+     real-world size (pictures drawn the same size), heavier/lighter, and for older kids "which one is out of order?". */
+  const pr=TS.rngFrom(n*131+(a+3)*7);
+  const pool=a<0?["compare","order","compare","real"].concat(n>8?["order"]:[]):a===0?["compare","order","real","realorder","heavy"]:["order","realorder","heavy","wrong","compare","real"];
+  for(let k=pool.length-1;k>0;k--){const j=Math.floor(pr()*(k+1));[pool[k],pool[j]]=[pool[j],pool[k]]}
+  const kind=pool[(i+n)%pool.length];
+  const REAL=[["ant","🐜",1],["ladybug","🐞",1],["strawberry","🍓",1.5],["mouse","🐭",2],["apple","🍎",2],["frog","🐸",2],["cat","🐱",3],["watermelon","🍉",3.5],["dog","🐶",4],
+    ["bike","🚲",5],["horse","🐴",6],["car","🚗",6.5],["giraffe","🦒",7],["elephant","🐘",7.5],["bus","🚌",8],["house","🏠",8.5],["airplane","✈️",9],["whale","🐋",9.5]];
+  const HEAVY=[["feather","🪶",.1],["leaf","🍃",.2],["balloon","🎈",.3],["sock","🧦",.5],["banana","🍌",1],["book","📖",2],["rock","🪨",4],["bowling ball","🎳",6],["watermelon","🍉",5],
+    ["cat","🐱",7],["dog","🐶",8],["car","🚗",9],["elephant","🐘",10]];
+  const card=(x)=>({key:x[0],html:'<span class="lr-word"><b>'+x[1]+"</b>"+x[0]+"</span>",say:x[0],aria:x[0]});
+  const pickSpread=(L,k,gap)=>{let s;do s=U.sample(r,L,k);while(s.some((x,j)=>s.some((y,m)=>m!==j&&Math.abs(x[2]-y[2])<gap)));return s};
+  if(kind==="real"){const k=a<0?2:3,s=pickSpread(REAL,k,a<0?3:1.5),big=a<0||r()<.6,ans=s.reduce((p,q)=>(big?q[2]>p[2]:q[2]<p[2])?q:p);
+    const w=k===2?(big?"bigger":"smaller"):(big?"the biggest":"the smallest");
+    return{type:"pick",cols:k,say:"Which is "+w+" in real life?",prompt:'<span class="ask">Which is '+w+" in <b>real life</b>?</span>",options:U.shuffle(r,s).map(card),answer:ans[0]}}
+  if(kind==="realorder"){const k=a<=0?3:4,s=pickSpread(REAL,k,1.5).sort((x,y)=>x[2]-y[2]),desc=r()<.4;if(desc)s.reverse();
+    const w=desc?"biggest to smallest":"smallest to biggest";
+    return{type:"order",wide:true,say:"Put them in order from "+w+", in real life.",prompt:'<span class="ask">Real life: '+w+"</span>",tiles:U.mix(r,s.map(card)),answer:s.map(x=>x[0])}}
+  if(kind==="heavy"){const k=a<=0?2:3,s=pickSpread(HEAVY,k,1.5),hv=r()<.6,ans=s.reduce((p,q)=>(hv?q[2]>p[2]:q[2]<p[2])?q:p);
+    const w=k===2?(hv?"heavier":"lighter"):(hv?"the heaviest":"the lightest");
+    return{type:"pick",cols:k,say:"Which is "+w+"?",prompt:'<span class="ask">⚖️ Which is '+w+"?</span>",options:U.shuffle(r,s).map(card),answer:ans[0]}}
+  // drawn sizes: emoji, long bars or tall bars
+  const mode=a<=0?"emoji":U.pick(r,["emoji","bar","vbar"]),em=U.pick(r,["🐘","🍎","⭐","🐻","🌳","🎈","🐟","🏠","🐢","🌻","🚗","🧸"]),col=U.pick(r,U.SHAPE_COLS);
   const html=v=>mode==="emoji"?'<span class="sz" style="font-size:calc(var(--ts) * '+(v*.78).toFixed(2)+')">'+em+"</span>":mode==="bar"?'<span class="sz"><i class="bar" style="width:'+Math.round(v*92)+"%;--c:"+col+'"></i></span>':
     '<span class="sz" style="display:flex;justify-content:center"><i class="vbar" style="height:'+Math.round(v*84)+"%;--c:"+col+'"></i></span>';
-  const sorted=vals.map((v,j)=>({key:"v"+j,v,html:html(v)})).sort((x,y)=>desc?y.v-x.v:x.v-y.v),ans=sorted.map(t=>t.key),tiles=sorted; // mixed below
-  const words=mode==="emoji"?["smallest","biggest"]:mode==="bar"?["shortest","longest"]:["shortest","tallest"],w=desc?words[1]+" to "+words[0]:words[0]+" to "+words[1];
-  return{type:"order",size:86,say:"Put them in order from "+w+".",prompt:'<span class="ask">'+w[0].toUpperCase()+w.slice(1)+"</span>",tiles:U.mix(r,tiles),answer:ans}}});
+  const words=mode==="emoji"?["smallest","biggest"]:mode==="bar"?["shortest","longest"]:["shortest","tallest"];
+  const step=a<0?.3:a===0?.2:a===1?.13:.09,grid=[];for(let v=.3;v<=1.0001;v+=step)grid.push(+v.toFixed(3));
+  if(kind==="compare"){const k=Math.min(grid.length,a<0?3:4),vals=U.sample(r,grid,k),big=r()<.5,ans=vals.indexOf(big?Math.max(...vals):Math.min(...vals));
+    return{type:"pick",cols:k,say:"Which one is the "+(big?words[1]:words[0])+"?",prompt:'<span class="ask">Which is the '+(big?words[1]:words[0])+"?</span>",
+      options:vals.map((v,j)=>({key:"v"+j,html:html(v),aria:"size "+Math.round(v*10)})),answer:"v"+ans}}
+  const k=Math.min(grid.length,a<0?(n<=15?3:3):a===0?(n<=20?3:4):a===1?(n<=15?4:5):(n<=15?5:6));
+  if(kind==="wrong"){const vals=U.sample(r,grid,Math.max(4,k)).sort((x,y)=>x-y);let from,to;do{from=U.ri(r,0,vals.length-1);to=U.ri(r,0,vals.length-1)}while(Math.abs(from-to)<2);
+    const row=vals.slice();const [mv]=row.splice(from,1);row.splice(to,0,mv);
+    return{type:"pick",cols:row.length,say:"These go from "+words[0]+" to "+words[1]+", but one is in the wrong place. Which one?",prompt:'<span class="ask">'+words[0][0].toUpperCase()+words[0].slice(1)+" → "+words[1]+": which one is in the wrong place?</span>",
+      options:row.map((v,j)=>({key:"w"+j,html:html(v),aria:"size "+Math.round(v*10)})),answer:"w"+to}}
+  const vals=U.sample(r,grid,k),desc=a<0?n>8&&r()<.4:r()<.5;
+  const sorted=vals.map((v,j)=>({key:"v"+j,v,html:html(v)})).sort((x,y)=>desc?y.v-x.v:x.v-y.v),w=desc?words[1]+" to "+words[0]:words[0]+" to "+words[1];
+  return{type:"order",size:86,say:"Put them in order from "+w+".",prompt:'<span class="ask">'+w[0].toUpperCase()+w.slice(1)+"</span>",tiles:U.mix(r,sorted),answer:sorted.map(t=>t.key)}}});
 })();
 </script>
 </body>

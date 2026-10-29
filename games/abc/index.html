@@ -8,45 +8,90 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#161b21">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box;height:100%}body{margin:0}[hidden]{display:none!important}</style>
-<title>ABC Order · Tile Solve</title>
+<title>My ABCs · Tile Solve</title>
 <meta name="apple-mobile-web-app-title" content="Tile Solve">
 <link rel="apple-touch-icon" href="../../icon-180.png">
 <link rel="icon" type="image/png" href="../../icon-512.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Barlow:wght@400;600;700&display=swap">
-<link rel="stylesheet" href="../../shared/ts.css?v=adee6b7e">
-<link rel="stylesheet" href="../../shared/game.css?v=adee6b7e">
+<link rel="stylesheet" href="../../shared/ts.css?v=0cd547ed">
+<link rel="stylesheet" href="../../shared/game.css?v=0cd547ed">
 </head>
 <body>
-<script src="../../shared/ts.js?v=adee6b7e"></script>
-<script src="../../shared/kit.js?v=adee6b7e"></script>
+<script src="../../shared/ts.js?v=0cd547ed"></script>
+<script src="../../shared/kit.js?v=0cd547ed"></script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&display=swap">
-<link rel="stylesheet" href="../../shared/learn.css?v=adee6b7e">
-<script src="../../shared/learn.js?v=adee6b7e"></script>
+<link rel="stylesheet" href="../../shared/learn.css?v=0cd547ed">
+<script src="../../shared/learn.js?v=0cd547ed"></script>
 <script>
 (()=>{const U=TS_LEARN.util;
-TS_LEARN({id:"abc",name:"ABC Order",howto:[["🔤", "Letters are mixed up."], ["👆", "Tap the letters in ABC order: A, then B, then C..."], ["✅", "Fill every box to finish the round."], ["🔊", "Tap the speaker to hear it again."]],
-label:n=>"",
-make(n,i,r,a){const UP="ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-  if(a>=2&&n>15){ // putting words in ABC order
-    const W=[["ant","🐜"],["apple","🍎"],["bat","🦇"],["bear","🐻"],["bed","🛏️"],["bus","🚌"],["cat","🐱"],["cake","🎂"],["cup","☕"],["dog","🐶"],["duck","🦆"],["egg","🥚"],
-      ["fish","🐟"],["fox","🦊"],["frog","🐸"],["goat","🐐"],["gift","🎁"],["hat","🎩"],["hen","🐔"],["jet","✈️"],["kite","🪁"],["key","🔑"],["lamp","💡"],["lion","🦁"],
-      ["map","🗺️"],["moon","🌙"],["nest","🪺"],["nut","🥜"],["owl","🦉"],["pig","🐷"],["pear","🍐"],["queen","👸"],["rain","🌧️"],["ring","💍"],["sun","☀️"],["sock","🧦"],
-      ["tree","🌳"],["tent","⛺"],["van","🚐"],["web","🕸️"],["yarn","🧶"],["zebra","🦓"]];
-    const k=U.ramp(n,16,40,3,5),same=n>30;let ws;
-    for(let t=0;t<50;t++){ws=U.sample(r,W,k);if(same||new Set(ws.map(w=>w[0][0])).size===k)break}
-    ws.sort((x,y)=>x[0]<y[0]?-1:1);const ans=ws.map(w=>w[0]);   // mix() shuffles away from the sorted order
-    return{type:"order",wide:true,say:"Put the words in A B C order.",prompt:'<span class="ask">Put the words in ABC order</span>',
-      tiles:U.mix(r,ws).map(w=>({key:w[0],html:w[1]+" "+w[0],say:w[0]})),answer:ans}}
-  let len,start,lower;
-  if(a<0){len=n<=20?3:n<=32?4:5;start=0;lower=false}
-  else if(a===0){len=Math.min(7,3+Math.floor((n-1)/8));start=n<=12?0:U.ri(r,0,26-len);lower=false}
-  else if(a===1){len=Math.min(10,5+Math.floor((n-1)/8));start=U.ri(r,0,26-len);lower=n>20}
-  else{len=U.ri(r,8,10);start=U.ri(r,0,26-len);lower=n>8}
-  const seq=UP.slice(start,start+len).split("").map(c=>lower?c.toLowerCase():c);
-  return{type:"order",say:"Put the letters in A B C order."+(start===0?" Start with A.":""),prompt:'<span class="ask">Put the letters in ABC order</span>',
-    tiles:U.mix(r,seq).map(c=>({key:c,html:c,say:c})),answer:seq}}});
+const ABC={UP:"ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+  // letters of the player's own name come first (children learn their name letters most easily), then the rest A to Z
+  seq(){const nm=((TS.players.current()||{}).name||"").toUpperCase().replace(/[^A-Z]/g,""),first=[...new Set(nm.split(""))].slice(0,6);
+    return first.concat(this.UP.split("").filter(c=>!first.includes(c)))},
+  HARD:"BDPQEIOUHWYCGMNVX".split(""), // the letters young children find hardest, for review levels
+  SND:{A:"ah",B:"buh",C:"kuh",D:"duh",E:"eh",F:"fff",G:"guh",H:"huh",I:"ih",J:"juh",K:"kuh",L:"lll",M:"mmm",N:"nnn",O:"aw",P:"puh",Q:"kwuh",R:"rrr",S:"sss",T:"tuh",U:"uh",V:"vvv",W:"wuh",X:"ks",Y:"yuh",Z:"zzz"},
+  W:{A:[["apple","🍎"],["ant","🐜"],["alligator","🐊"]],B:[["ball","⚽"],["bear","🐻"],["banana","🍌"],["bus","🚌"]],C:[["cat","🐱"],["car","🚗"],["cake","🎂"]],D:[["dog","🐶"],["duck","🦆"],["drum","🥁"]],
+    E:[["egg","🥚"],["elephant","🐘"]],F:[["fish","🐟"],["frog","🐸"],["fox","🦊"]],G:[["goat","🐐"],["grapes","🍇"],["gift","🎁"]],H:[["hat","🎩"],["horse","🐴"],["house","🏠"]],
+    I:[["iguana","🦎"],["igloo","🧊"]],J:[["jellyfish","🪼"],["juice","🧃"],["jeans","👖"]],K:[["kite","🪁"],["key","🔑"],["kangaroo","🦘"]],L:[["lion","🦁"],["leaf","🍃"],["lemon","🍋"]],
+    M:[["moon","🌙"],["mouse","🐭"],["monkey","🐵"]],N:[["nest","🪺"],["nose","👃"],["nut","🥜"]],O:[["octopus","🐙"],["otter","🦦"]],P:[["pig","🐷"],["pizza","🍕"],["panda","🐼"]],
+    Q:[["queen","👸"]],R:[["rabbit","🐰"],["rainbow","🌈"],["robot","🤖"]],S:[["sun","☀️"],["snake","🐍"],["sock","🧦"]],T:[["tiger","🐯"],["tree","🌳"],["train","🚆"]],
+    U:[["umbrella","☂️"],["up","⬆️"]],V:[["van","🚐"],["violin","🎻"],["volcano","🌋"]],W:[["whale","🐳"],["watermelon","🍉"],["worm","🪱"]],X:[["fox","🦊"],["box","📦"]],
+    Y:[["yo-yo","🪀"],["yak","🐃"],["yarn","🧶"]],Z:[["zebra","🦓"],["zipper","🤐"],["zero","0️⃣"]]},
+  word(c,r){const l=this.W[c];return l[Math.floor(r()*l.length)]},
+  CONF:{B:["D","P"],D:["B"],P:["Q","B"],Q:["P","O"],M:["N","W"],N:["M"],W:["M"],E:["F"],F:["E"],O:["Q","C"],C:["O","G"],G:["C"],I:["L","J"],L:["I"],U:["V"],V:["U"]},
+  // the alphabet song: A-G, H-P, Q-V, W-Z, and the note each letter is sung on
+  SEGS:[[0,7],[7,16],[16,22],[22,26]],
+  NOTE:[60,60,67,67,69,69,67,65,65,64,64,62,62,62,62,60,67,67,65,64,64,62,67,65,64,60]};
+
+TS_LEARN({id:"abc",name:"My ABCs",howto:[["🔤", "Each level is a new letter. The letters in YOUR name come first!"], ["👂", "Meet the letter: hear its name and its sound."], ["🔍", "Then find it, match big and little, trace it, and hear it in words."], ["🎵", "Finish by singing the ABC song: tap the glowing letters."]],
+rounds:()=>6,
+label:n=>{const q=ABC.seq();return n<=26?q[n-1]:"⭐"},
+make(n,i,r,a){
+  /* Built on research about how young children learn the alphabet:
+     letters of the child's own name first, then the rest; one new letter per level with review of earlier ones;
+     letter names linked to their sounds and a keyword picture; many kinds of practice; the alphabet song for order. */
+  const UP=ABC.UP,SEQ=ABC.seq(),pr=TS.rngFrom(n*7919+(a+2)*104729),review=n>26;
+  const L=review?U.pick(r,ABC.HARD):SEQ[n-1],known=review?SEQ:SEQ.slice(0,n-1);
+  // the plan for this level: meet (new letters only), then a mix, then the song
+  const mix=["find","hunt","sound","match","trace"].concat(a>=0?["next"]:[]).filter(k=>!(k==="match"&&a<0&&n<6)&&!(k==="sound"&&L==="X"));
+  const pickN=(arr,k)=>{const c=arr.slice(),o=[];while(o.length<k&&c.length)o.push(c.splice(Math.floor(pr()*c.length),1)[0]);return o};
+  // four practice rounds in a different mix and order each level (always including "find")
+  const mid=["find"].concat(pickN(mix.filter(k=>k!=="find"),3));for(let k=mid.length-1;k>0;k--){const j=Math.floor(pr()*(k+1));[mid[k],mid[j]]=[mid[j],mid[k]]}
+  const plan=review?pickN(["find","hunt","match","sound","trace"].concat(a>=0?["next"]:[]),5).concat(["sing"]):["meet"].concat(mid,["sing"]);
+  while(plan.length<6)plan.splice(plan.length-1,0,"find");
+  const kind=plan[i];
+  // a review round now and then: practise a letter learned earlier
+  const T=(kind==="find"||kind==="hunt")&&i>=3&&known.length>=2?U.pick(r,known.slice(-4)):L;
+  const t=T.toLowerCase(),[word,pic]=ABC.word(T,r),snd=ABC.SND[T],lowCase=a>=0&&r()<.5;
+  const others=(k,avoid)=>{const pool=(known.length>=k?known:UP.split("")).filter(c=>c!==T&&!(avoid||[]).includes(c));
+    const extra=a>=1?ABC.CONF[T]||[]:[];const out=U.shuffle(r,extra.filter(c=>c!==T)).slice(0,1);
+    for(const c of U.shuffle(r,pool.concat(UP.split("").filter(c=>!pool.includes(c)))))if(out.length<k&&c!==T&&!out.includes(c))out.push(c);return out};
+  const big=(c,low)=>'<span style="font-family:var(--font-kid)">'+(low?c.toLowerCase():c)+"</span>";
+  if(kind==="meet")return{type:"meet",up:T,low:t,pic,word,say:"This is the letter "+T+". "+T+" says "+snd+", like "+word+"! Tap it.",tapSay:T+". "+snd+". "+word+"!",
+    prompt:'<span class="ask">Meet the letter '+T+"!</span>",text:"Tap the big letter to hear it."};
+  if(kind==="find"){const k=a<0?3:4,opts=[T].concat(others(k-1));
+    return{type:"pick",cols:k,say:"Which one is "+(lowCase?"little ":"")+T+"?",prompt:'<span class="ask">Which one is '+(lowCase?"little ":"")+T+"?</span>",
+      options:U.shuffle(r,opts).map(c=>({key:c,html:big(c,lowCase),say:c})),answer:T}}
+  if(kind==="hunt"){const cols=4,cnt=a<0?8:12,hits=a<0?3:4,dis=others(3);const cells=[];
+    for(let k=0;k<hits;k++)cells.push({html:big(T,a>=0&&k%2===1),ok:true,aria:T});
+    while(cells.length<cnt){const c=U.pick(r,dis);cells.push({html:big(c,a>=0&&r()<.5),ok:false,aria:c})}
+    return{type:"hunt",cols,say:"Find every "+T+(a>=0?", big and little":"")+"!",prompt:'<span class="ask">Find every '+T+(a>=0?" and "+t:"")+"!</span>",cells:U.shuffle(r,cells)}}
+  if(kind==="sound"){const k=a<0?3:4,opts=[[word,pic]];for(const c of others(k+2,["X"]))if(opts.length<k){const w=ABC.word(c,r);if(!opts.some(o=>o[0][0]===w[0][0]))opts.push(w)}
+    return{type:"pick",cols:2,say:"Which one starts with "+T+"? "+T+" says "+snd+".",prompt:'<span class="ask">Which starts with '+big(T)+"?</span>",
+      options:U.shuffle(r,opts).map(([w,e])=>({key:w,html:'<span class="lr-word"><b>'+e+"</b>"+w+"</span>",say:w,aria:w})),answer:word}}
+  if(kind==="match"){const k=a<0?3:4,opts=[T].concat(others(k-1));
+    return{type:"pick",cols:k,say:"Find little "+T+". It goes with big "+T+".",prompt:'<span class="ask">Which is little '+T+"?</span>"+'<span class="big l">'+T+"</span>",
+      options:U.shuffle(r,opts).map(c=>({key:c,html:big(c,true),say:c})),answer:T}}
+  if(kind==="trace")return{type:"trace",ch:T,say:"Trace the letter "+T+". Start at the green dot.",prompt:'<span class="ask">Trace the letter '+T+"</span>"};
+  if(kind==="next"){const ix=UP.indexOf(T),after=ix<25&&(ix===0||r()<.6),ans=after?UP[ix+1]:UP[ix-1],opts=[ans].concat(U.shuffle(r,UP.split("").filter(c=>c!==ans&&c!==T)).slice(0,3));
+    return{type:"pick",cols:4,say:"What comes "+(after?"after ":"before ")+T+"? Sing the ABCs if you need to!",prompt:'<span class="ask">What comes '+(after?"after":"before")+'</span><span class="big l">'+T+"</span>",
+      options:U.shuffle(r,opts).map(c=>({key:c,html:big(c),say:c})),answer:ans}}
+  // sing: the part of the alphabet song with this letter in it (the whole song for bigger kids and review levels)
+  const seg=a>=1||review?[0,26]:ABC.SEGS.find(([s,e])=>UP.indexOf(L)>=s&&UP.indexOf(L)<e),letters=UP.slice(seg[0],seg[1]).split("");
+  return{type:"sing",letters,notes:letters.map(c=>ABC.NOTE[UP.indexOf(c)]),say:"Let's sing the ABCs! Tap the glowing letters.",prompt:'<span class="ask">🎵 Sing the ABCs! Tap the glowing letter.</span>'}}
+});
 })();
 </script>
 </body>

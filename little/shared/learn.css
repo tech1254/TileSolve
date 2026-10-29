@@ -13,7 +13,11 @@
 .lr-prompt .ask{font-family:var(--font-body);font-weight:700;font-size:clamp(17px,4.6vw,22px);flex-basis:100%}
 .lr-prompt .big{font-size:clamp(60px,20vw,110px);line-height:1;font-family:var(--font-body)}
 .lr-prompt .seq{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
-.lr-prompt .seq b{min-width:1.35em;padding:2px 6px;border-radius:12px;background:#f6f1e3;color:#1d2230;font-weight:700}
+.lr-prompt .seq{--sq:clamp(46px,12.5vw,60px)}
+.lr-prompt .seq b{width:var(--sq);height:var(--sq);flex:0 0 var(--sq);box-sizing:border-box;display:grid;place-items:center;border-radius:12px;background:#f6f1e3;color:#1d2230;font-weight:700;
+  font-size:calc(var(--sq)*.56);line-height:1;overflow:hidden}
+.lr-prompt .seq b.sm{font-size:calc(var(--sq)*.38)}
+.lr-prompt .seq b.w{width:auto;flex:0 0 auto;padding:0 14px}
 .lr-prompt .seq b.q{background:transparent;border:3px dashed var(--paint);color:var(--paint)}
 .lr-prompt .word{font-family:var(--font-body);font-weight:700;letter-spacing:.06em}
 .lr-body{width:100%;max-width:700px;display:flex;flex-direction:column;align-items:center;gap:16px}
@@ -141,3 +145,21 @@
 .lr-order .lr-slot .lr-planet,.lr-order .lr-tile .lr-planet{font-size:11px}
 .lr-em{font-size:clamp(32px,9vw,44px);line-height:1}
 .lr-binin .lr-em{font-size:24px}
+
+/* Meet the letter */
+.lr-body.lr-meet{display:flex;justify-content:center}
+.lr-mcard{border:0;border-radius:26px;background:#f6f1e3;color:#1d2230;padding:14px 26px 12px;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;
+  box-shadow:0 6px 0 rgba(0,0,0,.25);touch-action:manipulation;font-family:var(--font-kid);animation:lr-bob 1.6s ease-in-out infinite}
+.lr-mcard.on{animation:none;transform:scale(1.04)}
+.lr-mbig{font-weight:700;font-size:clamp(90px,30vw,150px);line-height:1;color:#e2412e}
+.lr-mbig i{font-style:normal;color:#3b6fd9;margin-left:.15em}
+.lr-mpic{font-size:clamp(46px,14vw,70px);line-height:1.1}
+.lr-mword{font-weight:700;font-size:clamp(24px,7vw,34px)}
+.lr-mword b{color:#e2412e}
+.lr-mtap{font:700 14px var(--font-body);color:#6a6458}
+@keyframes lr-bob{50%{transform:translateY(-6px)}}
+/* Sing the ABCs */
+.lr-body.lr-sing{display:grid;grid-template-columns:repeat(var(--cols),minmax(0,1fr));gap:8px;max-width:560px}
+.lr-sl{border:0;border-radius:14px;aspect-ratio:1;font:700 clamp(22px,7vw,34px) var(--font-kid);background:var(--panel,#262b36);color:var(--muted);cursor:pointer;touch-action:manipulation}
+.lr-sl.glow{background:var(--paint);color:var(--night);transform:scale(1.08);box-shadow:0 0 0 4px rgba(242,194,48,.35)}
+.lr-sl.sung{background:#43a047;color:#fff}
