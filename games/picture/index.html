@@ -15,7 +15,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Barlow:wght@400;600;700&display=swap">
-<link rel="stylesheet" href="../../shared/ts.css?v=329e34e9">
+<link rel="stylesheet" href="../../shared/ts.css?v=ebf08485">
 <style>
 body{overflow:hidden}
 .app{height:100%;display:flex;flex-direction:column;align-items:center;gap:12px;
@@ -169,8 +169,8 @@ body{overflow:hidden}
   </div>
 </div>
 
-<script src="../../shared/ts.js?v=329e34e9"></script>
-<script src="../../shared/pictures.js?v=329e34e9"></script>
+<script src="../../shared/ts.js?v=ebf08485"></script>
+<script src="../../shared/pictures.js?v=ebf08485"></script>
 <script>
 (()=>{
 const PLAYER=TS.requirePlayer(),Music=TS.music,PICS=window.TS_PICTURES,$=id=>document.getElementById(id);
@@ -218,7 +218,7 @@ const canPlay=n=>n>=1&&n<=LEVELS&&(save.all||n<=prog().unlocked);
 
 async function load(n){if(TS.gate.pending(prog(),n)){$("sheetWin").hidden=true;TS.gate.open(prog(),n,persist,load);return} // maths checkpoint first
   const my=++token;busy=true;closeDrag();
-  L=spec(mode,n);prog().last=n;save.mode=mode;persist();
+  repEnd("quit");L=spec(mode,n);rep={level:n,game:"picture-"+mode,t0:Date.now(),hints:0};prog().last=n;save.mode=mode;persist();
   board.innerHTML="";tray.innerHTML="";S=null;hud();tip(mode==="drop"?"":"Getting the tiles ready…");
   url=await picURL(L.pic);if(my!==token)return;
   $("btnPeek").style.backgroundImage='url("'+url+'")';$("peekImg").src=url;
@@ -235,7 +235,11 @@ const HOWTO={drop:[["🧩","Pieces of a picture are in the tray."],["👆","Drag
 function picPoint(){if(!L||L.n!==1||busy||!S||TS.howto.isOpen||TS.math.isOpen)return;
   if(mode==="drop"){const p=S.pieces.find(q=>!q.done);if(p)TS.point(p.el)}else{const t=nextMove();if(t>=0)TS.point(S.els[S.cells[t]])}}
 
-function win(text,stars){busy=true;Music.fx("win");const pr=prog();
+/* play reports (see TS.report) */
+let rep=null;TS.report.game="picture";
+function repEnd(result,stars){if(!rep)return;const c=rep;rep=null;TS.report.log({t:"play",game:c.game,level:c.level,result,stars:stars||0,ms:Date.now()-c.t0,oops:0,hints:c.hints})}
+addEventListener("pagehide",()=>{if(rep&&!busy){repEnd("quit");TS.report.flush(true)}});
+function win(text,stars){repEnd("win",stars);busy=true;Music.fx("win");const pr=prog();
   pr.stars[L.n]=Math.max(pr.stars[L.n]||0,stars);TS.gate.afterWin(pr,L.n,LEVELS);if(L.n+1>pr.unlocked)pr.unlocked=Math.min(LEVELS,L.n+1);persist();
   setTimeout(()=>{$("winTitle").textContent="You made "+L.pic.name+"!";$("winPic").style.backgroundImage='url("'+url+'")';
     $("winStars").innerHTML="★".repeat(stars)+'<span class="off">'+"★".repeat(3-stars)+"</span>";$("winText").textContent=text;
@@ -358,7 +362,7 @@ function nextMove(){const n=S.n,c=S.cells,z=c.indexOf(0);
 function slideHint(){const t=nextMove();if(t<0)return;const v=S.cells[t];S.els[v].classList.add("hint");tip("Hint: slide the flashing tile"+(save.numbers?" ("+v+")":"")+" into the gap.")}
 
 /* ---------- controls ---------- */
-$("btnHint").onclick=()=>{if(busy||!S)return;TS.math.open(()=>mode==="drop"?dropHint():slideHint())};
+$("btnHint").onclick=()=>{if(busy||!S)return;TS.math.open(()=>{if(rep)rep.hints++;mode==="drop"?dropHint():slideHint()})};
 $("btnReset").onclick=()=>{if(L&&!busy)load(L.n)};
 $("btnPrev").onclick=()=>{if(L&&L.n>1&&!busy)load(L.n-1)};
 $("btnNext").onclick=()=>{if(L&&canPlay(L.n+1)&&!busy)load(L.n+1)};

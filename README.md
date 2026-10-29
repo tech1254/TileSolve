@@ -9,6 +9,12 @@ The repo builds two sites, each its own Cloudflare Worker deployed on every push
 - **Tile Solve** (repo root, `tilesolve.<account>.workers.dev`): puzzles, Learn & explore (Pattern Next, Animal Sort and Odd One Out from grade 3), Tile Tunes and Christmas Tunes.
 - **Little Learners** (`little/`, `littlelearners.<account>.workers.dev`): the Little learners games, Pattern Next, Animal Sort, Odd One Out, Tile Tunes and Christmas Tunes, with its own name and icon (`little-src/`). `tools/build.js` writes it from the same pages (`const APP="little"` on the home page). Each app keeps its own players and progress, since browsers save per address.
 
+## Play reports (tuning difficulty)
+
+Every level start ends as a win, fail or quit, and every maths question is recorded with its result. Each record has the game, grade, level, stars, time, mistakes and hints. Records are queued on the device (`TS.report` in shared/ts.js, hooked into kit.js, car and picture) and sent in batches to `/api/events`. A small Worker (`worker.js`) stores them in the Cloudflare D1 database `tilesolve-reports` (`tools/schema.sql`). Both apps share it. Kids are a random id plus their buddy emoji and grade; names are never sent.
+
+Open **/report** on either app to see win rate, quits, stars, time, mistakes and hints by game, grade and level range (in fives). It also shows maths accuracy and the most-missed questions. Level ranges that look too hard or too easy are flagged. To lock the report, add a `REPORT_KEY` variable to both Workers in Cloudflare; then open `/report/?key=…`.
+
 ## Players
 
 "Who's playing?" opens first. Each player has a name, a buddy avatar, a colour and a grade, and every game keeps each player's progress separately. Tap the player chip at the top of the home screen to switch players. "Edit players" lets a parent rename, change the grade of, or delete a player.

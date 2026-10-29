@@ -1,7 +1,16 @@
 {
   "name": "littlelearners",
+  "main": "worker.js",
   "compatibility_date": "2026-10-01",
   "assets": {
-    "directory": "."
-  }
+    "directory": ".",
+    "binding": "ASSETS"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "tilesolve-reports",
+      "database_id": "48c6bcec-7336-4d1c-a942-8f72262c2241"
+    }
+  ]
 }

@@ -15,7 +15,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Barlow:wght@400;600;700&display=swap">
-<link rel="stylesheet" href="../../shared/ts.css?v=329e34e9">
+<link rel="stylesheet" href="../../shared/ts.css?v=ebf08485">
 <style>
 /* Layout: one-screen night parking garage. HUD on top, asphalt lot in the middle, thumb controls at the bottom. */
 body{overflow:hidden}
@@ -127,7 +127,7 @@ body{overflow:hidden}
   </div>
 </div>
 
-<script src="../../shared/ts.js?v=329e34e9"></script>
+<script src="../../shared/ts.js?v=ebf08485"></script>
 <script>
 (()=>{
 const PLAYER=TS.requirePlayer(),Music=TS.music;
@@ -222,6 +222,7 @@ function tip(t){$("tip").textContent=t||"Drag cars along their lanes. Slide the 
 
 function load(n){
   if(TS.gate.pending(prog(),n)){$("sheetWin").hidden=true;TS.gate.open(prog(),n,persist,load);return} // maths checkpoint first
+  repEnd("quit");rep={level:n,t0:Date.now(),hints:0};
   level=n;prog().last=n;persist();busy=false;gridEl.innerHTML="";els=[];
   L=getLevel(GRADE,n);pos=L.pos.slice();hist=[];moves=0;tip();
   let ci=n%COLORS.length,ti=n%TRUCKS.length;
@@ -258,10 +259,14 @@ function endDrag(){if(!drag)return;const{i,el,cell}=drag,c=L.cars[i],np=Math.rou
   hud();if(pos[0]===4)win()}
 gridEl.addEventListener("pointerup",endDrag);gridEl.addEventListener("pointercancel",endDrag);
 
+/* play reports (see TS.report): extra moves over par count as "oops" */
+let rep=null;TS.report.game="car";
+function repEnd(result,stars){if(!rep)return;const c=rep;rep=null;TS.report.log({t:"play",game:"car",level:c.level,result,stars:stars||0,ms:Date.now()-c.t0,oops:Math.max(0,moves-(L?L.par:0)),hints:c.hints})}
+addEventListener("pagehide",()=>{if(rep&&!busy){repEnd("quit");TS.report.flush(true)}});
 function win(){busy=true;const el=els[0];Music.fx("win");
   setTimeout(()=>{el.classList.add("leave");el.style.transform="translateX("+gridEl.clientWidth*0.75+"px)"},150);
   const s=moves<=L.par?3:moves<=Math.ceil(L.par*1.5)?2:1,pr=prog();
-  pr.stars[level]=Math.max(pr.stars[level]||0,s);TS.gate.afterWin(pr,level,TOTAL);
+  repEnd("win",s);pr.stars[level]=Math.max(pr.stars[level]||0,s);TS.gate.afterWin(pr,level,TOTAL);
   if(level+1>pr.unlocked)pr.unlocked=Math.min(TOTAL,level+1);persist();
   setTimeout(()=>{
     $("winTitle").textContent=level===TOTAL?"All 1,000 levels cleared!":"Level "+level+" cleared";
@@ -280,7 +285,7 @@ function showHint(){if(busy||!L)return;clearHint();const s=solveNext(L.cars,pos)
 
 $("btnUndo").onclick=()=>{if(busy||!hist.length)return;clearHint();pos=hist.pop();moves++;els.forEach((_,i)=>place(i));hud()};
 $("btnReset").onclick=()=>{if(busy||!L)return;clearHint();pos=L.pos.slice();hist=[];moves=0;els.forEach((_,i)=>place(i));hud();tip()};
-$("btnHint").onclick=()=>{if(busy||!L||pos[0]===4)return;TS.math.open(showHint)}; // a maths question first
+$("btnHint").onclick=()=>{if(busy||!L||pos[0]===4)return;TS.math.open(()=>{if(rep)rep.hints++;showHint()})}; // a maths question first
 $("btnPrev").onclick=()=>{if(level>1&&!busy)load(level-1)};
 $("btnNext").onclick=()=>{if(canPlay(level+1)&&!busy)load(level+1)};
 $("btnReplay").onclick=()=>{$("sheetWin").hidden=true;load(level)};

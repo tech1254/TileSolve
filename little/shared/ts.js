@@ -124,6 +124,27 @@ const SND={all:SV('<path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><cir
 const MUSIC_SVG='<svg class="on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg>'+
   '<svg class="off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/><path d="M3 3l18 18"/></svg>';
 
+/* ---------- play reports (to tune difficulty) ----------
+   Level results and maths answers are queued on the device and sent in batches to /api/events (worker.js),
+   so offline play still counts. Players are sent as their random id, buddy emoji and grade, never their name. */
+const report=(()=>{const QK="tilesolve:events",DK="tilesolve:device";let timer=null,busy=false;
+  const dev=()=>{let d=store.get(DK,null);if(!d){d=Math.random().toString(36).slice(2,10)+Date.now().toString(36);store.set(DK,d)}return d};
+  const little=()=>/^littlelearners\./.test(location.hostname)||/\/little\//.test(location.pathname);
+  const on=()=>/^https?:$/.test(location.protocol)&&(!/^(localhost|127\.0\.0\.1)$/.test(location.hostname)||window.TS_REPORT_TEST===true);
+  // the endpoint is at the site root (in local tests the little app lives under /little/)
+  const ep=()=>(/\/little\//.test(location.pathname)&&!/^littlelearners\./.test(location.hostname)?location.pathname.slice(0,location.pathname.indexOf("/little/")+7):"")+"/api/events";
+  function log(ev){const p=players.current();ev.ts=Date.now();ev.id=Math.random().toString(36).slice(2,10)+ev.ts.toString(36);if(p){ev.player=p.id;ev.avatar=p.avatar;ev.grade=p.grade}
+    const q=store.get(QK,[]);q.push(ev);while(q.length>500)q.shift();store.set(QK,q);clearTimeout(timer);timer=setTimeout(flush,4000)}
+  async function flush(beacon){if(!on()||busy)return;const q=store.get(QK,[]);if(!q.length)return;const batch=q.slice(0,200),n=batch.length;
+    const body=JSON.stringify({app:little()?"little":"main",device:dev(),events:batch});
+    // page closing: send without waiting, but keep the queue (it may not arrive); the next send repeats it and the server ignores duplicates
+    if(beacon===true&&navigator.sendBeacon){try{navigator.sendBeacon(ep(),new Blob([body],{type:"application/json"}))}catch(e){}return}
+    busy=true;try{const r=await fetch(ep(),{method:"POST",headers:{"content-type":"application/json"},body,keepalive:true});
+      if(r.ok){store.set(QK,store.get(QK,[]).slice(n));busy=false;if(store.get(QK,[]).length)flush();return}}catch(e){}busy=false}
+  addEventListener("pagehide",()=>flush(true));
+  setTimeout(flush,2500); // anything left over from last time
+  return{log,flush,pending:()=>store.get(QK,[]).length}})();
+
 /* ---------- maths: hint questions and level checkpoints ----------
    Calibrated to the Alberta K-6 mathematics curriculum (2022). Kids pick their CURRENT grade, but part way through
    the year they may not have learned it yet, so questions come from the PREVIOUS grade's outcomes:
@@ -184,7 +205,9 @@ const math=(()=>{
       b.onclick=()=>press(k);keys.appendChild(b)});
     addEventListener("keydown",e=>{if(el.hidden)return;
       if(/^[0-9]$/.test(e.key))press(e.key);else if(e.key==="Backspace")press("del");else if(e.key==="Enter")press("ok");else if(e.key==="Escape"&&kind==="hint")close()})}
-  function newQ(){M.lvl=mathLevel();M.q=problem(M.lvl,kind==="check");M.tries=3;M.entry="";M.mark="";M.opts=null}
+  function newQ(){M.lvl=mathLevel();M.q=problem(M.lvl,kind==="check");M.tries=3;M.entry="";M.mark="";M.opts=null;M.t0=Date.now()}
+  const qText=q=>q.slot==="n"?"count "+q.n:q.slot==="b"?q.a+" "+q.op+" ? = "+q.c:q.a+" "+q.op+" "+q.b;
+  const logQ=(correct,tries)=>{try{report.log({t:"math",game:report.game||"home",kind,mlevel:M.lvl,q:qText(M.q),correct:correct?1:0,tries,ms:Date.now()-(M.t0||Date.now())})}catch(e){}};
   const left=()=>M.tries<3?(M.tries===1?"Last try!":M.tries+" tries left"):"";
   function render(){const q=M.q,txt=M.entry||(M.mark==="show"?String(q.ans):"?");
     const slot='<span class="slot'+(M.entry||M.mark==="show"?"":" empty")+(M.mark?" "+M.mark:"")+'">'+txt+"</span>",s=x=>"<span>"+x+"</span>";
@@ -204,7 +227,7 @@ const math=(()=>{
   function countAlong(n,then){const sp=[...el.querySelectorAll(".ts-count span")];talk.say(Array.from({length:n},(_,i)=>i+1).join(", ")+". "+WORDS[n]+"!");
     sp.forEach((x,i)=>setTimeout(()=>{x.classList.add("lit");x.dataset.n=i+1},i*520));setTimeout(then,n*520+600)}
   function pickN(v){if(M.lock)return;talk.say(WORDS[v]);M.entry=String(v);
-    if(v===M.q.ans){M.lock=true;notes.addMath();M.mark="good";render();fb("Yes! Let's count them!","good");music.fx("good");const m=M;
+    if(v===M.q.ans){logQ(true,M.opts.off.size+1);M.lock=true;notes.addMath();M.mark="good";render();fb("Yes! Let's count them!","good");music.fx("good");const m=M;
       countAlong(v,()=>{m.q=null;m.opts=null;m.lock=false;close();m.done&&m.done()});return}
     // not quite: count together, then try again (that answer is greyed out); no tries are used up
     M.lock=true;M.opts.off.add(v);M.mark="bad";render();music.fx("bad");fb("Not "+v+". Let's count together!","bad");
@@ -219,13 +242,13 @@ const math=(()=>{
     if(M.q.slot==="n"){talk.say("How many are there? Count them, then tap the number.");fb("Count them, then tap the number!")}}
   function close(){if(el)el.hidden=true}
   function check(){if(M.lock||!M.entry)return;
-    if(+M.entry===M.q.ans){M.lock=true;notes.addMath();M.mark="good";render();fb(kind==="check"?"Correct! On to the next level.":"Correct! Here's your hint.","good");music.fx("good");
+    if(+M.entry===M.q.ans){logQ(true,4-M.tries);M.lock=true;notes.addMath();M.mark="good";render();fb(kind==="check"?"Correct! On to the next level.":"Correct! Here's your hint.","good");music.fx("good");
       const m=M;setTimeout(()=>{m.q=null;m.lock=false;close();m.done&&m.done()},900);return}
     M.tries--;music.fx("bad");
     if(M.tries>0){M.mark="bad";render();M.entry="";M.mark="";
       fb(M.tries===1?"Not quite. Last try!":"Not quite. Try again! "+M.tries+" tries left","bad");
       setTimeout(()=>{if(!M.lock&&!M.entry)render()},500);return}
-    M.lock=true;M.entry="";M.mark="show";render();fb("The answer was "+M.q.ans+". Here's a new one!","bad");
+    logQ(false,3);M.lock=true;M.entry="";M.mark="show";render();fb("The answer was "+M.q.ans+". Here's a new one!","bad");
     setTimeout(()=>{newQ();M.lock=false;render();fb("");if(M.q.slot==="n")talk.say("How many are there?")},2400)}
   function press(k){if(M.lock)return;
     if(k==="ok")return check();
@@ -303,4 +326,4 @@ const notes={
       if(/^(tunes|carols|tunes-options|notes|seen)$/.test(g))continue;const d=store.get(k,null);
       if(d&&d.grades)for(const a in d.grades){const st=d.grades[a]&&d.grades[a].stars;if(st)n+=Object.keys(st).length}}}catch(e){}
     return n}};
-return{HOME,rngFrom,store,players,requirePlayer,gameSave,music,notes,MUSIC_SVG,math,problem,gate,howto,point,talk,say:t=>talk.say(t)}})();
+return{HOME,rngFrom,store,players,requirePlayer,gameSave,music,notes,report,MUSIC_SVG,math,problem,gate,howto,point,talk,say:t=>talk.say(t)}})();

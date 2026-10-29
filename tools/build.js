@@ -88,6 +88,10 @@ for(const[src,out]of PAGES){
   fs.writeFileSync(path.join(LROOT,'index.html'),idx);
   for(const id of ids){const src=path.join(ROOT,'games',id,'index.html');if(!fs.existsSync(src))throw new Error('little app: no game '+id);
     fs.mkdirSync(path.join(LROOT,'games',id),{recursive:true});fs.writeFileSync(path.join(LROOT,'games',id,'index.html'),rename(fs.readFileSync(src,'utf8')))}
-  fs.writeFileSync(path.join(LROOT,'wrangler.jsonc'),JSON.stringify({name:'littlelearners',compatibility_date:'2026-10-01',assets:{directory:'.'}},null,2)+'\n');
-  fs.writeFileSync(path.join(LROOT,'.assetsignore'),'wrangler.jsonc\n.assetsignore\n');
+  // same backend as Tile Solve: worker.js and the same play-report database, so one /report covers both apps
+  const W=JSON.parse(fs.readFileSync(path.join(ROOT,'wrangler.jsonc'),'utf8').replace(/^\s*\/\/.*$/mg,''));
+  fs.writeFileSync(path.join(LROOT,'wrangler.jsonc'),JSON.stringify({...W,name:'littlelearners'},null,2)+'\n');
+  fs.copyFileSync(path.join(ROOT,'worker.js'),path.join(LROOT,'worker.js'));
+  fs.cpSync(path.join(ROOT,'report'),path.join(LROOT,'report'),{recursive:true});
+  fs.writeFileSync(path.join(LROOT,'.assetsignore'),'worker.js\nwrangler.jsonc\n.assetsignore\n');
   console.log('little/ ('+ids.length+' games)')}

@@ -33,29 +33,34 @@ window.TS_KIT=function(o){
   const $=id=>document.getElementById(id);
   $("kMusic").innerHTML=TS.MUSIC_SVG;TS.music.button($("kMusic"));
   if(!o.hint)$("kHint").disabled=true;
+  /* play reports: every level start ends as a win, a fail, or a quit (another level, or leaving the page) */
+  TS.report.game=o.id;let cur=null;
+  const endCur=(result,stars)=>{if(!cur)return;const c=cur;cur=null;
+    TS.report.log({t:"play",game:o.id,level:c.level,result,stars:stars||0,ms:Date.now()-c.t0,oops:c.oops,hints:c.hints})};
+  addEventListener("pagehide",()=>{if(cur&&!K.busy){endCur("quit");TS.report.flush(true)}});
   const K={grade:GRADE,age:AGE,player:PLAYER,levels:LEVELS,stage:$("kStage"),level:1,busy:false,save,persist:SAVE.save,
-    tip:t=>{$("kTip").textContent=t||""},stat:(a,b)=>{$("kS1").textContent=a==null?"":a;$("kS2").textContent=b||""},sub:t=>{$("kSub").textContent=t||o.name},
+    tip:t=>{$("kTip").textContent=t||""},stat:(a,b)=>{$("kS1").textContent=a==null?"":a;$("kS2").textContent=b||""},sub:t=>{$("kSub").textContent=t||o.name;const m=/(?:Oops|Falls|Mistakes?)\s+(\d+)/.exec(t||"");if(m&&cur)cur.oops=+m[1]},
     canPlay:n=>n>=1&&n<=LEVELS&&(save.all||(n<=prog().unlocked&&!(o.locked&&o.locked(n)))),
     /* seeded random for level n, different per game and grade */
     rng:n=>TS.rngFrom((o.id.length*7919+o.id.charCodeAt(0)*131)*100003+AGE*1009+n),
     load(n){n=Math.min(Math.max(1,n|0),LEVELS);
       if(TS.gate.pending(prog(),n)){$("kSheetWin").hidden=true;TS.gate.open(prog(),n,SAVE.save,K.load);return} // maths checkpoint first
-      K.level=n;prog().last=n;SAVE.save();K.busy=false;
+      endCur("quit");K.level=n;prog().last=n;SAVE.save();K.busy=false;cur={level:n,t0:Date.now(),oops:0,hints:0};
       $("kSheetWin").hidden=true;K.stage.innerHTML="";K.tip("");K.stat("","");K.sub();nav();o.start(n);if(n===1&&!TS.howto.isOpen)setTimeout(showPoint,350)},
-    win({stars,text,title}){K.busy=true;TS.music.fx("win");const pr=prog();
+    win({stars,text,title}){endCur("win",stars);K.busy=true;TS.music.fx("win");const pr=prog();
       pr.stars[K.level]=Math.max(pr.stars[K.level]||0,stars);TS.gate.afterWin(pr,K.level,LEVELS);if(K.level+1>pr.unlocked)pr.unlocked=Math.min(LEVELS,K.level+1);SAVE.save();
       setTimeout(()=>{$("kWinTitle").textContent=title||(K.level===LEVELS?"All "+LEVELS+" levels done!":"Level "+K.level+" done!");
         $("kWinStars").hidden=false;$("kWinStars").innerHTML="★".repeat(stars)+'<span class="off">'+"★".repeat(3-stars)+"</span>";
         $("kWinText").textContent=text||"";$("kReplay").textContent="Replay";$("kWinNext").hidden=K.level>=LEVELS||!K.canPlay(K.level+1);$("kWinNext").textContent=TS.gate.pending(pr,K.level+1)?"Maths, then next level":"Next level";$("kWinNext").disabled=false;
         $("kSheetWin").hidden=false;nav()},700)},
-    fail({title,text}){K.busy=true;TS.music.fx("bad");
+    fail({title,text}){endCur("fail");K.busy=true;TS.music.fx("bad");
       setTimeout(()=>{$("kWinTitle").textContent=title||"Nearly!";$("kWinStars").hidden=true;$("kWinText").textContent=text||"";
         $("kReplay").textContent="Try again";$("kWinNext").hidden=!K.canPlay(K.level+1);$("kSheetWin").hidden=false},500)}};
   function nav(){$("kNum").textContent=K.level;$("kPrev").disabled=K.level<=1;$("kNext").disabled=!K.canPlay(K.level+1)}
   $("kPrev").onclick=()=>{if(K.level>1)K.load(K.level-1)};
   $("kNext").onclick=()=>{if(K.canPlay(K.level+1))K.load(K.level+1)};
   $("kRestart").onclick=()=>K.load(K.level);
-  $("kHint").onclick=()=>{if(!K.busy&&o.hint)TS.math.open(o.hint)};
+  $("kHint").onclick=()=>{if(!K.busy&&o.hint)TS.math.open(()=>{if(cur)cur.hints++;o.hint()})};
   $("kReplay").onclick=()=>K.load(K.level);
   $("kWinNext").onclick=()=>K.load(K.level+1);
   function drawPicker(){const lg=$("kLevelGrid"),pr=prog();lg.innerHTML="";

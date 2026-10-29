@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Play Report · Tile Solve</title>
+<meta name="robots" content="noindex">
+<style>
+:root{--bg:#141820;--panel:#1f2530;--line:#2f3846;--text:#eef1f5;--muted:#9aa5b4;--hard:#e5534b;--easy:#3fb950;--warn:#d29922;--accent:#f2c230}
+@media (prefers-color-scheme:light){:root:not([data-theme="dark"]){--bg:#f6f7f9;--panel:#fff;--line:#dfe3e8;--text:#1b2028;--muted:#5c6773}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:1100px;margin:0 auto;padding:18px 16px 40px;display:flex;flex-direction:column;gap:18px}
+h1{margin:0;font-size:24px}h2{margin:0 0 8px;font-size:18px}
+.sub{color:var(--muted);margin:2px 0 0}
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.bar button{border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:999px;padding:6px 12px;font:600 14px inherit;cursor:pointer}
+.bar button.on{background:var(--accent);color:#1b1b1b;border-color:var(--accent)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;overflow:auto}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
+th,td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+th:first-child,td:first-child,th.l,td.l{text-align:left}
+th{color:var(--muted);font-weight:600;font-size:13px}
+tr.g td{border-top:2px solid var(--line);font-weight:700;padding-top:12px}
+.flag{display:inline-block;border-radius:999px;padding:1px 8px;font-size:12px;font-weight:700;color:#fff}
+.flag.hard{background:var(--hard)}.flag.easy{background:var(--easy)}.flag.few{background:var(--line);color:var(--muted)}
+.meter{display:inline-block;width:60px;height:7px;border-radius:4px;background:var(--line);vertical-align:middle;margin-left:6px;overflow:hidden}
+.meter i{display:block;height:100%;background:var(--easy)}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px}
+.kpi b{display:block;font-size:26px}.kpi span{color:var(--muted);font-size:13px}
+.empty{color:var(--muted);text-align:center;padding:30px 10px}
+details summary{cursor:pointer;color:var(--muted)}
+</style>
+</head>
+<body>
+<main>
+  <div><h1>Play report</h1><p class="sub">How each game is going, to tune difficulty. Kids appear as their buddy and grade, never by name.</p></div>
+  <div class="bar" id="days"></div>
+  <div class="bar" id="who"></div>
+  <div class="kpis" id="kpis"></div>
+  <section class="card"><h2>Where to tune</h2><div id="flags"></div></section>
+  <section class="card"><h2>Levels by game and grade</h2><p class="sub">Grouped in fives (levels 1–5, 6–10, …). "Grade" is the player's grade (content is one grade below).</p><div id="levels"></div></section>
+  <section class="card"><h2>Maths questions</h2><div id="maths"></div><h2 style="margin-top:16px">Most-missed questions</h2><div id="misses"></div></section>
+  <details class="card"><summary>How the flags work</summary>
+    <p><span class="flag hard">Too hard</span> fewer than 60% of tries are won, more than 30% are quit, or a hint is used in more than half of them.</p>
+    <p><span class="flag easy">Too easy</span> at least 95% won, 2.8+ stars on average and almost no mistakes.</p>
+    <p><span class="flag few">Few plays</span> fewer than 5 tries so far, so the numbers don't mean much yet.</p>
+    <p>Maths: under 60% right is flagged hard; over 95% right on the first try is flagged easy.</p></details>
+</main>
+<script>
+const NAMES={car:"Unblock the Car",picture:"Picture Puzzle","picture-drop":"Picture Drop","picture-slide":"Picture Slider",memory:"Memory Match",pattern:"Copy the Pattern",flood:"Color Flood",blocks:"Block Fit",numbers:"Number Tiles",
+  words:"Word Builder",sudoku:"Sudoku Light",pipes:"Pipe Connect",lights:"Lights Out",pixels:"Picture Logic",boxes:"Box Push",wordsearch:"Word Search",ballrun:"Ball Run",tunes:"Tile Tunes",carols:"Christmas Tunes",
+  trains:"Train Yard",abc:"My ABCs",missletter:"Missing Letter",case:"Big & Little",sound:"First Sound",trace:"Trace a Letter",count:"Count It",numorder:"Number Order",moreless:"More or Less",missnum:"Missing Number",
+  tenframe:"Ten Frame",shapesort:"Shape Sort",shapehunt:"Shape Hunt",colours:"Colour Match",sizeorder:"Size Order",rhyme:"Rhyme Time",maketen:"Make Ten",times:"Times Tables",fractions:"Fraction Pizza",money:"Money Shop",
+  clock:"Clock & Calendar",numberline:"Number Line Jump",patterns:"Pattern Next",sentence:"Sentence Builder",spelling:"Spelling Bee",crossword:"Picture Crossword",animals:"Animal Sort",oddone:"Odd One Out",
+  planets:"Planet Order",foodchain:"Food Chain",places:"Flags & Places",robot:"Code the Robot"};
+const $=id=>document.getElementById(id),esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const G=g=>g==null?"?":g===0?"K":g===7?"7+":String(g),pct=v=>v==null?"–":Math.round(v*100)+"%",sec=ms=>ms==null?"–":ms<60000?Math.round(ms/1000)+"s":(ms/60000).toFixed(1)+"m";
+const key=new URLSearchParams(location.search).get("key")||"";
+let state={days:30,player:""},data=null;
+function flagFor(l){const n=l.n,win=l.wins/n,quit=l.quits/n;if(n<5)return["few","Few plays"];
+  if(win<.6||quit>.3||l.hinted>.5)return["hard","Too hard"];if(win>=.95&&(l.stars||0)>=2.8&&(l.oops||0)<.5)return["easy","Too easy"];return null}
+async function load(){const q=new URLSearchParams({days:state.days});if(state.player)q.set("player",state.player);if(key)q.set("key",key);
+  try{const r=await fetch("/api/report?"+q);data=await r.json()}catch(e){data={ok:false,error:String(e)}}draw()}
+function draw(){
+  $("days").innerHTML="";[[7,"7 days"],[30,"30 days"],[90,"90 days"],[3650,"All time"]].forEach(([d,t])=>{const b=document.createElement("button");b.textContent=t;b.className=d===state.days?"on":"";b.onclick=()=>{state.days=d;load()};$("days").appendChild(b)});
+  if(!data||!data.ok){$("kpis").innerHTML='<div class="empty">'+(data&&data.error==="key needed"?"This report needs its key: add ?key=… to the address.":"No report yet. "+esc(data&&data.error||""))+"</div>";return}
+  $("who").innerHTML="";[{player:"",avatar:"👨‍👩‍👧‍👦",grade:null,app:"",n:null}].concat(data.players).forEach(p=>{const b=document.createElement("button");
+    b.textContent=p.player?p.avatar+" "+(p.grade===0?"Kindergarten":"Grade "+G(p.grade))+(p.app==="little"?" · Little":""):"Everyone";b.className=p.player===state.player?"on":"";b.onclick=()=>{state.player=p.player;load()};$("who").appendChild(b)});
+  const plays=data.levels.reduce((s,l)=>s+l.n,0),wins=data.levels.reduce((s,l)=>s+l.wins,0),mins=data.games.reduce((s,g)=>s+(g.minutes||0),0),mq=data.maths.reduce((s,m)=>s+m.n,0),mr=data.maths.reduce((s,m)=>s+m.n*m.acc,0);
+  $("kpis").innerHTML=[[plays,"levels played"],[pct(plays?wins/plays:null),"won"],[Math.round(mins),"minutes in levels"],[mq,"maths questions"],[pct(mq?mr/mq:null),"maths right"]].map(([v,t])=>'<div class="kpi"><b>'+v+"</b><span>"+t+"</span></div>").join("");
+  if(!plays&&!mq){$("flags").innerHTML=$("levels").innerHTML=$("maths").innerHTML=$("misses").innerHTML='<div class="empty">Nothing played in this period yet.</div>';return}
+  const flagged=data.levels.map(l=>({l,f:flagFor(l)})).filter(x=>x.f&&x.f[0]!=="few");
+  $("flags").innerHTML=flagged.length?"<table><tr><th>Game</th><th>Grade</th><th>Levels</th><th>Tries</th><th>Won</th><th>Quit</th><th>Hints</th><th class='l'></th></tr>"+
+    flagged.sort((a,b)=>a.f[0].localeCompare(b.f[0])||b.l.n-a.l.n).map(({l,f})=>"<tr><td>"+esc(NAMES[l.game]||l.game)+"</td><td>"+G(l.grade)+"</td><td>"+l.band+"–"+(l.band+4)+"</td><td>"+l.n+"</td><td>"+pct(l.wins/l.n)+"</td><td>"+pct(l.quits/l.n)+"</td><td>"+pct(l.hinted)+'</td><td class="l"><span class="flag '+f[0]+'">'+f[1]+"</span></td></tr>").join("")+"</table>"
+    :'<div class="empty">Nothing stands out yet. Flags appear once a level range has 5 or more tries.</div>';
+  let h="<table><tr><th>Game / grade</th><th>Levels</th><th>Tries</th><th>Won</th><th>Quit</th><th>Stars</th><th>Time to win</th><th>Mistakes</th><th>Hints</th><th class='l'></th></tr>",last="";
+  for(const l of data.levels){const gk=l.game+"|"+l.grade,f=flagFor(l);if(gk!==last){h+='<tr class="g"><td colspan="10">'+esc(NAMES[l.game]||l.game)+" · "+(l.grade===0?"Kindergarten":"Grade "+G(l.grade))+"</td></tr>";last=gk}
+    h+="<tr><td></td><td>"+l.band+"–"+(l.band+4)+"</td><td>"+l.n+"</td><td>"+pct(l.wins/l.n)+'<span class="meter"><i style="width:'+Math.round(l.wins/l.n*100)+'%"></i></span></td><td>'+pct(l.quits/l.n)+"</td><td>"+(l.stars==null?"–":l.stars.toFixed(1)+"★")+"</td><td>"+sec(l.ms)+"</td><td>"+(l.oops==null?"–":l.oops)+"</td><td>"+pct(l.hinted)+'</td><td class="l">'+(f?'<span class="flag '+f[0]+'">'+f[1]+"</span>":"")+"</td></tr>"}
+  $("levels").innerHTML=h+"</table>";
+  $("maths").innerHTML=data.maths.length?"<table><tr><th>Grade</th><th>Question level</th><th>Kind</th><th>Asked</th><th>Right</th><th>Tries</th><th>Time</th><th class='l'></th></tr>"+data.maths.map(m=>{const f=m.n<5?["few","Few"]:m.acc<.6?["hard","Too hard"]:m.acc>.95&&m.tries<=1.1?["easy","Too easy"]:null;
+    return"<tr><td>"+G(m.grade)+"</td><td>"+(m.mlevel<0?"pre-K":m.mlevel===0?"Kindergarten":"Grade "+m.mlevel)+"</td><td>"+(m.kind==="check"?"Checkpoint":"Hint")+"</td><td>"+m.n+"</td><td>"+pct(m.acc)+"</td><td>"+m.tries+"</td><td>"+sec(m.ms)+'</td><td class="l">'+(f?'<span class="flag '+f[0]+'">'+f[1]+"</span>":"")+"</td></tr>"}).join("")+"</table>":'<div class="empty">No maths questions yet.</div>';
+  $("misses").innerHTML=data.misses.length?"<table><tr><th>Question</th><th>Grade</th><th>Missed</th></tr>"+data.misses.map(m=>"<tr><td>"+esc(m.q)+"</td><td>"+G(m.grade)+"</td><td>"+m.n+"</td></tr>").join("")+"</table>":'<div class="empty">No missed questions.</div>'}
+load();
+</script>
+</body>
+</html>
