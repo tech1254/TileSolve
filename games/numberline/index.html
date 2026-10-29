@@ -15,20 +15,24 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Barlow:wght@400;600;700&display=swap">
-<link rel="stylesheet" href="../../shared/ts.css?v=ebf08485">
-<link rel="stylesheet" href="../../shared/game.css?v=ebf08485">
+<link rel="stylesheet" href="../../shared/ts.css?v=f25d63c9">
+<link rel="stylesheet" href="../../shared/game.css?v=f25d63c9">
 </head>
 <body>
-<script src="../../shared/ts.js?v=ebf08485"></script>
-<script src="../../shared/kit.js?v=ebf08485"></script>
+<script src="../../shared/ts.js?v=f25d63c9"></script>
+<script src="../../shared/kit.js?v=f25d63c9"></script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&display=swap">
-<link rel="stylesheet" href="../../shared/learn.css?v=ebf08485">
-<script src="../../shared/learn.js?v=ebf08485"></script>
+<link rel="stylesheet" href="../../shared/learn.css?v=f25d63c9">
+<script src="../../shared/learn.js?v=f25d63c9"></script>
 <script>
 (()=>{const U=TS_LEARN.util;
 TS_LEARN({id:"numberline",name:"Number Line Jump",howto:[["🐸", "The frog starts at the green dot."], ["↪️", "It jumps forward (+) or back (−)."], ["👆", "Tap where the frog lands."], ["🔊", "Tap the speaker to hear it again."]],
 make(n,i,r,a){let lo=0,hi,tick,label,unit,fmt=v=>String(v),s,j;
-  if(a<=0){hi=10;tick=1;label=1;s=U.ri(r,0,6);j=U.ri(r,1,10-s);if(n>20&&i%2===1){s=U.ri(r,4,10);j=-U.ri(r,1,s)}}                 // K: within 10
+  if(a<=0){ // research (Siegler & Ramani): a 1-10 number TRACK and a dot die build number sense before number lines
+    const s0=U.ri(r,1,n<=12?4:6),roll=U.ri(r,1,Math.min(4,10-s0)),e0=s0+roll,o=U.near(r,e0,3,1,10,1);
+    const track='<span class="lr-track">'+Array.from({length:10},(_,k)=>'<i class="'+(k+1===s0?"me":"")+'">'+(k+1===s0?"🐸":k+1)+"</i>").join("")+"</span>";
+    return{type:"pick",say:"The frog is on "+s0+". It rolls "+roll+". Hop "+roll+" squares. Where does it land?",
+      prompt:'<span class="ask">🐸 is on '+s0+". Roll: </span>"+U.numdots(roll).replace("<b>"+roll+"</b>","")+track,options:o.map(v=>({key:v,html:String(v),say:String(v)})),answer:e0}}
   else if(a===1){hi=20;tick=1;label=5;s=U.ri(r,0,15);j=U.ri(r,1,Math.min(9,20-s));if(n>10&&i%2===1){s=U.ri(r,6,20);j=-U.ri(r,1,Math.min(9,s))}} // grade 1: within 20
   else if(a===2){hi=100;tick=10;label=20;s=10*U.ri(r,0,7);j=10*U.ri(r,1,10-s/10);if(n>12&&i%2===1){s=10*U.ri(r,3,10);j=-10*U.ri(r,1,s/10)}} // grade 2: tens to 100
   else if(a===3){hi=1000;tick=100;label=200;s=100*U.ri(r,0,7);j=100*U.ri(r,1,10-s/100);if(i%2===1){s=100*U.ri(r,3,10);j=-100*U.ri(r,1,s/100)}} // grade 3: hundreds to 1000

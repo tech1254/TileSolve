@@ -29,7 +29,7 @@ VALIDATE = """(()=>{const bad=[],TR=TS_LEARN.TRACE;let rounds=0;
     else bad.push(id+' unknown type')}}
   return{bad:bad.slice(0,8),n:bad.length,rounds}})()"""
 
-def win_level(pg, limit=12):
+def win_level(pg, limit=40):
     for _ in range(limit):
         if pg.is_visible("#kSheetWin"): return True
         pg.evaluate("__learn.R && !__learn.R.done && __learn.solve()"); pg.wait_for_timeout(1000)
@@ -52,6 +52,27 @@ with sync_playwright() as p:
             check("Oops 1" in pg.text_content("#kSub"), f"{g}: a wrong answer counts an oops")
         check(win_level(pg), f"{g}: playing every round wins the level")
         pg.close()
+
+    # Support after mistakes (research): say what was picked, take away a wrong choice, then show the answer; missed rounds come back
+    sctx = b.new_context(viewport={"width": 390, "height": 844}); sctx.add_init_script(player(1, "sp"))
+    pg = watch_errors(sctx.new_page(), errors)
+    pg.add_init_script("window.__said=[];const S=window.speechSynthesis;if(S){S.speak=u=>window.__said.push(u.text);S.cancel=()=>{}}")
+    pg.goto(URL("moreless")); pg.wait_for_function("window.__learn && __learn.R", timeout=10000); pg.mouse.click(5, 5); pg.wait_for_timeout(200)
+    for _ in range(6):
+        if pg.evaluate("__learn.R.type==='pick'&&__learn.R.options.length>=3"): break
+        pg.evaluate("__learn.solve()"); pg.wait_for_timeout(1000)
+    keys = pg.evaluate("__learn.R.options.map(o=>o.key)"); ans = pg.evaluate("__learn.R.answer"); wrong = [k for k in keys if k != ans]
+    i0 = pg.evaluate("__learn.S.i")
+    tapk = lambda k: pg.evaluate(f"document.querySelector(\".lr-opt[data-key='{k}']\").click()")
+    tapk(wrong[0]); pg.wait_for_timeout(200)
+    check(pg.locator(f".lr-opt[data-key='{wrong[0]}']").is_disabled(), "a wrong pick is greyed out so it can't be picked again")
+    tapk(wrong[1]); pg.wait_for_timeout(200)
+    check(pg.locator(".lr-opt[disabled]").count() == (3 if len(keys) >= 5 else 2), f"a second mistake takes away another wrong choice when 2+ are left ({len(keys)} choices)")
+    tapk(ans); pg.wait_for_timeout(1100)
+    due = pg.evaluate("__learn.S.retry.map(x=>x.due)")
+    check(due == [i0 + 3], f"the missed round is queued to come back 3 rounds later ({due})")
+    check(pg.evaluate("__learn.S.adj") < 0, "two mistakes in a round makes the next rounds a little easier")
+    pg.close(); sctx.close()
 
     # My ABCs: the child's name letters first, a new letter each level, many kinds of rounds, ending with the song
     pg = watch_errors(ctx.new_page(), errors); pg.goto(URL("abc")); pg.wait_for_function("window.__learn && __learn.R", timeout=10000)

@@ -183,3 +183,24 @@
 .lr-coach{display:inline-flex;flex-wrap:wrap;gap:2px 6px;justify-content:center;align-content:center;max-width:min(80vw,330px);min-height:70px;padding:12px 16px 22px;
   background:#3b6fd9;border-radius:16px;position:relative;font-size:clamp(28px,8vw,40px);line-height:1.1;box-shadow:inset 0 -6px 0 rgba(0,0,0,.18)}
 .lr-coach::after{content:"";position:absolute;left:14%;right:14%;bottom:-12px;height:22px;background:radial-gradient(circle at 11px 11px,#2b2f36 10px,transparent 11px) left/50% 100% repeat-x}
+
+/* support after mistakes */
+.lr-opt.lr-off{opacity:.3;filter:grayscale(1);cursor:default}
+.lr-show{outline:4px solid var(--paint,#f2c230);outline-offset:3px}
+/* numerals: dots fade as each number is learned; they come back after a mistake */
+.lr-nd.fade .lr-dice{opacity:.35}
+.lr-nd.gone .lr-dice{opacity:0}
+.peek .lr-nd .lr-dice{opacity:1;transition:opacity .3s}
+/* counting along */
+.lr-cl i.lr-lit,.lr-sc i.lr-lit{transform:scale(1.25);filter:drop-shadow(0 0 6px #f2c230);position:relative}
+.lr-cl i.lr-lit::after,.lr-sc i.lr-lit::after{content:attr(data-n);position:absolute;left:50%;top:-.55em;transform:translateX(-50%);font:700 15px var(--font-body);color:#f2c230;font-style:normal}
+.lr-fc.em::after{display:none}
+.lr-fc.em{font-size:calc(var(--fc,58px)*.6);line-height:1;display:grid;place-items:center}
+.lr-rows{display:flex;flex-direction:column;align-items:center;gap:6px;flex-basis:100%;font-size:clamp(30px,8vw,42px);letter-spacing:6px}
+.lr-frame.five{grid-template-columns:repeat(5,var(--fc,58px))}
+.lr-track{display:flex;gap:2px;flex-basis:100%;justify-content:center;max-width:100%}
+.lr-track i{width:clamp(22px,7.2vw,40px);height:clamp(26px,8vw,40px);flex:0 1 auto;display:grid;place-items:center;font:700 clamp(13px,3.6vw,17px) var(--font-body);font-style:normal;background:#f6f1e3;color:#1d2230;border-radius:8px}
+.lr-track i.me{background:#9be38a;font-size:clamp(18px,5vw,24px)}
+.lr-track{display:flex;gap:2px;flex-basis:100%;justify-content:center;max-width:100%}
+.lr-track i{width:clamp(22px,7.2vw,40px);height:clamp(26px,8vw,40px);flex:0 1 auto;display:grid;place-items:center;font:700 clamp(13px,3.6vw,17px) var(--font-body);font-style:normal;background:#f6f1e3;color:#1d2230;border-radius:8px}
+.lr-track i.me{background:#9be38a;font-size:clamp(18px,5vw,24px)}

@@ -28,7 +28,7 @@ const ABC={UP:"ABCDEFGHIJKLMNOPQRSTUVWXYZ",
   NOTE:[60,60,67,67,69,69,67,65,65,64,64,62,62,62,62,60,67,67,65,64,64,62,67,65,64,60]};
 
 TS_LEARN({id:"abc",name:"My ABCs",howto:[["🔤", "Each level is a new letter. The letters in YOUR name come first!"], ["👂", "Meet the letter: hear its name and its sound."], ["🔍", "Then find it, match big and little, trace it, and hear it in words."], ["🎵", "Finish by singing the ABC song: tap the glowing letters."]],
-rounds:()=>6,
+rounds:()=>6,adapt:false,
 label:n=>{const q=ABC.seq();return n<=26?q[n-1]:"⭐"},
 make(n,i,r,a){
   /* Built on research about how young children learn the alphabet:

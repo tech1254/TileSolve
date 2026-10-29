@@ -15,15 +15,15 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Barlow:wght@400;600;700&display=swap">
-<link rel="stylesheet" href="../../shared/ts.css?v=ebf08485">
-<link rel="stylesheet" href="../../shared/game.css?v=ebf08485">
+<link rel="stylesheet" href="../../shared/ts.css?v=f25d63c9">
+<link rel="stylesheet" href="../../shared/game.css?v=f25d63c9">
 </head>
 <body>
-<script src="../../shared/ts.js?v=ebf08485"></script>
-<script src="../../shared/kit.js?v=ebf08485"></script>
+<script src="../../shared/ts.js?v=f25d63c9"></script>
+<script src="../../shared/kit.js?v=f25d63c9"></script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&display=swap">
-<link rel="stylesheet" href="../../shared/learn.css?v=ebf08485">
-<script src="../../shared/learn.js?v=ebf08485"></script>
+<link rel="stylesheet" href="../../shared/learn.css?v=f25d63c9">
+<script src="../../shared/learn.js?v=f25d63c9"></script>
 <script>
 (()=>{const U=TS_LEARN.util;
 const ABC={UP:"ABCDEFGHIJKLMNOPQRSTUVWXYZ",
@@ -46,7 +46,7 @@ const ABC={UP:"ABCDEFGHIJKLMNOPQRSTUVWXYZ",
   NOTE:[60,60,67,67,69,69,67,65,65,64,64,62,62,62,62,60,67,67,65,64,64,62,67,65,64,60]};
 
 TS_LEARN({id:"abc",name:"My ABCs",howto:[["🔤", "Each level is a new letter. The letters in YOUR name come first!"], ["👂", "Meet the letter: hear its name and its sound."], ["🔍", "Then find it, match big and little, trace it, and hear it in words."], ["🎵", "Finish by singing the ABC song: tap the glowing letters."]],
-rounds:()=>6,
+rounds:()=>6,adapt:false,
 label:n=>{const q=ABC.seq();return n<=26?q[n-1]:"⭐"},
 make(n,i,r,a){
   /* Built on research about how young children learn the alphabet:

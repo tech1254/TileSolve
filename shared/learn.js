@@ -15,7 +15,12 @@ window.TS_LEARN=function(o){
   const $=id=>document.getElementById(id),U=TS_LEARN.util;let K,R=null,S=null;
   const cssq=v=>(window.CSS&&CSS.escape)?CSS.escape(String(v)):String(v).replace(/"/g,'\\"');
   const roundsFor=age=>o.rounds?o.rounds(age):age<=0?4:age===1?5:6;
-  function start(n){S={n,i:0,total:roundsFor(K.age),miss:0,rng:K.rng(n)};
+  /* Research-based support (see the project's research docs):
+     - after a wrong answer: say what was picked, replay the question, then take away a wrong choice, then show the answer to tap
+     - a round with mistakes comes back once, 2-3 rounds later
+     - difficulty steps up after 3 clean rounds in a row and down after a round with 2+ mistakes (o.adapt:false turns this off)
+     - numerals shown with dots fade their dots as the child gets each number right */
+  function start(n){S={n,i:0,total:roundsFor(K.age),miss:0,rng:K.rng(n),adj:0,streak:0,retry:[]};
     K.stage.insertAdjacentHTML("beforeend",'<div class="lr-dots" id="lrDots"></div><div class="lr-head"><button class="lr-say" id="lrSay" type="button" aria-label="Say it again">🔊</button>'+
       '<div class="lr-prompt" id="lrPrompt"></div></div><div class="lr-body" id="lrBody"></div>');
     $("lrSay").onclick=()=>{TS.talk.on?TS.say(R&&R.say):K.tip("Talking is off. Turn it on in the Levels menu.")};next()}
@@ -23,12 +28,26 @@ window.TS_LEARN=function(o){
     if(S.i>=S.total){const st=S.miss<=1?3:S.miss<=3?2:1;
       K.win({stars:st,text:S.total+" rounds · "+(S.miss?S.miss+" oops":"no oops")+(st===3?" · superstar!":"")+(o.winText?" "+o.winText(S,K):"")});TS.say(st===3?"Great job, superstar!":"Well done!");return}
     // content comes from the grade BEFORE the player's grade (Kindergarten -> pre-K = -1)
-    R=o.make(S.n,S.i,S.rng,K.age-1);R.done=false;dots();$("lrPrompt").innerHTML=R.prompt||"";K.tip(R.text||R.say||"");
+    const due=S.retry.findIndex(x=>x.due<=S.i);
+    if(due>=0&&S.i<S.total-1){R=JSON.parse(S.retry.splice(due,1)[0].data);R.isRetry=true}
+    else{const nEff=o.adapt===false?S.n:Math.max(1,Math.min(40,S.n+S.adj));R=o.make(nEff,S.i,S.rng,K.age-1)}
+    R.done=false;R.miss=0;dots();$("lrPrompt").innerHTML=R.prompt||"";K.tip(R.isRetry?"Let's try this one again!":R.text||R.say||"");
     const b=$("lrBody");b.innerHTML="";b.className="lr-body lr-"+R.type;b.removeAttribute("style");TYPES[R.type].draw(b);TS.say(R.say);stats()}
   function dots(){$("lrDots").innerHTML=Array.from({length:S.total},(_,k)=>'<i class="'+(k<S.i?"done":k===S.i?"cur":"")+'"></i>').join("")}
   function stats(){K.stat(Math.min(S.i+1,S.total)+"/"+S.total,"Round");K.sub("Oops "+S.miss)}
-  function oops(el){S.miss++;stats();TS.music.fx("bad");if(el){el.classList.remove("lr-no");void el.offsetWidth;el.classList.add("lr-no")}}
+  function oops(el,picked){S.miss++;R.miss=(R.miss||0)+1;stats();TS.music.fx("bad");if(el){el.classList.remove("lr-no");void el.offsetWidth;el.classList.add("lr-no")}
+    const m=R.miss,b=body();
+    // 1st: say what was picked and ask again; 2nd: take away a wrong choice (or point at the answer); 3rd+: show the answer to tap
+    if(m===1)TS.say((picked?"That's "+picked+". ":"Not quite. ")+(R.say||""));
+    else if(m===2){TS.say(picked?"That's "+picked+". Try again!":"Try again!");if(R.type==="pick")dropOne(b);else flash(TYPES[R.type].target(b))}
+    else{TS.say("Tap the one that's glowing!");K.tip("Tap the one that's glowing!");const t=TYPES[R.type].target(b);flash(t);if(t)t.classList.add("lr-show")}
+    if(b)b.classList.add("peek")} // numerals that had faded their dots show them again
+  function dropOne(b){const left=[...b.querySelectorAll(".lr-opt:not([disabled])")].filter(x=>x.dataset.key!==String(R.answer));if(left.length>1){const x=left[Math.floor(Math.random()*left.length)];x.disabled=true;x.classList.add("lr-off")}}
   function roundDone(){if(R.done)return;R.done=true;TS.music.fx("good");
+    // missed rounds come back once; clean rounds in a row step the difficulty up, rough ones step it down
+    if(R.miss&&!R.isRetry&&!["meet","sing","trace"].includes(R.type)){const c=JSON.parse(JSON.stringify(R));for(const k of["done","miss","pos","sel","left","on","t","strokes","si","pi"])delete c[k];S.retry.push({due:S.i+3,data:JSON.stringify(c)})}
+    if(!R.miss){if(++S.streak>=3){S.adj=Math.min(S.adj+3,8);S.streak=0}}else{S.streak=0;if(R.miss>=2)S.adj=Math.max(S.adj-4,-10)}
+    if(R.type==="pick"&&typeof R.answer==="number"&&body().querySelector(".lr-nd"))numeralRight(R.answer);
     const c=document.createElement("div");c.className="lr-cheer";c.textContent=["⭐","🎉","👏","🌟","💫","🥳"][Math.floor(Math.random()*6)];document.body.appendChild(c);setTimeout(()=>c.remove(),900);
     S.i++;dots();setTimeout(next,900)}
   const body=()=>$("lrBody");
@@ -38,7 +57,9 @@ window.TS_LEARN=function(o){
     pick:{draw(b){const n=R.options.length;b.style.setProperty("--cols",R.cols||(n<=4?n:Math.ceil(n/2)));
         R.options.forEach(op=>{const x=document.createElement("button");x.type="button";x.className="lr-opt";x.innerHTML=op.html;x.dataset.key=op.key;
           x.setAttribute("aria-label",op.aria||String(op.key));
-          x.onclick=()=>{if(R.done||K.busy)return;if(op.key===R.answer){x.classList.add("lr-yes");if(op.say)TS.say(op.say);roundDone()}else oops(x)};b.appendChild(x)})},
+          x.onclick=()=>{if(R.done||K.busy||x.disabled)return;
+            if(op.key===R.answer){x.classList.add("lr-yes");if(R.countAlong)countAlong(op.say||String(op.key));else{if(op.say)TS.say(op.say);roundDone()}}
+            else{x.disabled=true;x.classList.add("lr-off");oops(x,op.say||(typeof op.key==="number"?String(op.key):""))}};b.appendChild(x)})},
       target:b=>b.querySelector('.lr-opt[data-key="'+cssq(R.answer)+'"]'),
       hint(b){flash(this.target(b))},solve(b){this.target(b).click()}},
     order:{draw(b){R.pos=0;b.innerHTML='<div class="lr-slots"></div><div class="lr-tray"></div>';const sl=b.firstChild,tr=b.lastChild;
@@ -76,16 +97,20 @@ window.TS_LEARN=function(o){
             note(R.notes[k],k===R.letters.length-1?.9:.45);TS.say(l);x.classList.remove("glow");x.classList.add("sung");R.pos++;
             const nx=b.children[R.pos];if(nx)nx.classList.add("glow");else setTimeout(roundDone,500)};b.appendChild(x)})},
       target:b=>b.querySelector(".lr-sl.glow"),hint(b){flash(this.target(b))},solve(b){let t;while(!R.done&&(t=this.target(b)))t.click()}},
-    fill:{draw(b){const n=R.size||10;R.on=new Set();
+    /* fill {type:"fill", target, size (5, 10 or 20), em?}: tap to fill the frame in order, top row first (research: keep the five-structure);
+       tapping a filled box takes the last one out. Each tap says the new count. */
+    fill:{draw(b){const n=R.size||10,per=n===5?5:10;R.count=0;
         b.innerHTML='<div class="lr-frames"></div><div class="lr-count"><b id="lrCount">0</b> / '+R.target+"</div>";const fr=b.firstChild;
-        for(let f=0;f<n/10;f++){const g=document.createElement("div");g.className="lr-frame";
-          for(let k=0;k<10;k++){const i=f*10+k,c=document.createElement("button");c.type="button";c.className="lr-fc";c.dataset.i=i;c.setAttribute("aria-label","Box "+(i+1));
-            c.onclick=()=>{if(R.done||K.busy)return;R.on.has(i)?R.on.delete(i):R.on.add(i);c.classList.toggle("on");TS.music.fx("tap");$("lrCount").textContent=R.on.size;
-              clearTimeout(R.t);if(R.on.size===R.target)R.t=setTimeout(()=>{if(!R.done&&R.on.size===R.target){TS.say(String(R.target));roundDone()}},550)};g.appendChild(c)}
-          fr.appendChild(g)}},
-      target(b){const cs=[...b.querySelectorAll(".lr-fc")];return R.on.size<R.target?cs.find(c=>!c.classList.contains("on")):cs.find(c=>c.classList.contains("on"))},
-      hint(b){const cs=[...b.querySelectorAll(".lr-fc")];cs.forEach((c,i)=>{const want=i<R.target;if(want!==c.classList.contains("on"))c.click()})},
-      solve(b){this.hint(b)}},
+        const show=()=>{b.querySelectorAll(".lr-fc").forEach((c,k)=>{const on=k<R.count;c.classList.toggle("on",on);c.classList.toggle("em",on&&!!R.em);c.textContent=on&&R.em?R.em:""});$("lrCount").textContent=R.count};
+        for(let f=0;f<Math.ceil(n/per);f++){const g=document.createElement("div");g.className="lr-frame"+(per===5?" five":"");
+          for(let k=0;k<per;k++){const i=f*per+k,c=document.createElement("button");c.type="button";c.className="lr-fc";c.dataset.i=i;c.setAttribute("aria-label","Box "+(i+1));
+            c.onclick=()=>{if(R.done||K.busy)return;if(i<R.count)R.count--;else if(R.count<n)R.count++;show();TS.music.fx("tap");if(R.count)TS.say(String(R.count));
+              clearTimeout(R.t);if(R.count===R.target)R.t=setTimeout(()=>{if(!R.done&&R.count===R.target){TS.say(R.target+"!");roundDone()}},650)};g.appendChild(c)}
+          fr.appendChild(g)}
+        R.on={get size(){return R.count}}},
+      target(b){const cs=[...b.querySelectorAll(".lr-fc")];return R.count<R.target?cs[R.count]:cs[R.count-1]},
+      hint(b){flash(this.target(b))},
+      solve(b){const cs=[...b.querySelectorAll(".lr-fc")];let g=0;while(R.count!==R.target&&g++<40)(R.count<R.target?cs[R.count]:cs[R.count-1]).click()}},
     combo:{draw(b){R.sel=new Set();const fmt=R.fmt||(v=>String(v));
         b.innerHTML='<div class="lr-combo"></div><div class="lr-count">Total: <b id="lrSum">'+fmt(0)+"</b> / "+fmt(R.target)+"</div>";const g=b.firstChild;
         const sum=()=>[...R.sel].reduce((a,k)=>a+R.cells[k].v,0);
@@ -116,6 +141,14 @@ window.TS_LEARN=function(o){
   let AC=null;function note(m,sec){if(TS.music.muted)return;try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();if(AC.state==="suspended")AC.resume();
     const t=AC.currentTime+.01,o=AC.createOscillator(),g=AC.createGain();o.type="triangle";o.frequency.value=440*Math.pow(2,(m-69)/12);
     g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.25,t+.01);g.gain.exponentialRampToValueAtTime(.0001,t+sec+.3);o.connect(g);g.connect(AC.destination);o.start(t);o.stop(t+sec+.35)}catch(e){}}
+  /* count along: light each picture in the question one by one while saying the numbers, then the total */
+  function countAlong(total){R.done=true;const items=[...$("lrPrompt").querySelectorAll(".lr-cl i,.lr-sc i")];
+    items.sort((a,b)=>(+getComputedStyle(a).getPropertyValue("--y")||0)-(+getComputedStyle(b).getPropertyValue("--y")||0)||(+getComputedStyle(a).getPropertyValue("--x")||0)-(+getComputedStyle(b).getPropertyValue("--x")||0));
+    TS.say(items.map((_,k)=>k+1).join(", ")+". "+total+"!");items.forEach((x,k)=>setTimeout(()=>{x.classList.add("lr-lit");x.dataset.n=k+1},k*380));
+    setTimeout(()=>{R.done=false;roundDone()},items.length*380+600)}
+  /* numeral learning: how many times each numeral has been picked right (per player) */
+  const NK=()=>"tilesolve:p:"+((TS.players.current()||{}).id||"none")+":numerals";
+  function numeralRight(v){const d=TS.store.get(NK(),{});d[v]=(d[v]||0)+1;TS.store.set(NK(),d)}
   function flash(el){if(!el)return;el.classList.remove("lr-hint");void el.offsetWidth;el.classList.add("lr-hint")}
 
   /* ---------- sorting: drag an item onto a bin, or tap the item then the bin ---------- */
@@ -193,7 +226,7 @@ TS_LEARN.util=(()=>{
   const scatter=(r,em,n)=>{const cells=sample(r,[...Array(16).keys()],n);return'<span class="lr-sc">'+cells.map(c=>'<i style="--x:'+(c%4)+';--y:'+((c/4)|0)+'">'+em+"</i>").join("")+"</span>"};
   const tens=(n,em)=>'<span class="lr-tens">'+Array.from({length:Math.floor(n/10)},()=>'<i class="rod" aria-hidden="true">'+"<b></b>".repeat(10)+"</i>").join("")+
     Array.from({length:n%10},()=>'<i class="one"></i>').join("")+"</span>";
-  const frame=(n,size=10)=>'<span class="lr-mini">'+Array.from({length:size/10},(_,f)=>'<span class="lr-frame sm">'+Array.from({length:10},(_,k)=>'<i class="'+(f*10+k<n?"on":"")+'"></i>').join("")+"</span>").join("")+"</span>";
+  const frame=(n,size=10)=>{const per=size===5?5:10;return'<span class="lr-mini">'+Array.from({length:Math.ceil(size/per)},(_,f)=>'<span class="lr-frame sm'+(per===5?" five":"")+'">'+Array.from({length:per},(_,k)=>'<i class="'+(f*per+k<n?"on":"")+'"></i>').join("")+"</span>").join("")+"</span>"};
   /* ---------- tracing ---------- */
   const dist=(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1]),pts=p=>p.map(q=>q[0].toFixed(1)+","+q[1].toFixed(1)).join(" ");
   function sampleLine(poly){const out=[poly[0]];for(let k=1;k<poly.length;k++){const a=poly[k-1],b=poly[k],d=dist(a,b),n=Math.max(1,Math.round(d/3));
@@ -233,7 +266,8 @@ TS_LEARN.util=(()=>{
   function numdots(v){const DICE={1:[[50,50]],2:[[28,28],[72,72]],3:[[25,25],[50,50],[75,75]],4:[[28,28],[72,28],[28,72],[72,72]],5:[[25,25],[75,25],[50,50],[25,75],[75,75]],6:[[28,22],[72,22],[28,50],[72,50],[28,78],[72,78]]};
     let d;if(DICE[v])d='<svg class="lr-dice" viewBox="0 0 100 100" aria-hidden="true">'+DICE[v].map(([x,y])=>'<circle cx="'+x+'" cy="'+y+'" r="13"/>').join("")+"</svg>";
     else d='<svg class="lr-dice wide" viewBox="0 0 110 46" aria-hidden="true">'+Array.from({length:Math.min(v,10)},(_,k)=>'<circle cx="'+(11+(k%5)*22)+'" cy="'+(k<5?12:34)+'" r="8.5"/>').join("")+"</svg>";
-    return'<span class="lr-nd"><b>'+v+"</b>"+d+"</span>"}
+    const m=(TS.store.get("tilesolve:p:"+((TS.players.current()||{}).id||"none")+":numerals",{})[v])||0;
+    return'<span class="lr-nd'+(m>=6?" gone":m>=3?" fade":"")+'"><b>'+v+"</b>"+d+"</span>"}
   /* a train car (or engine) drawn as SVG; label goes on the side */
   function car(col,label,engine){const L=label==null?"":String(label);
     const body=engine?'<path d="M8 20h34v-12h16v12h8a6 6 0 0 1 6 6v18H8z" fill="'+col+'"/><rect x="46" y="11" width="9" height="9" rx="2" fill="#cfe9ff"/><rect x="14" y="2" width="8" height="18" fill="#3a3a3a"/><path d="M72 44l8 6H72z" fill="#555"/>'

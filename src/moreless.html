@@ -9,15 +9,25 @@
 <script>
 (()=>{const U=TS_LEARN.util;
 
-TS_LEARN({id:"moreless",name:"More or Less",howto:[["⚖️", "Look at both sides."], ["👂", "Listen: is it asking for the MOST, or the LEAST?"], ["👆", "Tap the right one."], ["🔊", "Tap the speaker to hear it again."]],
+TS_LEARN({id:"moreless",name:"More or Less",howto:[["⚖️", "Look at the groups."], ["👂", "Listen: is it asking for the MOST, or the LEAST?"], ["🐘", "Careful: big pictures don't mean more! Count them."], ["🔊", "Tap the speaker to hear it again."]],
 make(n,i,r,a){
-  if(a<=0){ // groups of pictures: 2 at first, then 3, then 4; sometimes asks for the group with the LEAST
-    const EM=["🍎","⭐","🐟","🎈","🐞","🍪","🦆","🍓"],em=U.pick(r,U.fav(EM)),k=a<0?(n<=4?2:3):(n<=10?3:4),gap=a<0||n<=15?2:1,hi=a<0?7:9;
+  if(a<=0){ /* Research: big differences first, then close ones; then break the size cue (3 elephants vs 5 mice) and spread-out vs bunched rows;
+     K content adds "same" and "enough / not enough" (Alberta KN1.4). */
+    const EM=["🍎","⭐","🐟","🎈","🐞","🍪","🦆","🍓"],em=U.pick(r,U.fav(EM));
+    if(a===0&&i%4===3){const k=U.ri(r,2,6),h=U.pick(r,[k,k,k-1,k+1].filter(x=>x>=1)),PAIR=U.pick(r,[["🧒","🎩","hats","kids"],["🐶","🦴","bones","dogs"],["🐰","🥕","carrots","bunnies"],["🐝","🌸","flowers","bees"]]);
+      const ok=h>=k;return{type:"pick",cols:2,say:"Are there enough "+PAIR[2]+" for all the "+PAIR[3]+"? Match them up!",prompt:'<span class="ask">Enough '+PAIR[2]+" for every one?</span>"+'<span class="lr-rows"><span>'+PAIR[0].repeat(k)+"</span><span>"+PAIR[1].repeat(h)+"</span></span>",
+        options:[{key:"yes",html:"👍 Yes",say:"yes"},{key:"no",html:"👎 No",say:"no"}],answer:ok?"yes":"no"}}
+    const k=a<0?(n<=4?2:3):(n<=10?3:4),gap=a<0&&n<=10?3:a<0||n<=15?2:1,hi=a<0?7:9;
     let xs;do{xs=Array.from({length:k},()=>U.ri(r,1,hi))}while(xs.some((x,j)=>xs.some((y,m)=>m!==j&&Math.abs(x-y)<gap)));
-    const least=(a<0?n>3&&i%3===2:i%2===1),ans=xs.indexOf(least?Math.min(...xs):Math.max(...xs)),two=k===2;
-    const w=least?(two?"less":"the least"):(two?"more":"the most");
-    return{type:"pick",cols:2,say:"Which group has "+w+"?",prompt:'<span class="ask">Which group has <b>'+w.replace("the ","")+"</b>"+(two?"":" of all")+"?</span>",
-      options:xs.map((x,j)=>({key:"g"+j,html:U.cluster(em,x,3),aria:x+" pictures"})),answer:"g"+ans}}
+    const same=a===0&&n>10&&i%5===4;if(same){const v=U.ri(r,2,6);xs=[v,v]}
+    const least=(a<0?n>3&&i%3===2:i%2===1),trick=!least&&((a<0&&n>12&&i%3===1)||(a===0&&n>8&&i%3===1)),best=least?Math.min(...xs):Math.max(...xs),two=xs.length===2,w=least?(two?"less":"the least"):(two?"more":"the most");
+    // the size trick: the group with fewer things gets the bigger pictures
+    const sizeOf=x=>trick?(x===Math.min(...xs)?1.5:.75):1,BIG=["🐘","🐳","🦒","🐻"],SM=["🐭","🐞","🐜","🐣"],tb=U.pick(r,BIG),ts=U.pick(r,SM);
+    const pic=(x,j)=>{const e=trick?(x===Math.min(...xs)?tb:ts):em;return'<span style="font-size:'+sizeOf(x)+'em">'+(j%2&&a===0&&n>15?U.scatter(r,e,x):U.cluster(e,x,x>4&&j%2?2:3))+"</span>"};
+    const opts=xs.map((x,j)=>({key:"g"+j,html:pic(x,j),aria:x+" pictures"}));if(a===0)opts.push({key:"same",html:"🟰 Same",say:"the same"});
+    const ans=same?"same":"g"+xs.indexOf(best);
+    return{type:"pick",cols:2,say:(same||a===0&&opts.length>2&&!least?"Which group has "+w+"? Or are they the same?":"Which group has "+w+"?")+(trick?" Count carefully!":""),
+      prompt:'<span class="ask">Which group has <b>'+w.replace("the ","")+"</b>"+(two?"":" of all")+"?</span>",options:opts,answer:ans}}
   const k=n>20?3:2,big=i%2===0;let nums;
   if(a===1){const s=new Set(),hi=n>25?100:20;while(s.size<k)s.add(U.ri(r,1,hi));nums=[...s]}
   else if(a>=2&&n>25){const s=new Set(),b=U.ri(r,100,989);s.add(b);while(s.size<k)s.add(Math.max(100,Math.min(999,b+U.pick(r,[-100,100,-10,10,-1,1,90,-90]))));nums=[...s]}

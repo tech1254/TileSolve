@@ -27,7 +27,7 @@ with sync_playwright() as p:
     pg = watch_errors(ctx.new_page(), errors); pg.goto(URL("count")); pg.wait_for_function("window.__learn && __learn.R", timeout=10000)
     # a hint (pre-K counting question), then win the level
     pg.click("#kHint"); pg.wait_for_timeout(300); solve_math(pg)
-    for _ in range(8):
+    for _ in range(40):
         if pg.is_visible("#kSheetWin"): break
         pg.evaluate("__learn.R && !__learn.R.done && __learn.solve()"); pg.wait_for_timeout(950)
     # start level 2 and leave it unfinished by loading level 3

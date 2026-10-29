@@ -8,15 +8,16 @@ G = {}
 # ---------------------------------------------------------------- maths
 G["maketen"] = ("Make Ten", [["🔟","Each round has a target number."],["👆","Tap numbers that add up to it. Tap again to take one back."],["➕","Later you'll need three numbers!"],["🔊","Tap the speaker to hear it again."]],
 r'''make(n,i,r,a){let target,unit,parts;
-  if(a<=0){target=n<=15?U.pick(r,[5,6,7]):U.pick(r,[8,9,10]);unit=1;parts=2}            // Kindergarten: make numbers to 10
-  else if(a===1){target=n<=15?10:U.pick(r,[12,14,15,16,18,20]);unit=1;parts=n>25?3:2}   // grade 1: facts to 20
+  // research + Alberta K: "ways to make 5 and 10" (with dots), then grade 1 bridging through 10 to 20, then 3+ numbers to 100
+  if(a<=0){target=n<=12?5:10;unit=1;parts=2}
+  else if(a===1){target=n<=10?10:U.pick(r,[11,12,13,14,15,16,17,18]);unit=1;parts=n>25?3:2}
   else if(a===2){target=10*U.ri(r,5,10);unit=10;parts=n>20?3:2}                        // grade 2: within 100, several addends
   else{target=50*U.ri(r,10,20);unit=50;parts=3}                                          // grade 3: within 1000
   const sol=[];let left=target;for(let j=0;j<parts-1;j++){const v=unit*U.ri(r,1,left/unit-(parts-1-j));sol.push(v);left-=v}sol.push(left);
   const extra=Array.from({length:a<=0?3:4},()=>unit*U.ri(r,1,Math.max(1,target/unit-1)));
   const cells=U.shuffle(r,sol.map(v=>({v,sol:true})).concat(extra.map(v=>({v,sol:false}))));
   return{type:"combo",target,say:"Tap numbers that add up to "+target+".",prompt:'<span class="ask">Make</span><span class="big l">'+target+"</span>",
-    cells:cells.map(c=>({v:c.v,html:String(c.v)})),solution:cells.map((c,k)=>c.sol?k:-1).filter(k=>k>=0)}}''', [1,4])
+    cells:cells.map(c=>({v:c.v,html:a<=0?U.numdots(c.v):String(c.v)})),solution:cells.map((c,k)=>c.sol?k:-1).filter(k=>k>=0)}}''', [1,4])
 
 G["times"] = ("Times Tables", [["✖️","Answer the times table questions."],["🍪","Equal groups: count how many altogether."],["🧗","Every right answer climbs the ladder!"],["🔊","Tap the speaker to hear it again."]],
 r'''rounds:()=>8,
@@ -112,7 +113,11 @@ r'''make(n,i,r,a){const D=["Sunday","Monday","Tuesday","Wednesday","Thursday","F
 
 G["numberline"] = ("Number Line Jump", [["🐸","The frog starts at the green dot."],["↪️","It jumps forward (+) or back (−)."],["👆","Tap where the frog lands."],["🔊","Tap the speaker to hear it again."]],
 r'''make(n,i,r,a){let lo=0,hi,tick,label,unit,fmt=v=>String(v),s,j;
-  if(a<=0){hi=10;tick=1;label=1;s=U.ri(r,0,6);j=U.ri(r,1,10-s);if(n>20&&i%2===1){s=U.ri(r,4,10);j=-U.ri(r,1,s)}}                 // K: within 10
+  if(a<=0){ // research (Siegler & Ramani): a 1-10 number TRACK and a dot die build number sense before number lines
+    const s0=U.ri(r,1,n<=12?4:6),roll=U.ri(r,1,Math.min(4,10-s0)),e0=s0+roll,o=U.near(r,e0,3,1,10,1);
+    const track='<span class="lr-track">'+Array.from({length:10},(_,k)=>'<i class="'+(k+1===s0?"me":"")+'">'+(k+1===s0?"🐸":k+1)+"</i>").join("")+"</span>";
+    return{type:"pick",say:"The frog is on "+s0+". It rolls "+roll+". Hop "+roll+" squares. Where does it land?",
+      prompt:'<span class="ask">🐸 is on '+s0+". Roll: </span>"+U.numdots(roll).replace("<b>"+roll+"</b>","")+track,options:o.map(v=>({key:v,html:String(v),say:String(v)})),answer:e0}}
   else if(a===1){hi=20;tick=1;label=5;s=U.ri(r,0,15);j=U.ri(r,1,Math.min(9,20-s));if(n>10&&i%2===1){s=U.ri(r,6,20);j=-U.ri(r,1,Math.min(9,s))}} // grade 1: within 20
   else if(a===2){hi=100;tick=10;label=20;s=10*U.ri(r,0,7);j=10*U.ri(r,1,10-s/10);if(n>12&&i%2===1){s=10*U.ri(r,3,10);j=-10*U.ri(r,1,s/10)}} // grade 2: tens to 100
   else if(a===3){hi=1000;tick=100;label=200;s=100*U.ri(r,0,7);j=100*U.ri(r,1,10-s/100);if(i%2===1){s=100*U.ri(r,3,10);j=-100*U.ri(r,1,s/100)}} // grade 3: hundreds to 1000
@@ -123,12 +128,23 @@ r'''make(n,i,r,a){let lo=0,hi,tick,label,unit,fmt=v=>String(v),s,j;
     prompt:'<span class="ask">Start at '+fmt(s)+", jump "+js+". Where do you land?</span>"+U.numberline(lo,hi,tick,label,s,e,fmt),
     options:U.shuffle(r,[...o]).map(v=>({key:v,html:fmt(v)})),answer:e}}''', [1,6])
 
-G["patterns"] = ("Pattern Next", [["🔁","Patterns repeat or grow in a special way."],["👀","Look for the rule."],["👆","Tap what comes next."],["🔊","Tap the speaker to hear it again."]],
-r'''make(n,i,r,a){const SETS=[["🔴","🔵","🟡","🟢"],["🐶","🐱","🐭","🐰"],["⭐","🌙","☀️","☁️"],["🍎","🍌","🍇","🍓"],["🔺","🟦","🟣","🔶"]].concat(U.fav([]).length?[U.fav([]).slice(0,4)]:[]);
-  const seqHtml=(xs)=>'<span class="ask">What comes next?</span><span class="seq">'+xs.map(x=>"<b"+(String(x).length>2?' class="sm"':"")+">"+x+"</b>").join("")+'<b class="q">?</b></span>';
-  if(a<=1){ // pre-K/K: repeating patterns (up to 3 in the core); grade 1: up to 4
-    const core=U.pick(r,a<0?["AB"]:a===0?["AB","AAB","ABC","ABB"]:["ABC","AABB","ABCD","ABBC","AAB"]),set=U.shuffle(r,U.pick(r,SETS)),L=core.length;
+G["patterns"] = ("Pattern Next", [["🔁","Patterns repeat or grow in a special way."],["👀","Look for the part that repeats."],["👆","Copy it, finish it, or find the part that repeats."],["🔊","Tap the speaker to hear it again."]],
+r'''make(n,i,r,a){const SETS=[["🔴","🔵","🟡","🟢"],["🐶","🐱","🐭","🐰"],["⭐","🌙","☀️","☁️"],["🍎","🍌","🍇","🍓"],["🔺","🟦","🟣","🔶"]].concat(U.fav([]).length?[U.fav([]).slice(0,4),U.fav([]).slice(4,8)]:[]);
+  const seqHtml=(xs,q)=>'<span class="ask">'+(q||"What comes next?")+'</span><span class="seq">'+xs.map(x=>"<b"+(String(x).length>2?' class="sm"':"")+">"+x+"</b>").join("")+(q?"":'<b class="q">?</b>')+"</span>";
+  if(a<=1){ /* Research (Vanderbilt patterning study): copy is easiest, then extend, then rebuild with new things, then "which part repeats?" (hardest).
+       Always show at least 2 full repeats; pre-K uses AB only. */
+    const cores=a<0?["AB"]:a===0?["AB","AAB","ABC","ABB"]:["ABC","AABB","ABCD","ABBC","AAB"],core=U.pick(r,cores),set=U.shuffle(r,U.pick(r,SETS)),L=core.length;
     const len=Math.max(L*2,a<0?4:6)+U.ri(r,0,L-1),xs=Array.from({length:len},(_,k)=>set["ABCD".indexOf(core[k%L])]),ans=set["ABCD".indexOf(core[len%L])];
+    const kinds=a<0?(n<=6?["copy","copy","next"]:["copy","next","next"]):a===0?["copy","next","next","rebuild"]:["next","rebuild","unit","next"],kind=kinds[i%kinds.length];
+    if(kind==="copy"){const row=xs.slice(0,Math.min(len,L*2));
+      return{type:"order",say:"Copy the pattern! Tap the pictures in the same order.",prompt:seqHtml(row,"Copy the pattern"),tiles:U.mix(r,row.map((x,k)=>({key:"c"+k,val:x,html:x}))),answer:row}}
+    if(kind==="rebuild"){const other=U.shuffle(r,U.pick(r,SETS.filter(s=>!s.includes(set[0]))));
+      const mk=c=>Array.from({length:L*2},(_,k)=>other["ABCD".indexOf(c[k%c.length])]).join(" "),wrong=U.shuffle(r,["AB","AAB","ABB","ABC","AABB"].filter(c=>c!==core)).slice(0,2);
+      return{type:"pick",cols:1,say:"Which row has the same pattern, made with different things?",prompt:seqHtml(xs.slice(0,L*2),"Which row has the same pattern?"),
+        options:U.shuffle(r,[core].concat(wrong)).map(c=>({key:c,html:'<span style="font-size:.6em;letter-spacing:4px">'+mk(c)+"</span>"})),answer:core}}
+    if(kind==="unit"){const unit=core.split("").map(c=>set["ABCD".indexOf(c)]).join(""),wrongs=new Set();
+      for(const c of U.shuffle(r,[core.slice(0,-1),core+core[0],core.split("").reverse().join(""),core.slice(1)+core[0]])){const w=c.split("").map(x=>set["ABCD".indexOf(x)]).join("");if(c.length>=2&&w!==unit&&wrongs.size<2)wrongs.add(w)}
+      return{type:"pick",cols:1,say:"Which part repeats over and over?",prompt:seqHtml(xs,"Which part repeats?"),options:U.shuffle(r,[unit].concat([...wrongs])).map(u=>({key:u,html:'<span style="letter-spacing:4px">'+u+"</span>"})),answer:unit}}
     const used=[...new Set(core)].map(c=>set["ABCD".indexOf(c)]),o=new Set([ans]);for(const x of U.shuffle(r,used.concat(set)))if(o.size<(a<0?2:3))o.add(x);
     return{type:"pick",say:"What comes next in the pattern?",prompt:seqHtml(xs),options:U.shuffle(r,[...o]).map(x=>({key:x,html:x})),answer:ans}}
   let xs,ans;

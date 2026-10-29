@@ -8,12 +8,23 @@
 <!--LEARN-->
 <script>
 (()=>{const U=TS_LEARN.util;
-TS_LEARN({id:"patterns",name:"Pattern Next",howto:[["🔁", "Patterns repeat or grow in a special way."], ["👀", "Look for the rule."], ["👆", "Tap what comes next."], ["🔊", "Tap the speaker to hear it again."]],
-make(n,i,r,a){const SETS=[["🔴","🔵","🟡","🟢"],["🐶","🐱","🐭","🐰"],["⭐","🌙","☀️","☁️"],["🍎","🍌","🍇","🍓"],["🔺","🟦","🟣","🔶"]].concat(U.fav([]).length?[U.fav([]).slice(0,4)]:[]);
-  const seqHtml=(xs)=>'<span class="ask">What comes next?</span><span class="seq">'+xs.map(x=>"<b"+(String(x).length>2?' class="sm"':"")+">"+x+"</b>").join("")+'<b class="q">?</b></span>';
-  if(a<=1){ // pre-K/K: repeating patterns (up to 3 in the core); grade 1: up to 4
-    const core=U.pick(r,a<0?["AB"]:a===0?["AB","AAB","ABC","ABB"]:["ABC","AABB","ABCD","ABBC","AAB"]),set=U.shuffle(r,U.pick(r,SETS)),L=core.length;
+TS_LEARN({id:"patterns",name:"Pattern Next",howto:[["🔁", "Patterns repeat or grow in a special way."], ["👀", "Look for the part that repeats."], ["👆", "Copy it, finish it, or find the part that repeats."], ["🔊", "Tap the speaker to hear it again."]],
+make(n,i,r,a){const SETS=[["🔴","🔵","🟡","🟢"],["🐶","🐱","🐭","🐰"],["⭐","🌙","☀️","☁️"],["🍎","🍌","🍇","🍓"],["🔺","🟦","🟣","🔶"]].concat(U.fav([]).length?[U.fav([]).slice(0,4),U.fav([]).slice(4,8)]:[]);
+  const seqHtml=(xs,q)=>'<span class="ask">'+(q||"What comes next?")+'</span><span class="seq">'+xs.map(x=>"<b"+(String(x).length>2?' class="sm"':"")+">"+x+"</b>").join("")+(q?"":'<b class="q">?</b>')+"</span>";
+  if(a<=1){ /* Research (Vanderbilt patterning study): copy is easiest, then extend, then rebuild with new things, then "which part repeats?" (hardest).
+       Always show at least 2 full repeats; pre-K uses AB only. */
+    const cores=a<0?["AB"]:a===0?["AB","AAB","ABC","ABB"]:["ABC","AABB","ABCD","ABBC","AAB"],core=U.pick(r,cores),set=U.shuffle(r,U.pick(r,SETS)),L=core.length;
     const len=Math.max(L*2,a<0?4:6)+U.ri(r,0,L-1),xs=Array.from({length:len},(_,k)=>set["ABCD".indexOf(core[k%L])]),ans=set["ABCD".indexOf(core[len%L])];
+    const kinds=a<0?(n<=6?["copy","copy","next"]:["copy","next","next"]):a===0?["copy","next","next","rebuild"]:["next","rebuild","unit","next"],kind=kinds[i%kinds.length];
+    if(kind==="copy"){const row=xs.slice(0,Math.min(len,L*2));
+      return{type:"order",say:"Copy the pattern! Tap the pictures in the same order.",prompt:seqHtml(row,"Copy the pattern"),tiles:U.mix(r,row.map((x,k)=>({key:"c"+k,val:x,html:x}))),answer:row}}
+    if(kind==="rebuild"){const other=U.shuffle(r,U.pick(r,SETS.filter(s=>!s.includes(set[0]))));
+      const mk=c=>Array.from({length:L*2},(_,k)=>other["ABCD".indexOf(c[k%c.length])]).join(" "),wrong=U.shuffle(r,["AB","AAB","ABB","ABC","AABB"].filter(c=>c!==core)).slice(0,2);
+      return{type:"pick",cols:1,say:"Which row has the same pattern, made with different things?",prompt:seqHtml(xs.slice(0,L*2),"Which row has the same pattern?"),
+        options:U.shuffle(r,[core].concat(wrong)).map(c=>({key:c,html:'<span style="font-size:.6em;letter-spacing:4px">'+mk(c)+"</span>"})),answer:core}}
+    if(kind==="unit"){const unit=core.split("").map(c=>set["ABCD".indexOf(c)]).join(""),wrongs=new Set();
+      for(const c of U.shuffle(r,[core.slice(0,-1),core+core[0],core.split("").reverse().join(""),core.slice(1)+core[0]])){const w=c.split("").map(x=>set["ABCD".indexOf(x)]).join("");if(c.length>=2&&w!==unit&&wrongs.size<2)wrongs.add(w)}
+      return{type:"pick",cols:1,say:"Which part repeats over and over?",prompt:seqHtml(xs,"Which part repeats?"),options:U.shuffle(r,[unit].concat([...wrongs])).map(u=>({key:u,html:'<span style="letter-spacing:4px">'+u+"</span>"})),answer:unit}}
     const used=[...new Set(core)].map(c=>set["ABCD".indexOf(c)]),o=new Set([ans]);for(const x of U.shuffle(r,used.concat(set)))if(o.size<(a<0?2:3))o.add(x);
     return{type:"pick",say:"What comes next in the pattern?",prompt:seqHtml(xs),options:U.shuffle(r,[...o]).map(x=>({key:x,html:x})),answer:ans}}
   let xs,ans;
