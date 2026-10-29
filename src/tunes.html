@@ -26,11 +26,13 @@
 .tt-notes{display:flex;flex-wrap:wrap;gap:4px;min-height:34px;max-height:96px;overflow:auto;padding:6px;border:2px dashed var(--lane);border-radius:12px}
 .tt-notes i{font-style:normal;font:800 13px var(--font-body);color:#fff;border-radius:7px;padding:4px 6px}
 .tt-notes:empty::before{content:"Your notes show up here";color:var(--muted);font-weight:700;font-size:14px}
-.tt-piano{position:relative;display:flex;height:170px;user-select:none;-webkit-user-select:none;touch-action:none}
+.tt-piano{position:relative;display:flex;height:clamp(170px,26vh,260px);user-select:none;-webkit-user-select:none;touch-action:none}
 .tt-piano button{border:0;padding:0;cursor:pointer;touch-action:none;font:800 13px var(--font-body)}
 .tt-piano .w{flex:1;margin:0 2px;background:#f6f3ea;border-radius:0 0 10px 10px;color:#fff;display:flex;align-items:flex-end;justify-content:center;padding-bottom:8px;box-shadow:inset 0 -6px 0 var(--kc)}
 .tt-piano .w span{background:var(--kc);border-radius:6px;padding:2px 5px}
-.tt-piano .b{position:absolute;top:0;height:58%;width:calc(100%/10*.62);background:#1d1f26;border-radius:0 0 8px 8px;z-index:2;box-shadow:inset 0 -5px 0 var(--kc)}
+.tt-piano .w sub{font-size:9px;vertical-align:baseline;margin-left:1px}
+.tt-card:has(#ePiano){max-width:1000px}
+.tt-piano .b{position:absolute;top:0;height:58%;background:#1d1f26;border-radius:0 0 8px 8px;z-index:2;box-shadow:inset 0 -5px 0 var(--kc)}
 .tt-piano button.down{filter:brightness(.8);transform:translateY(2px)}
 .tt-code{width:100%;min-height:70px;font:600 13px ui-monospace,monospace;border-radius:12px;border:2px solid var(--lane);background:transparent;color:var(--text);padding:8px;box-sizing:border-box}
 .tt-song small{display:block;color:var(--muted);font-size:13px;font-weight:600}
@@ -237,13 +239,22 @@ const MINE=(()=>{const KEY="tilesolve:mysongs",all=()=>TS.store.get(KEY,[]),put=
     sheet('<div class="tt-row"><h2>🎹 Make a song</h2><button class="tt-btn" id="eBack" type="button">Back</button></div>'+
       '<div class="tt-row"><input class="tt-name" id="eName" maxlength="40" value="'+esc(me.name+"'s song "+n)+'" aria-label="Song name"></div>'+
       '<p class="tt-empty" style="margin:0">Tap the keys to play your tune at its normal speed. Wait longer on long notes!</p>'+
-      '<div class="tt-notes" id="eNotes"></div><div class="tt-piano" id="ePiano"></div>'+
+      '<div class="tt-notes" id="eNotes"></div><div class="tt-row" style="justify-content:space-between"><button class="tt-btn" id="eLow" type="button">◀ Lower</button><b id="eRange"></b><button class="tt-btn" id="eHigh" type="button">Higher ▶</button></div><div class="tt-piano" id="ePiano"></div>'+
       '<div class="tt-row"><button class="tt-btn" id="eUndo" type="button">↶ Undo</button><button class="tt-btn" id="eListen" type="button">▶ Listen</button><button class="tt-btn" id="eClear" type="button">🗑️ Start over</button><button class="tt-btn go" id="eSave" type="button" disabled>💾 Save</button></div>');
-    const P=document.getElementById("ePiano"),whites=[60,62,64,65,67,69,71,72,74,76],blacks=[[61,0],[63,1],[66,3],[68,4],[70,5],[73,7],[75,8]];
-    const key=(m,cls,left)=>{const b=document.createElement("button");b.type="button";b.className=cls;b.dataset.m=m;b.style.setProperty("--kc",COL[m%12]);b.setAttribute("aria-label",nm(m));
-      if(left!=null)b.style.left="calc(100%/10*"+(left+1)+" - 100%/10*.31)";if(cls==="w")b.innerHTML="<span>"+NAMES[m%12]+"</span>";
+    /* three octaves (C3 to C6); the screen shows as many white keys as fit (10 on a phone, up to 22 on an iPad) and ◀ ▶ slide by an octave */
+    const P=document.getElementById("ePiano"),WH=[];for(let m=48;m<=84;m++)if([0,2,4,5,7,9,11].includes(m%12))WH.push(m);
+    const key=(m,cls,left,V)=>{const b=document.createElement("button");b.type="button";b.className=cls;b.dataset.m=m;b.style.setProperty("--kc",COL[m%12]);b.setAttribute("aria-label",nm(m));
+      if(left!=null){b.style.left="calc(100%/"+V+"*"+(left+1)+" - 100%/"+V+"*.31)";b.style.width="calc(100%/"+V+"*.62)"}
+      if(cls==="w")b.innerHTML="<span>"+NAMES[m%12]+(m%12===0?"<sub>"+(Math.floor(m/12)-1)+"</sub>":"")+"</span>";
       b.addEventListener("pointerdown",e=>{e.preventDefault();press(m);b.classList.add("down");setTimeout(()=>b.classList.remove("down"),140)});P.appendChild(b)};
-    whites.forEach(m=>key(m,"w"));blacks.forEach(([m,i])=>key(m,"b",i));
+    // whole octaves (C to C) when there is room: 22 or 15 white keys, else 10
+    const draw=()=>{const fit=Math.floor(P.clientWidth/44),V=fit>=22?22:fit>=15?15:10;view=Math.max(0,Math.min(WH.length-V,view));P.innerHTML="";
+      const vis=WH.slice(view,view+V);vis.forEach(m=>key(m,"w"));vis.forEach((m,i)=>{if(i<V-1&&![4,11].includes(m%12))key(m+1,"b",i,V)});
+      document.getElementById("eRange").textContent=nm(vis[0]).replace("#","♯")+" – "+nm(vis[vis.length-1]);
+      document.getElementById("eLow").disabled=view===0;document.getElementById("eHigh").disabled=view>=WH.length-V};
+    let view=WH.indexOf(60);
+    document.getElementById("eLow").onclick=()=>{view-=7;draw()};document.getElementById("eHigh").onclick=()=>{view+=7;draw()};
+    draw();const onR=()=>{if(document.getElementById("ePiano"))draw();else removeEventListener("resize",onR)};addEventListener("resize",onR);
     document.getElementById("eBack").onclick=()=>open();
     document.getElementById("eUndo").onclick=()=>{rec.pop();notes()};
     document.getElementById("eClear").onclick=()=>{rec=[];notes()};
