@@ -6,7 +6,7 @@ from tsutil import *
 OUT = pathlib.Path(sys.argv[1]) if len(sys.argv) > 1 else pathlib.Path(".")
 check = Checker(); errors = []
 LBASE = BASE + "/little"
-LITTLE = ["trains", "abc", "syllables", "blend", "missletter", "case", "sound", "trace", "count", "numorder", "moreless", "missnum", "tenframe", "shapesort", "shapehunt", "colours", "sizeorder", "rhyme", "position", "shapes3d", "quicklook", "hidebugs", "dotmatch", "counton", "senses", "seasons"]
+LITTLE = ["trains", "trip", "abc", "syllables", "blend", "missletter", "case", "sound", "trace", "count", "numorder", "moreless", "missnum", "tenframe", "shapesort", "shapehunt", "colours", "sizeorder", "rhyme", "position", "shapes3d", "quicklook", "hidebugs", "dotmatch", "counton", "senses", "seasons"]
 EXTRAS = ["patterns", "animals", "oddone"]; MUSIC = ["tunes", "carols"]
 
 def player(grade, pid):
@@ -16,7 +16,7 @@ def player(grade, pid):
 
 check((ROOT / "little/wrangler.jsonc").exists() and '"littlelearners"' in (ROOT / "little/wrangler.jsonc").read_text(), "little/ has its own Worker config (littlelearners)")
 check((ROOT / "little/icon-180.png").read_bytes() != (ROOT / "icon-180.png").read_bytes(), "Little Learners has its own icon")
-check(sorted(d.name for d in (ROOT / "little/games").iterdir()) == sorted(LITTLE + EXTRAS + MUSIC), "little/ has exactly its 31 games")
+check(sorted(d.name for d in (ROOT / "little/games").iterdir()) == sorted(LITTLE + EXTRAS + MUSIC), "little/ has exactly its 32 games")
 
 with sync_playwright() as p:
     b = p.chromium.launch()
@@ -35,7 +35,7 @@ with sync_playwright() as p:
     check([h.split(" ")[0] for h in heads] == ["Letters", "Numbers", "Shapes", "Science", "Music"], f"sections by subject: letters, numbers, shapes, science, music ({heads})")
     got = lambda grp: pg.evaluate(f"[...document.querySelectorAll(\".games[data-group='{grp}'] .game\")].map(e=>e.dataset.game)")
     allg = sorted(sum((got(k) for k in ["letters", "numbers", "shapes", "science", "puzzles"]), []))
-    check(allg == sorted(LITTLE + EXTRAS + MUSIC) and got("letters")[0] == "abc" and got("numbers")[0] == "trains" and "animals" in got("science") and got("puzzles") == MUSIC, f"all 31 games are listed, each under its subject ({len(allg)})")
+    check(allg == sorted(LITTLE + EXTRAS + MUSIC) and got("letters")[0] == "abc" and got("numbers")[0] == "trains" and "animals" in got("science") and got("puzzles") == MUSIC, f"all 32 games are listed, each under its subject ({len(allg)})")
     pg.screenshot(path=str(OUT / "little-home.png"), full_page=True)
     check(not pg.is_visible("#otherApp"), "no cross-app link on a test address")
     ctx.close()
@@ -44,7 +44,7 @@ with sync_playwright() as p:
     ctx = b.new_context(viewport={"width": 390, "height": 844}); ctx.add_init_script(player(1, "lg"))
     for g in LITTLE + EXTRAS + MUSIC:
         gp = watch_errors(ctx.new_page(), errors); gp.goto(f"{LBASE}/games/{g}/index.html"); gp.wait_for_timeout(500)
-        ok = gp.evaluate("!!document.getElementById('kStage')") and "Little Learners" in gp.title()
+        ok = gp.evaluate("!!(document.getElementById('kStage')||document.getElementById('cv'))") and "Little Learners" in gp.title()
         gp.click("#kHome"); gp.wait_for_timeout(300)
         check(ok and gp.url.endswith("/little/index.html"), f"{g}: opens in Little Learners and Home comes back to it")
         gp.close()

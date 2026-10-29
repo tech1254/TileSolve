@@ -156,6 +156,7 @@ const GAMES=[
   {id:"tunes",name:"Tile Tunes",desc:"Earn 🎵 in other games to open songs",art:"🎹",href:"games/tunes/index.html",g:["#8f5bd6","#4b2a85"]},
   {id:"carols",name:"Christmas Tunes",desc:"Carols to play, earned with 🎵",art:"🎄",href:"games/carols/index.html",g:["#2e7d32","#a3201b"]},
   {id:"trains",name:"Train Yard",desc:"Numbers, letters and patterns on the train",art:"🚂",href:"games/trains/index.html",g:["#3b6fd9","#1d3d85"],group:"little"},
+  {id:"trip",name:"Train Trip",desc:"Ride the rails and pick the right track",art:"🛤️",href:"games/trip/index.html",g:["#2e9e5b","#165a32"],group:"little"},
   {id:"abc",name:"My ABCs",desc:"Learn every letter, starting with your name",art:"🔤",href:"games/abc/index.html",g:["#e2412e","#8a2318"],group:"little"},
   {id:"missletter",name:"Missing Letter",desc:"Which letter is gone?",art:"❓",href:"games/missletter/index.html",g:["#f08a24","#99500d"],group:"little"},
   {id:"case",name:"Big & Little",desc:"Match A to a",art:"🅰️",href:"games/case/index.html",g:["#c9a400","#6b5600"],group:"little"},
@@ -226,7 +227,7 @@ function drawGames(){const g=$("gameGrid");g.innerHTML="";const cur=players.curr
   const L=["little","Little learners","Letters, numbers and shapes"],X=APP==="little"?["explore","More to explore",""]:["explore","Learn & explore","Picked for "+players.gradeName(cur?cur.grade:3)],
     P=APP==="little"?["puzzles","Music","Earn 🎵 by playing"]:["puzzles","Puzzles","Every grade"];
   // Little Learners lists its games by subject
-  const SUBJ={letters:["abc","trace","sound","rhyme","syllables","blend","missletter","case"],numbers:["trains","count","quicklook","dotmatch","numorder","moreless","tenframe","hidebugs","counton","missnum","patterns"],
+  const SUBJ={letters:["abc","trace","sound","rhyme","syllables","blend","missletter","case"],numbers:["trains","trip","count","quicklook","dotmatch","numorder","moreless","tenframe","hidebugs","counton","missnum","patterns"],
     shapes:["shapesort","shapehunt","colours","position","shapes3d","sizeorder"],science:["animals","senses","seasons","oddone"]};
   const subj=x=>Object.keys(SUBJ).find(k=>SUBJ[k].includes(x.id))||(x.group==="puzzles"||!x.group?"puzzles":"science");
   const LS=[["letters","Letters & sounds","🔤"],["numbers","Numbers","🔢"],["shapes","Shapes & space","🔺"],["science","Science & thinking","🔬"],P];

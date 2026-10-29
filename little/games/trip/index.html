@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#161b21">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box;height:100%}body{margin:0}[hidden]{display:none!important}</style>
+<title>Train Trip · Little Learners</title>
+<meta name="apple-mobile-web-app-title" content="Little Learners">
+<link rel="apple-touch-icon" href="../../icon-180.png">
+<link rel="icon" type="image/png" href="../../icon-512.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Barlow:wght@400;600;700&display=swap">
+<link rel="stylesheet" href="../../shared/ts.css?v=80d9b501">
+<link rel="stylesheet" href="../../shared/game.css?v=80d9b501">
+<style>
+body{overflow:hidden}
+.trip{height:100%;display:flex;flex-direction:column}
+.tbar{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;padding:8px max(12px,env(safe-area-inset-right,0px)) 8px max(12px,env(safe-area-inset-left,0px))}
+.tbar .left,.tbar .right{display:flex;gap:6px;align-items:center}
+.tbar .right{justify-content:flex-end}
+.tbar .ttl{font-family:var(--font-sign);color:var(--paint);font-size:18px;letter-spacing:.04em}
+.score{font-family:var(--font-sign);font-size:17px;display:flex;gap:10px;font-variant-numeric:tabular-nums;white-space:nowrap}
+@media (max-width:520px){.tbar .ttl{display:none}.askc{font-size:20px;gap:8px}.askc .spk{width:42px;height:42px;font-size:20px}}
+#view{position:relative;flex:1;min-height:0;overflow:hidden;background:#8ac6ff}
+#cv{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
+#signs{position:absolute;inset:0;pointer-events:none}
+.sign{position:absolute;left:0;top:0;width:2.9em;height:2.4em;box-sizing:border-box;border-radius:.32em;border:.08em solid #6d4c2a;background:#fffaf0;color:#1d2230;
+  display:grid;place-items:center;padding:.08em;font-family:var(--font-kid);font-weight:700;line-height:1;cursor:pointer;pointer-events:auto;
+  box-shadow:0 .1em 0 #6d4c2a,0 .25em .45em rgba(0,0,0,.3);transition:opacity .45s,filter .3s,background .3s;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.sign.wait{pointer-events:none}
+.sign .big{font-size:1.3em}
+.sign .word{font-size:.7em}
+.sign .lr-nd{gap:.05em}
+.sign .lr-nd b{font-size:1.05em}
+.sign .lr-dice{width:.95em;height:.95em;fill:#e0a800}
+.sign .lr-dice.wide{width:1.7em;height:.72em}
+.sign .lr-cl{font-size:.62em;gap:0 .06em}
+.sign .lr-cl.m{font-size:.5em}
+.sign .lr-cl.s{font-size:.38em}
+.sign .lr-cl.grp i:nth-child(5n){margin-right:0}
+.sign .lr-shp{width:1.75em;height:1.75em}
+.sign .sw{display:block;width:2.1em;height:1.7em;border-radius:.3em;border:.06em solid rgba(0,0,0,.35)}
+.sign .lr-car{width:2.4em}
+.sign .ltr{font-size:1.35em}
+.sign.yes{background:#d9f2cc;border-color:#2e7d32}
+.sign.no{opacity:.35;filter:grayscale(1);pointer-events:none;animation:tshake .35s}
+.sign.glow{animation:tglow 1s ease-in-out infinite}
+.sign.gone{opacity:0;pointer-events:none}
+@keyframes tshake{25%{margin-left:-.12em}75%{margin-left:.12em}}
+@keyframes tglow{50%{box-shadow:0 0 0 .14em #f2c230,0 0 .7em .25em #f2c230}}
+.askc{position:absolute;left:0;right:0;top:10px;margin:0 auto;width:max-content;display:flex;align-items:center;gap:12px;background:rgba(22,27,33,.88);color:#fff;border-radius:20px;
+  padding:8px 18px 8px 8px;font-family:var(--font-kid);font-weight:700;font-size:clamp(20px,4.4vw,30px);line-height:1.2;max-width:calc(100% - 24px);box-sizing:border-box;box-shadow:0 8px 22px rgba(0,0,0,.3)}
+.askc .spk{width:50px;height:50px;border-radius:50%;border:0;background:var(--paint);font-size:24px;flex:none;cursor:pointer}
+.askc #askT{display:flex;align-items:center;gap:.3em;flex-wrap:wrap}
+.askc b{color:var(--paint);font-size:1.15em}
+.askc .sw{display:inline-block;width:1.1em;height:1.1em;border-radius:.25em;vertical-align:middle;border:2px solid rgba(255,255,255,.6)}
+.askc .lr-shp{width:1.5em;height:1.5em}
+.askc .lr-cl{font-size:22px}
+.askc .lr-nd b{font-size:1.2em;color:var(--paint)}
+.askc .lr-dice{width:34px;height:34px}
+.askc .lr-dice.wide{width:60px;height:26px}
+.askc .lr-car{width:40px;display:inline-block}
+.askc .cars{display:inline-flex;align-items:flex-end}
+.askc .emo{font-size:1.6em}
+.askc .lr-tens{max-width:none}
+.askc .lr-tens .rod{grid-template-rows:repeat(10,5px)}
+.askc .lr-tens .rod b{width:8px}
+.askc .lr-tens .one{width:9px;height:9px}
+.mid{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none}
+.mid>*{pointer-events:auto}
+.stcard{background:rgba(22,27,33,.92);border-radius:24px;padding:18px 26px;text-align:center;display:grid;gap:12px;justify-items:center;color:#fff;max-width:min(440px,90vw);box-shadow:0 12px 30px rgba(0,0,0,.35)}
+.stcard h2{font-family:var(--font-sign);font-weight:400;color:var(--paint);margin:0;font-size:clamp(22px,5vw,30px)}
+.stcard p{margin:0;font-family:var(--font-kid);font-size:clamp(18px,4vw,22px);font-weight:700}
+.gobtn{font-family:var(--font-sign);font-size:clamp(24px,6vw,32px);background:var(--good);color:#fff;border:0;border-radius:22px;padding:16px 34px;cursor:pointer;
+  box-shadow:inset 0 -6px 0 rgba(0,0,0,.2),0 8px 20px rgba(0,0,0,.3);animation:tbob 1.3s ease-in-out infinite}
+.gift{font-size:clamp(90px,22vw,130px);line-height:1;background:none;border:0;cursor:pointer;animation:twig 1s ease-in-out infinite;padding:0}
+.carpv{width:240px;height:110px}
+.yardbtn{font-family:var(--font-kid);font-weight:700;font-size:20px;background:var(--panel);color:#fff;border:2px solid var(--lane);border-radius:16px;padding:10px 20px;cursor:pointer}
+.yard{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;max-height:46vh;overflow-y:auto;padding:4px}
+.ycar{position:relative;background:#cfe6ff;border-radius:14px;padding:4px 4px 0}
+.ycar canvas{width:80px;height:73px;display:block}
+.ycar button{position:absolute;top:-8px;right:-8px;width:34px;height:34px;border-radius:50%;border:2px solid #fff;background:var(--target);color:#fff;font-size:16px;font-weight:700;cursor:pointer}
+@keyframes tbob{50%{transform:translateY(-6px)}}
+@keyframes twig{0%,100%{transform:rotate(0)}20%{transform:rotate(-9deg) scale(1.05)}40%{transform:rotate(8deg)}60%{transform:rotate(-5deg)}}
+.horn{position:absolute;left:max(12px,env(safe-area-inset-left,0px));bottom:12px;width:64px;height:64px;border-radius:50%;font-size:32px;background:rgba(22,27,33,.65);border:2px solid rgba(255,255,255,.35);cursor:pointer}
+.horn:active{transform:scale(.94)}
+@media (prefers-reduced-motion:reduce){.gobtn,.gift,.sign.glow{animation:none}.sign.glow{box-shadow:0 0 0 .14em #f2c230}}
+</style>
+</head>
+<body>
+<script src="../../shared/ts.js?v=80d9b501"></script>
+<script src="../../shared/kit.js?v=80d9b501"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&display=swap">
+<link rel="stylesheet" href="../../shared/learn.css?v=80d9b501">
+<script src="../../shared/learn.js?v=80d9b501"></script>
+<div class="trip">
+  <header class="tbar">
+    <div class="left"><a class="chip icon" id="kHome" href="../../index.html" aria-label="Home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg></a>
+      <button class="chip icon" id="kMusic" type="button"></button></div>
+    <div class="ttl">TRAIN TRIP</div>
+    <div class="right"><span class="score" id="score"></span><button class="chip icon help" id="kHelp" type="button" aria-label="How to play">?</button></div>
+  </header>
+  <div id="view">
+    <canvas id="cv"></canvas>
+    <div id="signs"></div>
+    <div class="askc" id="ask" hidden><button class="spk" id="spk" type="button" aria-label="Hear it again">🔊</button><span id="askT"></span></div>
+    <button class="horn" id="horn" type="button" aria-label="Toot the horn">📯</button>
+    <div class="mid" id="mid"></div>
+  </div>
+</div>
+<script>
+/* Train Trip: the train rides from station to station through changing Alberta scenery (prairie, forest, mountains, lakes, towns),
+   with tunnels and bridges. At every Y in the track it stops: the child listens to the question and taps the sign on the right track.
+   Every station (3-5 Ys apart) has a present: a new car for the train. No levels and no checkpoints: the trip is the game.
+   Questions come from one grade back (Kindergarten -> pre-K), with 2 tracks for pre-K and 3 after. Each question kind steps up after
+   4 of 5 right and down after 2 misses in a row. After a miss the sign greys out and the voice says what it was; a missed question
+   comes back two Ys later. */
+(()=>{
+const P=TS.requirePlayer(),G=TS.players.gnum(P.grade),A=Math.max(-1,Math.min(3,G-1)),U=TS_LEARN.util,R=Math.random;
+const SV=TS.gameSave("trip",{cars:[],forks:0,stations:0,step:{},hist:{},bag:[]}),save=SV.data;
+const $=id=>document.getElementById(id);
+TS.report.game="trip";
+$("kMusic").innerHTML=TS.MUSIC_SVG;TS.music.button($("kMusic"));
+const HOWTO=[["🚂","Ride the train from station to station."],["🛤️","At every Y in the tracks the train stops. Listen, then tap the sign on the right track."],
+  ["🎁","Every station has a present: a new car for your train!"],["📯","Tap the horn to toot!"]];
+$("kHelp").onclick=()=>TS.howto.show("trip","Train Trip",HOWTO);
+const NO=A<0?2:3; // tracks at each Y
+
+/* ---------- questions ---------- */
+const COLS={red:"#e2412e",blue:"#3b6fd9",green:"#43a047",yellow:"#f5c518",orange:"#f08a24",purple:"#8f5bd6",pink:"#f06fb0",brown:"#8b5a2b",grey:"#9aa3ad",black:"#262626",white:"#fafafa"};
+const CLASH={red:["pink","orange","brown"],pink:["red","purple"],orange:["yellow","red","brown"],yellow:["orange"],purple:["blue","pink"],blue:["purple"],brown:["orange","red","black"],
+  grey:["white","black"],black:["grey","brown"],white:["grey"],green:[]};
+const EMS=U.fav([["🦆","ducks"],["🐄","cows"],["🐑","sheep"],["⭐","stars"],["🍎","apples"],["🐟","fish"]]);
+const art=w=>(/^[aeiou]/.test(w)?"an ":"a ")+w;
+const CONF=[[6,9],[2,5],[1,7]],bad=(a,b)=>CONF.some(([x,y])=>(a===x&&b===y)||(a===y&&b===x));
+// the answer first, then n-1 different distractors within [lo,hi]; gap = smallest difference from every other option
+function nums(ans,n,lo,hi,spread,gap){const o=[ans];let g=0;gap=gap||1;
+  while(o.length<n&&g++<400){const v=ans+U.ri(R,-spread,spread);if(v<lo||v>hi||o.includes(v)||o.some(x=>Math.abs(x-v)<gap||(A<0&&bad(x,v))))continue;o.push(v)}
+  for(let v=lo;o.length<n;v++)if(!o.includes(v))o.push(v);return o}
+// typical slips for sums: one off, ten off
+function slips(ans,n,lo,tens){const c=U.shuffle(R,[ans+1,ans-1,ans+2,ans-2].concat(tens?[ans+10,ans-10,ans+10]:[]));const o=[ans];
+  for(const v of c)if(o.length<n&&v>=lo&&!o.includes(v))o.push(v);for(let v=ans+3;o.length<n;v++)o.push(v);return o}
+const pics=(em,v)=>U.cluster(em,v,v<=2?v:v<=4?2:v<=6?3:5).replace('class="lr-cl','class="lr-cl'+(v<=4?"":v<=6?" m":" s")),big=v=>'<span class="big">'+v+"</span>",nd=v=>A<0?U.numdots(v):big(v);
+function mk(kind,say,ask,list,opt,hint){const o=list.map(opt),q={kind,say,ask,ans:o[0].key,opts:U.shuffle(R,o),hint:hint||""};return q}
+const NAME=[...new Set((P.name||"").toUpperCase().replace(/[^A-Z]/g,""))];
+const SAFE_WORDS=[["🐟","fish"],["🐶","dog"],["☀️","sun"],["🦊","fox"],["🐝","bee"],["🌙","moon"],["🐷","pig"],["🦆","duck"],["🐭","mouse"],["🎩","hat"],["🐻","bear"],["🐐","goat"],
+  ["🦁","lion"],["🚌","bus"],["🧦","sock"],["💍","ring"],["🦓","zebra"],["🐢","turtle"],["🌮","taco"],["🍋","lemon"],["🐮","cow"],["🎈","balloon"],["🍩","donut"],["🪁","kite"],["🪵","log"],["🐴","horse"]];
+
+const KINDS={
+  num(st){const max=A<0?[4,5,7,10][st]:[10,10,20,20][st],N=U.ri(R,1,max),vs=nums(N,NO,1,max,A<0?4:3,A<0&&st<2?2:1);
+    const show=A<0?(st===0?U.numdots(N):st===1?"<b>"+N+"</b>":"<b>?</b> 👂"):(st===0?"<b>"+N+"</b>":"<b>?</b> 👂");
+    return mk("num","Take track "+N+"!","🚂 Take track "+show,vs,v=>({key:v,html:nd(v),say:"track "+v}),"We need track "+N+".")},
+  count(st){const [em,nm]=U.pick(R,EMS),max=A<0?[3,4,5,6][st]:[6,8,10,10][st],N=U.ri(R,1,max),vs=nums(N,NO,1,max,3,A<0&&st<2?2:1);
+    return mk("count","Which track has "+N+" "+nm+"? Count them.","Which track has <b>"+N+"</b> "+em+"?",vs,
+      v=>({key:v,html:pics(em,v),say:String(v)}),"We need "+N+". Count again!")},
+  colour(st){const c=U.pick(R,["red","blue","green","yellow","orange","purple","pink","brown","grey","black","white","brown","grey","pink","purple"]);
+    const others=Object.keys(COLS).filter(x=>x!==c&&(st>=2||!CLASH[c].includes(x))),vs=[c].concat(U.sample(R,others,NO-1));
+    return mk("colour","Take the "+c+" track!","Take the "+(st===0?'<span class="sw" style="background:'+COLS[c]+'"></span>':"")+"<b>"+c+"</b> track",vs,
+      x=>({key:x,html:'<span class="sw" style="background:'+COLS[x]+'"></span>',say:x}),"We need "+c+".")},
+  shape(st){const base=A<0?(st<1?["circle","square","triangle"]:["circle","square","triangle","rectangle","star","heart"]):["circle","square","triangle","rectangle","star","heart","oval"];
+    const t=U.pick(R,base),near=(a,b)=>st<2&&[["square","rectangle"],["circle","oval"]].some(p=>p.includes(a)&&p.includes(b));
+    const vs=[t].concat(U.sample(R,base.filter(x=>x!==t&&!near(t,x)),NO-1));
+    const draw=k=>{let kind=k,rot=0,sc=1;if(k==="triangle"&&(A>=0||st>=2)&&R()<.6)kind=U.pick(R,["tri_tall","tri_right","tri_wide"]);
+      if(A>=0&&st>=1){rot=U.pick(R,[0,0,15,30,45,180]);sc=U.pick(R,[.7,.85,1])}return U.shape(kind,U.pick(R,U.SHAPE_COLS),rot,sc)};
+    return mk("shape","Take the "+t+" track!","Take the "+(st===0?U.shape(t,"#ffffff",0,1,true):"")+"<b>"+t+"</b> track",vs,x=>({key:x,html:draw(x),say:art(x)}),"We need "+art(t)+".")},
+  letter(st){const EASY="BDMPTSOXACLH".split("").concat(A>=0?"EFGKNRW".split(""):[]);
+    const t=NAME.length&&R()<(A<0?.6:.35)?U.pick(R,NAME):U.pick(R,EASY),TW=["BDPQ","MNW","UN","CGO","EF","IL"],twin=x=>TW.some(g=>g.includes(x)&&g.includes(t));
+    const vs=[t].concat(U.sample(R,"ABCDEFGHIJKLMNOPRSTUVWXYZ".split("").filter(x=>x!==t&&(st>=3||!twin(x))),NO-1)),low=A>=0&&st>=1;
+    const inName=NAME.includes(t)?" "+t+" is in your name!":"";
+    const ask=low?"Find little <b>"+t.toLowerCase()+"</b> <small>("+t+")</small>":(A<0&&st>=1?"Find the letter <b>?</b> 👂":"Find the letter <b>"+t+"</b>");
+    return mk("letter",low?"Find little "+t.toLowerCase()+"!":"Find the letter "+t+"!"+inName,ask,vs,
+      x=>({key:x,html:'<span class="ltr">'+(low?x.toLowerCase():x)+"</span>",say:low?"little "+x.toLowerCase():x}),"We need "+(low?"little ":"")+t+".")},
+  more(st){const [em,nm]=U.pick(R,EMS),max=A<0?6:10,fewer=st>=2&&R()<.5,gap=A<0?[3,2,1,1][st]:[3,2,1,1][st];let vs,g=0;
+    do vs=Array.from({length:NO},()=>U.ri(R,1,max));while(g++<500&&(new Set(vs).size<NO||vs.some((x,i)=>vs.some((y,j)=>i!==j&&Math.abs(x-y)<gap))));
+    if(new Set(vs).size<NO)vs=NO===2?[1,4]:[1,4,7];
+    const ans=fewer?Math.min(...vs):Math.max(...vs),list=[ans].concat(vs.filter(x=>x!==ans));
+    const w=NO===2?(fewer?"fewer":"more"):(fewer?"the fewest":"the most");
+    return mk("more","Which track has "+w+" "+nm+"?","Which track has <b>"+w+"</b> "+em+"?",list,v=>({key:v,html:pics(em,v),say:"the track with "+v}),
+      "Look for "+w+".")},
+  onemore(st){const less=st>=2&&R()<.5,N=U.ri(R,less?2:1,9),ans=less?N-1:N+1,vs=[ans,N].concat(nums(ans,4,0,11,2).filter(x=>x!==N&&x!==ans)).slice(0,NO);
+    return mk("onemore","What is one "+(less?"less":"more")+" than "+N+"?","One "+(less?"less":"more")+" than <b>"+N+"</b>?",vs,v=>({key:v,html:big(v),say:String(v)}),
+      (less?"Count back":"Count on")+" one from "+N+".")},
+  addpic(st){const [em,nm]=U.pick(R,EMS),max=st<2?5:10,a=U.ri(R,1,max-1),b=U.ri(R,1,Math.min(4,max-a)),ans=a+b,vs=nums(ans,NO,1,max+1,2);
+    return mk("addpic",a+" "+nm+", and "+b+" more. How many altogether?",U.cluster(em,a,Math.min(a,5))+" <b>+</b> "+U.cluster(em,b,b)+" <b>= ?</b>",vs,
+      v=>({key:v,html:big(v),say:String(v)}),"Count them all: start at "+a+".")},
+  pattern(st){const core=st<1?"AB":U.pick(R,["AB","ABC","AAB","ABB"]),cs=U.sample(R,["red","blue","yellow","green","purple","orange"],3),L=core.length,len=Math.max(L*2,4);
+    const at=k=>cs["ABC".indexOf(core[k%L])],ans=at(len),used=[...new Set(core)].map(c=>cs["ABC".indexOf(c)]),vs=[ans];
+    for(const c of U.shuffle(R,used.concat(cs)))if(vs.length<NO&&!vs.includes(c))vs.push(c);
+    return mk("pattern","What colour car comes next?",'<span class="cars">'+Array.from({length:len},(_,k)=>U.car(COLS[at(k)],"")).join("")+U.car("#9aa3ad","?")+"</span>",vs,
+      c=>({key:c,html:U.car(COLS[c],""),say:art(c)+" car"}),"Say the colours out loud.")},
+  add(st){let a,b,max;if(A<=1){max=[10,15,20,20][st];a=U.ri(R,1,max-1);b=U.ri(R,1,Math.min(10,max-a));if(st===2&&R()<.5)b=a<=10?a:b}
+    else if(A===2){if(st===0){a=10*U.ri(R,1,7)+U.ri(R,0,5);b=10*U.ri(R,1,8-Math.floor(a/10))+U.ri(R,0,9-a%10)}else{a=U.ri(R,11,80);b=U.ri(R,5,99-a)}}
+    else{a=U.ri(R,100,800);b=U.ri(R,10,999-a)}
+    const ans=a+b;return mk("add","What is "+a+" plus "+b+"?","<b>"+a+" + "+b+" = ?</b>",slips(ans,NO,0,A>=2||st>=2),v=>({key:v,html:big(v),say:String(v)}),"Start at "+a+" and count on "+b+".")},
+  sub(st){let a,b;if(A<=1){const max=[10,15,20,20][st];a=U.ri(R,3,max);b=U.ri(R,1,Math.min(10,a-1))}else if(A===2){a=U.ri(R,st?30:20,99);b=st?U.ri(R,5,a-10):U.ri(R,1,a%10||1)}
+    else{a=U.ri(R,300,999);b=U.ri(R,20,a-100)}
+    const ans=a-b;return mk("sub","What is "+a+" take away "+b+"?","<b>"+a+" − "+b+" = ?</b>",slips(ans,NO,0,A>=2||st>=2),v=>({key:v,html:big(v),say:String(v)}),"Start at "+a+" and count back "+b+".")},
+  missing(st){const by=st===3?10:1,back=st===2,s=back?U.ri(R,5,20):st===0?U.ri(R,1,16):st===1?10*U.ri(R,1,9)-U.ri(R,1,3):10*U.ri(R,0,6);
+    const seq=Array.from({length:4},(_,k)=>back?s-k:s+k*by),hole=U.ri(R,1,2),ans=seq[hole];
+    return mk("missing","What number is missing? "+seq.map((v,k)=>k===hole?"blank":v).join(", "),"<b>"+seq.map((v,k)=>k===hole?"__":v).join(", ")+"</b>",slips(ans,NO,0,by===10),
+      v=>({key:v,html:big(v),say:String(v)}),"Count "+(back?"back":"on")+" "+(by===10?"by tens":"by ones")+".")},
+  skip(st){const by=A<=1?[10,10,5,2][st]:[2,5,10,25][st],s=A<=1||st>=3?0:U.ri(R,1,9),seq=Array.from({length:3},(_,k)=>s+by*k),ans=s+3*by;
+    const vs=[ans];for(const v of U.shuffle(R,[ans+by,ans-1,ans+1,ans+2*by,ans-2]))if(vs.length<NO&&v>0&&!vs.includes(v))vs.push(v);
+    return mk("skip","Count by "+by+"s. "+seq.join(", ")+". What comes next?","<b>"+seq.join(", ")+", ?</b>",vs,v=>({key:v,html:big(v),say:String(v)}),"Add "+by+" to "+seq[2]+".")},
+  bigger(st){const hi=A<=1?100:1000,ans=A<=1?U.ri(R,21,99):U.ri(R,120,989),d=String(ans),vs=[ans];
+    const rev=+d.split("").reverse().join("");if(rev<ans&&rev>0)vs.push(rev);
+    for(const v of U.shuffle(R,[ans-10,ans-1,ans-9,ans-100,Math.floor(ans/10)*10-1]))if(vs.length<NO&&v>0&&v<ans&&!vs.includes(v))vs.push(v);
+    return mk("bigger","Take the biggest number!","Take the <b>biggest</b> number",vs,v=>({key:v,html:big(v),say:String(v)}),"Look at the "+(A<=1?"tens":"hundreds")+" first.")},
+  firstletter(st){const [em,w]=U.pick(R,SAFE_WORDS),t=w[0],pool="bdfghlmnprstvz".split("").filter(x=>x!==t),vs=[t].concat(U.sample(R,pool,NO-1));
+    return mk("firstletter",w+". What letter does "+w+" start with?",'<span class="emo">'+em+"</span> starts with… ?",vs,x=>({key:x,html:'<span class="ltr">'+x+"</span>",say:x}),
+      "Say it slowly: "+w+".")},
+  oddeven(st){const even=R()<.5,ans=2*U.ri(R,5,49)+(even?0:1),vs=[ans];while(vs.length<NO){const v=2*U.ri(R,5,49)+(even?1:0);if(!vs.includes(v))vs.push(v)}
+    const q=mk("oddeven","Take the "+(even?"even":"odd")+" number!","Take the <b>"+(even?"even":"odd")+"</b> number",vs,v=>({key:v,html:big(v),say:v+". "+v+" is "+(v%2?"odd":"even")}),
+      "Look at the last digit.");return q},
+  tens(st){const T=U.ri(R,1,9),O=U.ri(R,1,9),ans=10*T+O,vs=[ans];for(const v of U.shuffle(R,[10*O+T,ans+10,ans-10,T+O,ans+1]))if(vs.length<NO&&v>0&&!vs.includes(v))vs.push(v);
+    return mk("tens",T+" tens and "+O+" ones. What number is it?",(st===0?U.tens(ans):"")+"<b>"+T+" tens "+O+" ones</b>",vs,v=>({key:v,html:big(v),say:String(v)}),
+      "Tens first: "+T+" tens is "+10*T+".")},
+  mul(st){const m=st<2?10:12,a=U.ri(R,2,m),b=U.ri(R,2,st<1?5:m),ans=a*b,vs=[ans];for(const v of U.shuffle(R,[ans+a,ans-a,ans+b,ans-b,ans+1]))if(vs.length<NO&&v>0&&!vs.includes(v))vs.push(v);
+    return mk("mul","What is "+a+" times "+b+"?","<b>"+a+" × "+b+" = ?</b>",vs,v=>({key:v,html:big(v),say:String(v)}),"Think: "+b+" groups of "+a+".")},
+  div(st){const b=U.ri(R,2,st<2?10:12),q=U.ri(R,2,10),vs=[q];for(const v of U.shuffle(R,[q+1,q-1,q+2,b]))if(vs.length<NO&&v>0&&!vs.includes(v))vs.push(v);
+    return mk("div","What is "+q*b+" divided by "+b+"?","<b>"+q*b+" ÷ "+b+" = ?</b>",vs,v=>({key:v,html:big(v),say:String(v)}),"What times "+b+" makes "+q*b+"?")}};
+const POOL=A<0?["num","count","colour","shape","letter","more"]:A===0?["num","count","letter","shape","more","onemore","addpic","pattern"]:
+  A===1?["add","sub","missing","skip","bigger","firstletter"]:A===2?["add","sub","skip","oddeven","tens","bigger"]:["mul","div","add","sub","bigger"];
+let lastKind="";const retry=[];
+function newQ(){const r=retry.findIndex(x=>x.due<=save.forks);
+  if(r>=0){const q=retry.splice(r,1)[0].q;q.opts=U.shuffle(R,q.opts);q.again=true;return q}
+  let k;do k=U.pick(R,POOL);while(k===lastKind&&POOL.length>1);lastKind=k;
+  return KINDS[k](Math.max(0,Math.min(3,save.step[k]||0)))}
+// adaptive: about 4 of 5 right steps up, 2 misses in a row steps down
+function learnt(kind,ok){const h=(save.hist[kind]=save.hist[kind]||[]);h.push(ok?1:0);while(h.length>5)h.shift();
+  const st=save.step[kind]||0;if(h.length>=5&&h.reduce((a,b)=>a+b,0)>=4&&st<3){save.step[kind]=st+1;save.hist[kind]=[]}
+  else if(h.length>=2&&!h[h.length-1]&&!h[h.length-2]&&st>0){save.step[kind]=st-1;save.hist[kind]=[]}}
+
+/* ---------- cars you can win ---------- */
+const CARS={passenger:"passenger car",coal:"coal car",tanker:"tank car",box:"box car",flat:"flat car",logs:"log car",caboose:"caboose",animal:"animal car",party:"party car",ice:"ice cream car",grain:"grain car",mail:"mail car"};
+const PAL=["#e2412e","#3b6fd9","#f2b705","#43a047","#8f5bd6","#f08a24","#1e9e8a","#e06aa6"];
+const FAVEM=(()=>{const f=TS.players.fav&&TS.players.fav();return f?f.em.map(x=>x[0]):["🦖","🧸","🎁","🚜","🦄","🏆"]})();
+/* each station gives its own kind of car (its sign shows what) */
+const GIVES={"Moose Creek":["animal","🐄"],"Prairie Town":["passenger","🧑"],"Pine Hill":["logs","🪵"],"Bison Flats":["animal","🦬"],"Maple Junction":["box","📦"],
+  "Sunny Lake":["tanker","💧"],"Rocky Peak":["coal","⛏️"],"Wheat Field":["grain","🌾"],"Beaver Pond":["logs","🪵"],"Chinook Corner":["mail","✉️"],"Hoodoo Hill":["coal","⛏️"],
+  "Gopher Gulch":["grain","🌾"],"Duck Lake":["tanker","💧"],"Teddy Bear Stop":["flat","🧸"],"Northern Lights":["caboose","🏮"],"Blueberry Bend":["passenger","🧑"],
+  "Elk Valley":["animal","🦌"],"Rainbow Bridge":["party","🎈"],"Snowy Owl":["mail","✉️"],"Honey Hollow":["ice","🍦"]};
+const gives=name=>GIVES[name]||["party","🎈"];
+function newCar(name){const g=gives(name),k=g[0],last=save.cars[save.cars.length-1];
+  let c;do c=U.pick(R,PAL);while(last&&c===last.c);return{k,c,e:k==="flat"&&g[1]==="🧸"?U.pick(R,["🧸",...FAVEM]):k==="animal"?g[1]:U.pick(R,FAVEM),seed:Math.floor(R()*1e6)}}
+const STN=["Moose Creek","Prairie Town","Pine Hill","Bison Flats","Maple Junction","Sunny Lake","Rocky Peak","Wheat Field","Beaver Pond","Chinook Corner","Hoodoo Hill",
+  "Gopher Gulch","Duck Lake","Teddy Bear Stop","Northern Lights","Blueberry Bend","Elk Valley","Rainbow Bridge","Snowy Owl","Honey Hollow"];
+const stName=n=>n>0&&n%6===0&&P.name?P.name+"ville":STN[n%STN.length];
+
+/* ---------- world ---------- */
+const cv=$("cv"),view=$("view");let ctx=cv.getContext("2d");
+let W=0,H=0,dpr=1,s=1,vw=900,vh=640,BASE=380,HOR=160,FRONT=.36;
+function resize(){const r=view.getBoundingClientRect();W=r.width;H=r.height;dpr=Math.min(2,devicePixelRatio||1);cv.width=Math.round(W*dpr);cv.height=Math.round(H*dpr);
+  const portrait=W<H*.9;s=Math.max(.42,Math.min(W/(portrait?620:940),H/620));vw=W/s;vh=H/s;FRONT=portrait?.24:.34;
+  BASE=Math.round(vh*.6);HOR=Math.max(70,BASE-215);$("signs").style.fontSize=(40*s)+"px"}
+addEventListener("resize",resize);
+const BIO={prairie:{sky:"#7cc4ff",sky2:"#e4f4ff",far:"#a9b6cf",g1:"#e3cb6e",g2:"#c9a944"},forest:{sky:"#78bff7",sky2:"#e3f4ff",far:"#8ea6c6",g1:"#6fae4f",g2:"#4c8a38"},
+  mountains:{sky:"#66aef0",sky2:"#e6f1ff",far:"#7d90b2",g1:"#82af62",g2:"#5b8b44"},lake:{sky:"#86ccff",sky2:"#ecf8ff",far:"#9bb4d6",g1:"#7cc062",g2:"#58a049"},
+  town:{sky:"#8ac6ff",sky2:"#f3f8ff",far:"#a5b4cf",g1:"#88c16b",g2:"#69a552"}};
+const hex=h=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16)),mixC=(a,b,t)=>{const x=hex(a),y=hex(b);return"rgb("+x.map((v,i)=>Math.round(v+(y[i]-v)*t)).join(",")+")"};
+let tx=0,v=0,camX=0,mode="start",T=0,wheelA=0;const CRUISE=165,ACC=110,DEC=150;
+const LEGS=[],STOPS=[],FORKS=[],RIVERS=[],TUNNELS=[],STATIONS=[];let sp=0,lastBiome="";
+function station(x,name){const st={type:"station",stop:x,name,x0:x-480,x1:x+90};STATIONS.push(st);return st}
+function newLeg(x0){let b;do b=U.pick(R,Object.keys(BIO));while(b===lastBiome);lastBiome=b;let x=x0+360;const n=U.ri(R,3,5);
+  for(let k=0;k<n;k++){
+    if((b==="mountains"&&R()<.75)||(b==="forest"&&R()<.4)){const t0=x+140,t1=t0+U.ri(R,300,460);TUNNELS.push({x0:t0,x1:t1,off:0,H:U.ri(R,70,120),trees:U.ri(R,0,3)});x=t1+260}
+    else if((b==="lake"&&R()<.7)||(b==="prairie"&&R()<.35)||(b==="town"&&R()<.3)){const r0=x+170,w=U.ri(R,100,150);RIVERS.push({x0:r0,x1:r0+w,offs:[0]});x=r0+w+260}
+    else x+=U.ri(R,380,600);
+    const f={type:"fork",stop:x-10,xs:x,xm:x+260,xe:x+780,xf:x+1040,n:NO,offs:NO===2?[-82,82]:[-112,0,112],choice:null,q:null,signs:[],miss:0};
+    if(R()<.4){const r0=f.xm+190+U.ri(R,0,110);RIVERS.push({x0:r0,x1:r0+U.ri(R,100,135),offs:f.offs})}
+    else{const k2=U.ri(R,0,NO-1);TUNNELS.push({x0:f.xm+110,x1:f.xe-30,off:f.offs[k2],H:U.ri(R,30,46),trees:U.ri(R,0,2),fork:f})}
+    FORKS.push(f);STOPS.push(f);x=f.xf}
+  const st=station(x+560,stName(save.stations+1+LEGS.length-legsDone));st.leg=true;STOPS.push(st);LEGS.push({x0,x1:st.stop+200,biome:b});return st}
+let legsDone=0;
+const biomeAt=x=>{for(const L of LEGS)if(x>=L.x0&&x<L.x1)return L.biome;return LEGS.length?LEGS[LEGS.length-1].biome:"prairie"};
+const sm=t=>t<=0?0:t>=1?1:t*t*(3-2*t);
+const shape=(f,x)=>x<=f.xs||x>=f.xf?0:x<f.xm?sm((x-f.xs)/(f.xm-f.xs)):x<=f.xe?1:1-sm((x-f.xe)/(f.xf-f.xe));
+function trackY(x){for(const f of FORKS)if(f.choice!=null&&x>f.xs&&x<f.xf)return BASE+f.offs[f.choice]*shape(f,x);return BASE}
+
+/* scenery layers: each spawns items ahead of the camera in its own (parallax) coordinates */
+const blocked=x=>STATIONS.some(st=>x>st.x0-30&&x<st.x1+30)||RIVERS.some(r=>x>r.x0-50&&x<r.x1+50);
+const LAY=[
+  {sp:.05,drift:5,items:[],next:-200,gen:genCloud},
+  {sp:.13,items:[],next:-300,gen:genFar},
+  {sp:.38,items:[],next:-300,gen:genMid},
+  {sp:1,items:[],next:-500,gen:genNear},
+  {sp:1,items:[],next:-500,gen:genPole,poles:true},
+  {sp:1,items:[],next:-500,gen:genFront},
+  {sp:1.55,items:[],next:200,gen:genFg}];
+const lcam=L=>camX*L.sp+(L.drift?T*L.drift:0);
+function spawn(){const b=biomeAt(camX+vw+250);for(const L of LAY){const c=lcam(L);
+    while(L.next<c+vw+320){const it=L.gen(L.next,b,L);it.x=L.next;L.items.push(it);L.next+=it.gap}
+    while(L.items.length&&L.items[0].x+(L.items[0].w||200)<c-300)L.items.shift()}}
+const EMF='"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';
+function emo(e,x,y,size){ctx.font=size+"px "+EMF;ctx.textAlign="center";ctx.textBaseline="bottom";ctx.fillText(e,x,y)}
+function genCloud(){const w=U.ri(R,60,130),y=U.ri(R,14,Math.max(20,HOR-60));return{w,gap:U.ri(R,160,380),d:x=>{ctx.fillStyle="rgba(255,255,255,.92)";ctx.beginPath();
+  ctx.ellipse(x+w*.5,y,w*.5,w*.17,0,0,7);ctx.ellipse(x+w*.35,y-w*.1,w*.22,w*.17,0,0,7);ctx.ellipse(x+w*.62,y-w*.12,w*.24,w*.2,0,0,7);ctx.fill()}}}
+function genFar(x,b){const c=BIO[b].far;
+  if(b==="mountains"){const w=U.ri(R,210,350),h=U.ri(R,120,200),pk=U.ri(R,40,60)/100;return{w,gap:w*.5,d:x=>{const hh=Math.min(h,HOR-6),top=HOR+4-hh;
+    ctx.fillStyle=c;ctx.beginPath();ctx.moveTo(x,HOR+4);ctx.lineTo(x+w*pk,top);ctx.lineTo(x+w,HOR+4);ctx.fill();
+    ctx.fillStyle="rgba(0,0,0,.09)";ctx.beginPath();ctx.moveTo(x+w*pk,top);ctx.lineTo(x+w,HOR+4);ctx.lineTo(x+w*pk+w*.08,HOR+4);ctx.fill();
+    ctx.fillStyle="#f6f9ff";ctx.beginPath();const q=.3;ctx.moveTo(x+w*pk*(1-q),top+hh*q);ctx.lineTo(x+w*pk,top);ctx.lineTo(x+w*pk+(w-w*pk)*q,top+hh*q);
+    ctx.lineTo(x+w*pk+w*.04,top+hh*q*.75);ctx.lineTo(x+w*pk-w*.01,top+hh*q*1.05);ctx.lineTo(x+w*pk-w*.06,top+hh*q*.8);ctx.fill()}}}
+  const w=U.ri(R,260,440),h=U.ri(R,24,60);return{w,gap:w*.6,d:x=>{ctx.fillStyle=c;ctx.beginPath();ctx.ellipse(x+w/2,HOR+4,w/2,Math.min(h,HOR-6),0,Math.PI,0);ctx.fill()}}}
+function pine(x,y,h,col){ctx.fillStyle="#6b4a2b";ctx.fillRect(x-h*.05,y-h*.18,h*.1,h*.18);ctx.fillStyle=col;
+  for(let k=0;k<3;k++){const w=h*(.42-k*.09),yy=y-h*.12-k*h*.24;ctx.beginPath();ctx.moveTo(x-w,yy);ctx.lineTo(x,yy-h*.42);ctx.lineTo(x+w,yy);ctx.fill()}}
+function leafy(x,y,h,col){ctx.fillStyle="#6b4a2b";ctx.fillRect(x-h*.06,y-h*.45,h*.12,h*.45);ctx.fillStyle=col;ctx.beginPath();ctx.arc(x,y-h*.62,h*.3,0,7);ctx.arc(x-h*.2,y-h*.5,h*.22,0,7);ctx.arc(x+h*.2,y-h*.5,h*.22,0,7);ctx.fill()}
+function house(x,y,w,h,col,roof){ctx.fillStyle=col;ctx.fillRect(x,y-h,w,h);ctx.fillStyle=roof;ctx.beginPath();ctx.moveTo(x-w*.1,y-h);ctx.lineTo(x+w/2,y-h-w*.45);ctx.lineTo(x+w*1.1,y-h);ctx.fill();
+  ctx.fillStyle="#fff6c9";ctx.fillRect(x+w*.15,y-h*.72,w*.22,h*.28);ctx.fillRect(x+w*.62,y-h*.72,w*.22,h*.28);ctx.fillStyle="#6b4a2b";ctx.fillRect(x+w*.4,y-h*.45,w*.2,h*.45)}
+function genMid(x,b){const y=()=>HOR+4;
+  if(b==="prairie"){const r=R();if(r<.3)return{w:50,gap:U.ri(R,200,420),d:x=>{const Y=y();ctx.fillStyle="#b5402f";ctx.fillRect(x,Y-62,24,62);ctx.fillStyle="#8a2f22";ctx.beginPath();ctx.moveTo(x-3,Y-62);ctx.lineTo(x+12,Y-76);ctx.lineTo(x+27,Y-62);ctx.fill();ctx.fillStyle="#9aa3ad";ctx.fillRect(x+24,Y-30,18,30)}};
+    if(r<.6)return{w:70,gap:U.ri(R,140,300),d:x=>{const Y=y();ctx.fillStyle="#d9a93c";for(let k=0;k<3;k++){ctx.beginPath();ctx.arc(x+k*22,Y-7,7,0,7);ctx.fill()}}};
+    return{w:60,gap:U.ri(R,160,340),d:x=>{const Y=y();house(x,Y,34,20,"#c0392b","#7b241c")}}}
+  if(b==="forest"||b==="mountains"){const n=U.ri(R,4,8),hs=Array.from({length:n},()=>U.ri(R,16,34)),col=b==="forest"?"#2f6b3a":"#3f7550";return{w:n*14,gap:U.ri(R,40,160),d:x=>{const Y=y();hs.forEach((h,k)=>pine(x+k*14,Y,h,col))}}}
+  if(b==="lake"){const w=U.ri(R,220,340);return{w,gap:w+U.ri(R,60,200),d:x=>{const Y=y();ctx.fillStyle="#5aa7e0";ctx.beginPath();ctx.ellipse(x+w/2,Y+3,w/2,7,0,0,7);ctx.fill();emo("⛵",x+w*.6,Y+2,18)}}}
+  const n=U.ri(R,2,4),cs=Array.from({length:n},()=>U.pick(R,["#e8d3a8","#d98c5f","#a7c4e0","#f2e3c4","#cf9fb0"]));return{w:n*30,gap:U.ri(R,60,200),d:x=>{const Y=y();cs.forEach((c,k)=>house(x+k*30,Y,24,18,c,"#7b4b3a"))}}}
+function genNear(x,b){const lo=HOR+30,hi=Math.max(lo,BASE-150),y=U.ri(R,0,1000)/1000;if(blocked(x))return{w:40,gap:70,d:null};const Y=()=>lo+(Math.max(lo,BASE-150)-lo)*y;
+  const r=R(),gap=U.ri(R,70,200);
+  const animal=(e,sz)=>({w:sz,gap:gap+60,d:x=>emo(e,x,Y()+4,sz)});
+  if(b==="prairie"){if(r<.25)return animal(U.pick(R,["🐄","🐄","🦬","🐎"]),U.ri(R,34,46));if(r<.6){const n=U.ri(R,5,9);return{w:n*7,gap,d:x=>{const yy=Y();ctx.strokeStyle="#b78f2c";ctx.lineWidth=2.4;
+      for(let k=0;k<n;k++){ctx.beginPath();ctx.moveTo(x+k*7,yy);ctx.lineTo(x+k*7+2,yy-22);ctx.stroke();ctx.fillStyle="#d8b04a";ctx.beginPath();ctx.ellipse(x+k*7+2,yy-24,3,6,0,0,7);ctx.fill()}}}}
+    if(r<.75){const h=U.ri(R,50,80);return{w:40,gap,d:x=>leafy(x,Y(),h,"#5d9a3f")}}
+    return{w:44,gap,d:x=>{const yy=Y();ctx.fillStyle="#b9c2cb";ctx.fillRect(x,yy-34,22,34);ctx.beginPath();ctx.ellipse(x+11,yy-34,11,6,0,Math.PI,0);ctx.fill();ctx.fillStyle="#98a2ad";ctx.fillRect(x+16,yy-34,4,34)}}}
+  if(b==="forest"){if(r<.15)return animal(U.pick(R,["🫎","🦌","🐿️","🐻"]),U.ri(R,34,48));const h=U.ri(R,60,120);return{w:h*.8,gap:U.ri(R,30,110),d:x=>pine(x,Y(),h,R2col(x))}}
+  if(b==="mountains"){if(r<.12)return animal(U.pick(R,["🐐","🦌"]),U.ri(R,32,42));if(r<.2)return{w:30,gap,d:x=>emo("🦅",x,Math.max(30,HOR-40)+(Math.sin(T+x)*6),26)};
+    if(r<.45){const w=U.ri(R,26,50);return{w,gap,d:x=>{const yy=Y();ctx.fillStyle="#8f8a83";ctx.beginPath();ctx.ellipse(x+w/2,yy-w*.3,w/2,w*.32,0,0,7);ctx.fill();ctx.fillStyle="#a8a39b";ctx.beginPath();ctx.ellipse(x+w*.4,yy-w*.38,w*.25,w*.15,0,0,7);ctx.fill()}}}
+    const h=U.ri(R,55,100);return{w:h*.8,gap:U.ri(R,40,140),d:x=>pine(x,Y(),h,"#356b45")}}
+  if(b==="lake"){if(r<.2)return animal(U.pick(R,["🦆","🛶","🦫"]),U.ri(R,30,40));if(r<.45){const n=U.ri(R,4,8);return{w:n*6,gap,d:x=>{const yy=Y();ctx.strokeStyle="#5b7a3a";ctx.lineWidth=2.5;for(let k=0;k<n;k++){ctx.beginPath();ctx.moveTo(x+k*6,yy);ctx.lineTo(x+k*6+(k%2?3:-2),yy-26-(k%3)*6);ctx.stroke()}ctx.fillStyle="#7a4a2a";ctx.fillRect(x+4,yy-34,4,10)}}}
+    const h=U.ri(R,50,85);return{w:40,gap,d:x=>leafy(x,Y(),h,"#4f9a4a")}}
+  if(r<.55){const w=U.ri(R,46,70),h=U.ri(R,34,52),c=U.pick(R,["#e8d3a8","#d98c5f","#a7c4e0","#f2e3c4","#cf9fb0","#b5d99c"]);return{w:w+10,gap:U.ri(R,30,90),d:x=>house(x,Y(),w,h,c,"#7b4b3a")}}
+  if(r<.7)return animal(U.pick(R,["🏪","🏫","⛪","🚲"]),U.ri(R,40,52));const h=U.ri(R,50,80);return{w:40,gap,d:x=>leafy(x,Y(),h,"#5d9a3f")}}
+const R2col=x=>(Math.floor(x)%3)?"#2f6b3a":"#285f33";
+function genPole(x,b){if(blocked(x)||b==="town")return{w:30,gap:240,d:null};return{w:10,gap:240,pole:true,d:x=>{const y=BASE-140;ctx.fillStyle="#7a5230";ctx.fillRect(x-2,y-64,4,64);ctx.fillRect(x-12,y-58,24,3)}}}
+function genFront(x,b){const lo=BASE+172;if(lo>vh-8||blocked(x))return{w:40,gap:80,d:null};const y=U.ri(R,0,1000)/1000,Y=()=>Math.min(vh-4,lo+(vh-4-lo)*y),r=R(),gap=U.ri(R,60,180);
+  if(b==="lake"&&r<.3){const w=U.ri(R,260,420);return{w,gap:w+60,d:x=>{const t=BASE+168;if(t>vh)return;ctx.fillStyle="#4aa3df";ctx.beginPath();ctx.roundRect(x,t,w,vh-t+30,40);ctx.fill();
+    ctx.strokeStyle="rgba(255,255,255,.5)";ctx.lineWidth=2;for(let k=0;k<3;k++){const yy=t+18+k*18;if(yy>vh)break;ctx.beginPath();ctx.moveTo(x+30+k*20+((T*14)%30),yy);ctx.lineTo(x+70+k*20+((T*14)%30),yy);ctx.stroke()}
+    emo("🦆",x+w*.4+Math.sin(T*.7)*10,t+44,30)}}}
+  if(r<.4){const n=U.ri(R,3,6);return{w:n*5,gap,d:x=>{const yy=Y();ctx.strokeStyle=b==="prairie"?"#b08a2e":"#3f7f33";ctx.lineWidth=2.2;for(let k=0;k<n;k++){ctx.beginPath();ctx.moveTo(x+k*5,yy);ctx.lineTo(x+k*5+(k-n/2)*2,yy-12-(k%2)*6);ctx.stroke()}}}}
+  if(r<.6)return{w:24,gap,d:x=>emo(pick2(x,["🌼","🌷","🌸","🍄"]),x,Y(),22)};
+  if(r<.7)return{w:30,gap:gap+80,d:x=>emo(b==="forest"?"🐿️":b==="prairie"?"🐇":b==="mountains"?"🪨":"🐇",x,Y(),26)};
+  const w=U.ri(R,16,30);return{w,gap,d:x=>{const yy=Y();ctx.fillStyle="#9b958d";ctx.beginPath();ctx.ellipse(x+w/2,yy-w*.25,w/2,w*.28,0,0,7);ctx.fill()}}}
+const pick2=(x,a)=>a[Math.abs(Math.floor(x/7))%a.length];
+function genFg(){if(vh-BASE<230)return{w:60,gap:600,d:null};const w=U.ri(R,90,150),col=U.pick(R,["#2e6b2a","#3c7d32","#356f2c"]);
+  return{w,gap:U.ri(R,600,1300),d:x=>{const y=vh+18;ctx.fillStyle=col;ctx.beginPath();ctx.ellipse(x+w*.3,y,w*.3,w*.32,0,0,7);ctx.ellipse(x+w*.62,y+4,w*.36,w*.4,0,0,7);ctx.fill()}}}
+
+/* ---------- drawing the track, tunnels, rivers, stations ---------- */
+function railLine(yf,x0,x1,alpha){const a=Math.max(x0,camX-80),b=Math.min(x1,camX+vw+80);if(b<=a)return;ctx.globalAlpha=alpha||1;
+  const path=(dy)=>{ctx.beginPath();for(let x=a;;x+=6){const xx=Math.min(x,b);const y=yf(xx)+dy;xx===a?ctx.moveTo(xx-camX,y):ctx.lineTo(xx-camX,y);if(xx>=b)break}};
+  ctx.lineCap="round";ctx.strokeStyle="#8d7c69";ctx.lineWidth=15;path(8);ctx.stroke();
+  ctx.fillStyle="#5d4330";for(let x=Math.ceil(a/16)*16;x<=b;x+=16){const y=yf(x);ctx.fillRect(x-camX-3,y+1,7,9)}
+  ctx.strokeStyle="#59606a";ctx.lineWidth=3.6;path(0);ctx.stroke();ctx.strokeStyle="#c3c9d0";ctx.lineWidth=1.2;path(-1.5);ctx.stroke();ctx.globalAlpha=1}
+function drawTracks(){let x=camX-80;const end=camX+vw+80,fs=FORKS.filter(f=>f.xf>x&&f.xs<end).sort((p,q)=>p.xs-q.xs);
+  for(const f of fs){if(f.xs>x)railLine(()=>BASE,x,f.xs);f.offs.forEach((o,k)=>railLine(xx=>BASE+o*shape(f,xx),f.xs,f.xf,f.choice==null||f.choice===k?1:.55));x=Math.max(x,f.xf)}
+  if(x<end)railLine(()=>BASE,x,end)}
+function drawRiver(r){if(r.x1<camX-200||r.x0>camX+vw+200)return;const cx=(r.x0+r.x1)/2-camX,w=r.x1-r.x0;
+  ctx.fillStyle="#4aa3df";ctx.beginPath();ctx.moveTo(cx-w*.22,HOR+3);ctx.bezierCurveTo(cx-w*.5,BASE-60,cx-w*.4,BASE+80,cx-w*.75,vh+10);ctx.lineTo(cx+w*.75,vh+10);
+  ctx.bezierCurveTo(cx+w*.4,BASE+80,cx+w*.5,BASE-60,cx+w*.22,HOR+3);ctx.fill();
+  ctx.strokeStyle="rgba(255,255,255,.45)";ctx.lineWidth=2;for(let k=0;k<6;k++){const yy=HOR+20+((k*57+T*22)%(vh-HOR));const ww=w*(.15+.35*(yy-HOR)/(vh-HOR));ctx.beginPath();ctx.moveTo(cx-ww*.5,yy);ctx.lineTo(cx+ww*.1,yy);ctx.stroke()}}
+function drawBridges(r){if(r.x1<camX-200||r.x0>camX+vw+200)return;const x0=r.x0-30-camX,x1=r.x1+30-camX;
+  for(const o of r.offs){const y=BASE+o;ctx.fillStyle="#6f7680";for(let x=x0+16;x<x1-10;x+=50)ctx.fillRect(x,y+14,10,60);ctx.fillStyle="#7a5232";ctx.fillRect(x0,y+4,x1-x0,11);
+    ctx.strokeStyle="#8a5c36";ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(x0,y-28);ctx.lineTo(x1,y-28);ctx.stroke();ctx.lineWidth=2.4;
+    for(let x=x0;x<=x1;x+=22){ctx.beginPath();ctx.moveTo(x,y-28);ctx.lineTo(x,y+4);ctx.stroke()}}}
+function portal(t){if(t.x1<camX-200||t.x0>camX+vw+200)return;const y=BASE+t.off;ctx.fillStyle="#191919";
+  for(const px of [t.x0+22,t.x1-22]){ctx.beginPath();ctx.moveTo(px-34-camX,y+12);ctx.lineTo(px-34-camX,y-52);ctx.arc(px-camX,y-52,34,Math.PI,0);ctx.lineTo(px+34-camX,y+12);ctx.fill()}}
+function hill(t){if(t.x1<camX-200||t.x0>camX+vw+200)return;const y=BASE+t.off,a=t.x0+22-camX,b=t.x1-22-camX,top=y-60-t.H;
+  ctx.fillStyle="#8a7d6c";ctx.beginPath();ctx.moveTo(a,y+22);ctx.lineTo(a,y-56);ctx.quadraticCurveTo(a+10,top,(a+b)/2,top);ctx.quadraticCurveTo(b-10,top,b,y-56);ctx.lineTo(b,y+22);ctx.closePath();ctx.fill();
+  ctx.fillStyle="#6d6253";ctx.beginPath();ctx.moveTo((a+b)/2,top);ctx.quadraticCurveTo(b-10,top,b,y-56);ctx.lineTo(b,y+22);ctx.lineTo((a+b)/2+20,y+22);ctx.fill();
+  ctx.fillStyle="#6aa84f";ctx.beginPath();ctx.moveTo(a+8,top+20);ctx.quadraticCurveTo(a+14,top,(a+b)/2,top);ctx.quadraticCurveTo(b-14,top,b-8,top+20);ctx.quadraticCurveTo((a+b)/2,top+8,a+8,top+20);ctx.fill();
+  for(let k=0;k<t.trees;k++)pine(a+(b-a)*(.25+.25*k),top+12,30+8*k,"#2f6b3a");
+  ctx.strokeStyle="#b3a794";ctx.lineWidth=8;for(const px of [a,b]){ctx.beginPath();ctx.arc(px,y-52,40,Math.PI,0);ctx.stroke()}}
+function inTunnel(x,y){return TUNNELS.some(t=>x>t.x0+22&&x<t.x1-22&&Math.abs(BASE+t.off-y)<6)}
+function drawSignal(f){const x=f.stop+30-camX;if(x<-40||x>vw+40)return;ctx.fillStyle="#6b737d";ctx.fillRect(x-3,BASE-98,6,92);ctx.fillStyle="#24282e";ctx.beginPath();ctx.roundRect(x-11,BASE-128,22,36,6);ctx.fill();
+  const go=f.choice!=null;ctx.fillStyle=go?"#3a2020":"#ff3b2f";ctx.beginPath();ctx.arc(x,BASE-118,6,0,7);ctx.fill();ctx.fillStyle=go?"#3dff6a":"#1f3a24";ctx.beginPath();ctx.arc(x,BASE-102,6,0,7);ctx.fill()}
+function drawStationBack(st){const x=st.stop-camX;if(x<-600||x>vw+600)return;const bx=x-380,by=BASE-24;
+  ctx.fillStyle="#c96f3b";ctx.fillRect(bx,by-96,220,96);ctx.fillStyle="#6b3b22";ctx.beginPath();ctx.moveTo(bx-18,by-96);ctx.lineTo(bx+110,by-150);ctx.lineTo(bx+238,by-96);ctx.fill();
+  ctx.fillStyle="#fff6c9";for(const wx of [bx+18,bx+164])ctx.fillRect(wx,by-70,38,30);ctx.fillStyle="#5a3a22";ctx.fillRect(bx+92,by-62,36,62);
+  ctx.fillStyle="#fffaf0";ctx.strokeStyle="#5a3a22";ctx.lineWidth=3;ctx.beginPath();ctx.roundRect(bx+20,by-128,180,28,8);ctx.fill();ctx.stroke();
+  ctx.fillStyle="#1d2230";ctx.font="700 17px Andika,Verdana,sans-serif";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText(gives(st.name)[1]+" "+st.name,bx+110,by-113);
+  ctx.fillStyle="#3a3f46";ctx.fillRect(x+24,BASE-110,5,100);ctx.fillStyle="#ffe680";ctx.beginPath();ctx.arc(x+26,BASE-112,8,0,7);ctx.fill()}
+function drawStationFront(st){const x=st.stop-camX;if(x<-600||x>vw+600)return;ctx.fillStyle="#a9afb6";ctx.fillRect(x-470,BASE+16,520,26);ctx.fillStyle="#d4d8dc";ctx.fillRect(x-470,BASE+14,520,6);
+  ctx.fillStyle="#f2c230";ctx.fillRect(x-470,BASE+19,520,2);emo("🧍",x-300,BASE+44,34);emo(st.leg?"🙋":"🧒",x-262,BASE+44,30);emo("🧳",x-234,BASE+44,22)}
+
+/* ---------- the train ---------- */
+const ENG=112,CAR=90,GAP=6;
+function wheel(x,y,r){ctx.fillStyle="#2b2f36";ctx.beginPath();ctx.arc(x,y,r,0,7);ctx.fill();ctx.strokeStyle="#8d949c";ctx.lineWidth=1.4;
+  for(let k=0;k<3;k++){const a=wheelA+k*Math.PI/3;ctx.beginPath();ctx.moveTo(x-Math.cos(a)*r*.8,y-Math.sin(a)*r*.8);ctx.lineTo(x+Math.cos(a)*r*.8,y+Math.sin(a)*r*.8);ctx.stroke()}
+  ctx.fillStyle="#c0c4c8";ctx.beginPath();ctx.arc(x,y,r*.28,0,7);ctx.fill()}
+function drawEngine(){const col=P.color||"#e2412e";
+  ctx.fillStyle="#2b2f36";ctx.fillRect(-54,-22,104,8);ctx.fillStyle="#b0302a";ctx.beginPath();ctx.moveTo(44,-20);ctx.lineTo(60,-2);ctx.lineTo(44,-2);ctx.fill();
+  ctx.fillStyle=col;ctx.beginPath();ctx.roundRect(-14,-52,62,32,8);ctx.fill();ctx.fillStyle="rgba(0,0,0,.25)";ctx.fillRect(40,-52,9,32);
+  ctx.fillStyle="#f2c230";for(const bx of [2,20])ctx.fillRect(bx,-52,4,32);
+  ctx.fillStyle="#2b2f36";ctx.fillRect(28,-74,11,22);ctx.fillRect(25,-78,17,6);ctx.fillStyle="#f2c230";ctx.beginPath();ctx.arc(12,-52,7,Math.PI,0);ctx.fill();
+  ctx.fillStyle="#ffe680";ctx.beginPath();ctx.arc(50,-44,4.5,0,7);ctx.fill();
+  ctx.fillStyle=col;ctx.fillRect(-54,-76,42,56);ctx.fillStyle="rgba(0,0,0,.18)";ctx.fillRect(-54,-76,42,56);ctx.fillStyle="#2b2f36";ctx.fillRect(-58,-82,50,8);
+  ctx.fillStyle="#cfe9ff";ctx.fillRect(-48,-68,28,22);emo(P.avatar||"🙂",-34,-44,20);
+  wheel(-36,-13,13);wheel(-6,-13,13);wheel(24,-13,13);wheel(46,-6,6);
+  const cx=Math.cos(wheelA)*6,cy=Math.sin(wheelA)*6;ctx.strokeStyle="#c0c4c8";ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(-36+cx,-13+cy);ctx.lineTo(24+cx,-13+cy);ctx.stroke()}
+function rnd(seed){let a=seed>>>0;return()=>{a=(a*1664525+1013904223)>>>0;return a/4294967296}}
+function drawCar(c){const k=c.k,col=c.c,rr=rnd(c.seed||1);
+  ctx.fillStyle="#2b2f36";ctx.fillRect(-44,-20,88,7);ctx.fillRect(-49,-18,6,4);ctx.fillRect(43,-18,6,4);
+  const body=(y0,y1)=>{ctx.fillStyle=col;ctx.beginPath();ctx.roundRect(-42,y0,84,y1-y0,6);ctx.fill()};
+  if(k==="passenger"||k==="party"||k==="mail"){body(-62,-20);ctx.fillStyle="rgba(0,0,0,.3)";ctx.fillRect(-44,-68,88,8);
+    if(k==="mail"){ctx.fillStyle="#fffaf0";ctx.fillRect(-20,-52,40,24);ctx.strokeStyle="#c0392b";ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-20,-52);ctx.lineTo(0,-38);ctx.lineTo(20,-52);ctx.stroke()}
+    else for(let j=0;j<4;j++){const wx=-36+j*20;ctx.fillStyle="#e8f6ff";ctx.fillRect(wx,-54,14,15);ctx.fillStyle=["#f1c27d","#8d5524","#e0ac69","#c68642"][Math.floor(rr()*4)];ctx.beginPath();ctx.arc(wx+7,-44,4,0,7);ctx.fill()}
+    if(k==="party")for(let j=0;j<3;j++){const bx=-26+j*26,by=-96-(j%2)*8+Math.sin(T*2+j)*3;ctx.strokeStyle="#555";ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(bx,by+12);ctx.lineTo(bx,-68);ctx.stroke();
+      ctx.fillStyle=PAL[(j*3+1)%PAL.length];ctx.beginPath();ctx.ellipse(bx,by,8,11,0,0,7);ctx.fill()}}
+  else if(k==="coal"||k==="grain"){ctx.fillStyle=col;ctx.beginPath();ctx.moveTo(-44,-60);ctx.lineTo(44,-60);ctx.lineTo(34,-20);ctx.lineTo(-34,-20);ctx.fill();
+    if(k==="coal"){ctx.fillStyle="#1d1d1d";for(let j=0;j<6;j++){ctx.beginPath();ctx.arc(-34+j*14,-60,8,Math.PI,0);ctx.fill()}}
+    else{ctx.fillStyle="#fff";ctx.font="700 13px Verdana,sans-serif";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText("GRAIN",0,-40);ctx.fillStyle="#d8b04a";ctx.fillRect(-40,-64,80,5)}}
+  else if(k==="tanker"){ctx.fillStyle=col;ctx.beginPath();ctx.roundRect(-42,-54,84,34,17);ctx.fill();ctx.fillStyle="rgba(255,255,255,.35)";ctx.fillRect(-32,-48,64,5);ctx.fillStyle=col;ctx.fillRect(-7,-62,14,9)}
+  else if(k==="box"){body(-66,-20);ctx.fillStyle="rgba(0,0,0,.22)";ctx.fillRect(-14,-62,28,40);ctx.strokeStyle="rgba(255,255,255,.5)";ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-14,-62);ctx.lineTo(14,-22);ctx.moveTo(14,-62);ctx.lineTo(-14,-22);ctx.stroke()}
+  else if(k==="flat"||k==="logs"||k==="ice"){ctx.fillStyle=col;ctx.fillRect(-44,-28,88,9);
+    if(k==="logs"){for(let j=0;j<3;j++){ctx.fillStyle="#8b5a2b";ctx.fillRect(-40,-40-j*0-j*10,80,10);ctx.fillStyle="#d2a36c";ctx.beginPath();ctx.arc(40,-35-j*10,5,0,7);ctx.fill()}ctx.fillStyle="#2b2f36";ctx.fillRect(-30,-62,4,36);ctx.fillRect(26,-62,4,36)}
+    else emo(k==="ice"?"🍦":c.e||"🦖",0,-24,k==="ice"?46:44)}
+  else if(k==="caboose"){body(-58,-20);ctx.fillStyle=col;ctx.fillRect(-14,-74,28,18);ctx.fillStyle="rgba(0,0,0,.3)";ctx.fillRect(-18,-78,36,5);ctx.fillRect(-44,-62,88,5);
+    ctx.fillStyle="#fff6c9";ctx.fillRect(-8,-70,16,10);ctx.fillRect(-32,-48,14,13);ctx.fillRect(18,-48,14,13)}
+  else if(k==="animal"){body(-60,-20);ctx.fillStyle="rgba(0,0,0,.28)";for(let j=0;j<5;j++)ctx.fillRect(-40,-56+j*8,80,3);emo(/^[🐄🦬🦌]/u.test(c.e||"")?c.e:"🐄",-16,-50,30);emo("🐑",18,-50,26)}
+  wheel(-30,-8,8);wheel(-14,-8,8);wheel(14,-8,8);wheel(30,-8,8)}
+function unitAt(fx,L,draw){const cx=fx-L/2,y=trackY(cx),a=Math.atan2(trackY(fx-6)-trackY(fx-L+6),L-12);
+  if(cx-camX<-L||cx-camX>vw+L)return;ctx.save();ctx.translate(cx-camX,y);ctx.rotate(a);draw();ctx.restore()}
+function drawTrain(){let fx=tx;unitAt(fx,ENG,drawEngine);fx-=ENG+GAP;for(const c of save.cars.slice(0,40)){unitAt(fx,CAR,()=>drawCar(c));fx-=CAR+GAP}}
+
+/* smoke and confetti */
+const puffs=[],bits=[];
+function puff(big){const x=tx-ENG/2+33,y=trackY(tx-ENG/2)-80;if(inTunnel(tx-20,trackY(tx-20)))return;puffs.push({x,y,r:big?12:7,a:big?.95:.8,vx:-v*.25-10-R()*10,vy:-22-R()*16})}
+function confetti(){for(let k=0;k<70;k++)bits.push({x:vw/2,y:vh*.45,vx:(R()-.5)*420,vy:-R()*420-80,c:U.pick(R,PAL),r:R()*6,t:0})}
+
+/* ---------- sound: a train horn made with Web Audio ---------- */
+let AC=null;
+function toot(){puff(true);puff(true);if(TS.music.muted)return;try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();if(AC.state==="suspended")AC.resume();
+  const t=AC.currentTime+.02,lp=AC.createBiquadFilter();lp.type="lowpass";lp.frequency.value=1400;const g=AC.createGain();lp.connect(g);g.connect(AC.destination);
+  g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.12,t+.04);g.gain.setValueAtTime(.12,t+.5);g.gain.exponentialRampToValueAtTime(.001,t+.75);
+  for(const f of [311,392,466]){const o=AC.createOscillator();o.type="sawtooth";o.frequency.value=f;o.connect(lp);o.start(t);o.stop(t+.8)}}catch(e){}}
+$("horn").onclick=()=>toot();
+
+/* ---------- the Y: signs, asking, answering ---------- */
+let legMiss=0,legT0=Date.now();
+function setupFork(f){f.q=newQ();f.signs=f.q.opts.map((o,k)=>{const el=document.createElement("button");el.type="button";el.className="sign wait";el.innerHTML=o.html;
+  el.setAttribute("aria-label",o.say);el.onclick=()=>tap(f,k);$("signs").appendChild(el);return{el,k}})}
+function askNow(f){const q=f.q;$("askT").innerHTML=q.ask;$("ask").hidden=false;f.signs.forEach(x=>x.el.classList.remove("wait"));
+  TS.say((save.forks===0&&!f.miss?"Tap a sign to choose a track. ":"")+q.say)}
+$("spk").onclick=()=>{const f=STOPS[sp];if(f&&f.q)TS.say(f.q.say)};
+function tap(f,k){if(mode!=="ask"||STOPS[sp]!==f||f.choice!=null)return;const q=f.q,o=q.opts[k],sg=f.signs[k];
+  if(o.key===q.ans){f.choice=k;TS.music.fx("good");sg.el.classList.remove("glow");sg.el.classList.add("yes");f.signs.forEach((x,j)=>{if(j!==k)x.el.classList.add("gone")});
+    TS.say(U.pick(R,["Yes!","Great!","You got it!","Right track!","All aboard!"])+" "+o.say[0].toUpperCase()+o.say.slice(1)+"!");
+    learnt(q.kind,!f.miss);save.forks++;SV.save();sp++;mode="go";setTimeout(()=>{$("ask").hidden=true;toot();mode="run"},900);return}
+  f.miss++;legMiss++;TS.music.fx("bad");sg.el.classList.add("no");
+  const right=f.signs[q.opts.findIndex(x=>x.key===q.ans)].el,left=f.signs.filter(x=>!x.el.classList.contains("no")).length;
+  TS.say("That's "+o.say+". "+(f.miss>=2||left===1?"This sign is the one. Tap it!":q.hint));
+  if(f.miss>=2||left===1)right.classList.add("glow");
+  if(f.miss===1&&!q.again)retry.push({q,due:save.forks+2})}
+function placeSigns(){for(const f of FORKS){if(!f.signs.length)continue;const sx=(f.xm+46-camX)*s;
+  if(sx<-200&&f.choice!=null){f.signs.forEach(x=>x.el.remove());f.signs=[];continue}
+  if(f.choice!=null&&tx>f.xm-20)f.signs[f.choice].el.classList.add("gone");
+  f.signs.forEach((x,k)=>{const w=x.el.offsetWidth,h=x.el.offsetHeight;x.el.style.transform="translate("+(sx-w/2)+"px,"+((BASE+f.offs[k])*s-h/2)+"px)"})}}
+
+/* ---------- stations and presents ---------- */
+function card(html){$("mid").innerHTML=html?'<div class="stcard">'+html+"</div>":""}
+function score(){$("score").innerHTML="<span>🚉 "+save.stations+"</span><span>🚃 "+save.cars.length+"</span>"}
+function nextName(){const st=STOPS.slice(sp).find(x=>x.type==="station");return st?st.name:stName(save.stations+1)}
+function thumb(cvs,c){const o=ctx;ctx=cvs.getContext("2d");ctx.setTransform(1.15,0,0,1.15,cvs.width/2,cvs.height-4);drawCar(c);ctx=o}
+function startCard(title){const nx=nextName();card("<h2>"+(title||"All aboard, "+(P.name||"friend")+"!")+"</h2><p>Next stop: "+nx+" "+gives(nx)[1]+"</p><button class=\"gobtn\" id=\"go\" type=\"button\">▶ Go!</button>"+
+    (save.cars.length?'<button class="yardbtn" id="yard" type="button">🚃 My train</button>':""));
+  $("go").onclick=()=>{card("");TS.say("All aboard! Next stop, "+nx+"!");toot();legT0=Date.now();legMiss=0;mode="run"};
+  if($("yard"))$("yard").onclick=()=>yard(title)}
+/* My train: see every car, and tap ✖ to leave one at the station */
+function yard(title){const st=STATIONS.find(x=>x.stop===tx),here=st?st.name:"the station";
+  card("<h2>Your train</h2><p>Tap ✖ to leave a car at "+here+".</p><div class=\"yard\" id=\"yl\"></div><button class=\"gobtn\" id=\"done\" type=\"button\">Done</button>");
+  const yl=$("yl");
+  const draw=()=>{yl.innerHTML="";if(!save.cars.length)yl.innerHTML="<p>Just the engine!</p>";
+    save.cars.forEach((c,i)=>{const d=document.createElement("div");d.className="ycar";d.innerHTML='<canvas width="120" height="110"></canvas><button type="button" aria-label="Leave the '+CARS[c.k]+'">✖</button>';
+      thumb(d.firstChild,c);d.lastChild.onclick=()=>{save.cars.splice(i,1);SV.save();score();TS.music.fx("tap");TS.say("Bye bye, "+CARS[c.k]+"!");draw()};yl.appendChild(d)})};
+  draw();TS.say("Here's your train. Tap the X to leave a car at the station.");$("done").onclick=()=>startCard(title)}
+function atStation(st){mode="station";legsDone++;save.stations++;SV.save();score();TS.notes.addMath(); // a 🎵 for Tile Tunes
+  TS.report.log({t:"play",game:"trip",level:save.stations,result:"win",stars:legMiss===0?3:legMiss<=2?2:1,ms:Date.now()-legT0,oops:legMiss,hints:0});
+  card("<h2>"+st.name+"!</h2><button class=\"gift\" id=\"gift\" type=\"button\" aria-label=\"Open the present\">🎁</button><p>"+st.name+" has a present for your train! Tap it!</p>");
+  TS.say(st.name+" station! There's a present for your train. Tap it to open it!");
+  $("gift").onclick=()=>{const c=newCar(st.name);TS.music.fx("win");confetti();
+    card("<h2>A "+CARS[c.k]+" from "+st.name+"!</h2><canvas class=\"carpv\" id=\"pv\" width=\"480\" height=\"220\"></canvas><button class=\"gobtn\" id=\"hook\" type=\"button\">Hook it on! 🚃</button>");
+    const pc=$("pv").getContext("2d"),save2=ctx;ctx=pc;ctx.setTransform(2.1,0,0,2.1,240,205);drawCar(c);ctx=save2;
+    TS.say("Wow! A new "+CARS[c.k]+"! Hook it on to your train!");
+    $("hook").onclick=()=>{save.cars.push(c);SV.save();score();TS.music.fx("good");startCard("All aboard!");TS.say("Clunk! It's on! Tap Go when you're ready.")}}}
+
+/* ---------- main loop ---------- */
+let last=0;
+function frame(t){const dt=Math.min(.05,(t-(last||t))/1000);last=t;T+=dt;
+  const tgt=STOPS[sp];
+  if(mode==="run"&&tgt){const d=tgt.stop-tx,want=Math.min(CRUISE,Math.sqrt(Math.max(0,2*DEC*d))+4);v=v>want?want:Math.min(want,v+ACC*dt);
+    tx=Math.min(tgt.stop,tx+v*dt);wheelA+=v*dt/13;if(tgt.stop-tx<.5){tx=tgt.stop;v=0;if(tgt.type==="fork"){mode="ask";askNow(tgt)}else{sp++;atStation(tgt)}}}
+  camX=tx-vw*FRONT;
+  if(tgt&&tgt.type==="fork"&&!tgt.q&&tgt.xs-camX<vw+500)setupFork(tgt);
+  const nextSt=STOPS.slice(sp).find(x=>x.type==="station");if(nextSt&&!nextSt.made&&nextSt.stop-camX<vw+900){nextSt.made=true;newLeg(nextSt.stop)}
+  // tidy up things far behind the end of the train
+  const back=camX-(save.cars.length+2)*(CAR+GAP)-1500;for(const L of [FORKS,RIVERS,TUNNELS,STATIONS])while(L.length>2&&(L[0].xf||L[0].x1)<back&&!L[0].signs?.length)L.shift();
+  if(v>5&&R()<dt*(2+v/30))puff(false);else if(R()<dt*.8)puff(false);
+  for(const p of puffs){p.x+=p.vx*dt;p.y+=p.vy*dt;p.r+=dt*14;p.a-=dt*.45}while(puffs.length&&puffs[0].a<=0)puffs.shift();
+  for(const b of bits){b.x+=b.vx*dt;b.y+=b.vy*dt;b.vy+=600*dt;b.t+=dt}while(bits.length&&bits[0].t>2.5)bits.shift();
+  spawn();draw();placeSigns();requestAnimationFrame(frame)}
+let curB="prairie",prevB="prairie",bt=1;
+function draw(){ctx.setTransform(dpr*s,0,0,dpr*s,0,0);
+  const b=biomeAt(camX+vw*.5);if(b!==curB){prevB=curB;curB=b;bt=0}bt=Math.min(1,bt+.012);const p=BIO[prevB],q=BIO[curB],c=k=>mixC(p[k],q[k],bt);
+  let g=ctx.createLinearGradient(0,0,0,HOR);g.addColorStop(0,c("sky"));g.addColorStop(1,c("sky2"));ctx.fillStyle=g;ctx.fillRect(0,0,vw,HOR+6);
+  ctx.fillStyle="#ffe680";ctx.beginPath();ctx.arc(vw-90,Math.min(70,HOR*.45),26,0,7);ctx.fill();ctx.fillStyle="rgba(255,230,128,.25)";ctx.beginPath();ctx.arc(vw-90,Math.min(70,HOR*.45),40,0,7);ctx.fill();
+  const layer=L=>{const o=lcam(L);for(const it of L.items)if(it.d)it.d(it.x-o)};
+  layer(LAY[0]);layer(LAY[1]);
+  g=ctx.createLinearGradient(0,HOR,0,vh);g.addColorStop(0,c("g1"));g.addColorStop(1,c("g2"));ctx.fillStyle=g;ctx.fillRect(0,HOR+4,vw,vh-HOR);
+  layer(LAY[2]);for(const r of RIVERS)drawRiver(r);layer(LAY[3]);
+  const P2=LAY[4],o=lcam(P2),ps=P2.items.filter(i=>i.pole);ctx.strokeStyle="rgba(40,40,40,.55)";ctx.lineWidth=1.2;
+  for(let k=1;k<ps.length;k++){if(ps[k].x-ps[k-1].x>250)continue;for(const dy of [-60,-50]){const y=BASE-140+dy+4;ctx.beginPath();ctx.moveTo(ps[k-1].x-o,y);ctx.quadraticCurveTo((ps[k-1].x+ps[k].x)/2-o,y+12,ps[k].x-o,y);ctx.stroke()}}
+  layer(P2);
+  for(const st of STATIONS)drawStationBack(st);for(const f of FORKS)drawSignal(f);for(const t of TUNNELS)portal(t);for(const r of RIVERS)drawBridges(r);
+  drawTracks();drawTrain();for(const t of TUNNELS)hill(t);
+  for(const p of puffs){ctx.fillStyle="rgba(240,240,240,"+Math.max(0,p.a)+")";ctx.beginPath();ctx.arc(p.x-camX,p.y,p.r,0,7);ctx.fill()}
+  for(const st of STATIONS)drawStationFront(st);layer(LAY[5]);layer(LAY[6]);
+  for(const b of bits){ctx.fillStyle=b.c;ctx.fillRect(b.x-b.r/2,b.y-b.r/2,b.r+3,b.r+6)}}
+
+/* ---------- start at the station the player last reached ---------- */
+if(!CanvasRenderingContext2D.prototype.roundRect)CanvasRenderingContext2D.prototype.roundRect=function(x,y,w,h,r){this.moveTo(x+r,y);this.arcTo(x+w,y,x+w,y+h,r);this.arcTo(x+w,y+h,x,y+h,r);this.arcTo(x,y+h,x,y,r);this.arcTo(x,y,x+w,y,r);this.closePath();return this};
+resize();score();const st0=station(0,stName(save.stations));STOPS.push(st0);sp=1;newLeg(0);
+startCard();requestAnimationFrame(frame);
+TS.howto.first("trip","Train Trip",HOWTO);
+window.__trip={gives,get station(){return STATIONS.find(x=>x.stop===tx)},get mode(){return mode},get fork(){const f=STOPS[sp];return f&&f.type==="fork"?f:null},tap,save,get tx(){return tx},
+  /* tests: answer the waiting Y right (or wrong), skip ahead to the next stop */
+  right(){const f=STOPS[sp];if(f&&f.q)tap(f,f.q.opts.findIndex(o=>o.key===f.q.ans))},wrong(){const f=STOPS[sp];if(f&&f.q)tap(f,f.q.opts.findIndex(o=>o.key!==f.q.ans&&!f.signs[f.q.opts.indexOf(o)].el.classList.contains("no")))},
+  skip(){const f=STOPS[sp];if(f&&mode==="run")tx=f.stop-1}};
+})();
+</script>
+</body>
+</html>
