@@ -65,6 +65,16 @@ body{overflow:hidden}
   box-shadow:inset 0 -6px 0 rgba(0,0,0,.2),0 8px 20px rgba(0,0,0,.3);animation:tbob 1.3s ease-in-out infinite}
 .gift{font-size:clamp(90px,22vw,130px);line-height:1;background:none;border:0;cursor:pointer;animation:twig 1s ease-in-out infinite;padding:0}
 .carpv{width:240px;height:110px}
+.bookbtn{padding:6px 12px;font-size:17px;text-transform:none}
+.bookbtn.bump{animation:tbump .5s}
+@keyframes tbump{40%{transform:scale(1.35)}}
+.bookov{position:absolute;inset:0;display:grid;place-items:center;background:rgba(0,0,0,.35);z-index:5}
+.sbook{display:grid;grid-template-columns:repeat(auto-fill,minmax(58px,1fr));gap:8px;width:min(400px,80vw);max-height:48vh;overflow-y:auto;padding:4px}
+.sbook i{position:relative;font-style:normal;aspect-ratio:1;border-radius:50%;display:grid;place-items:center;font-size:32px;background:#fff;box-shadow:0 0 0 3px #f2c230,0 3px 6px rgba(0,0,0,.3)}
+.sbook i.no{background:rgba(255,255,255,.12);box-shadow:inset 0 0 0 2px rgba(255,255,255,.25);color:rgba(255,255,255,.4);font-size:22px;font-family:var(--font-sign)}
+.sbook i b{position:absolute;right:-4px;bottom:-4px;background:var(--target);color:#fff;font:700 12px var(--font-body);border-radius:10px;padding:1px 5px}
+.stk{position:absolute;left:0;top:0;width:110px;height:110px;margin:-55px 0 0 -55px;border-radius:50%;background:#fff;display:grid;place-items:center;font-size:64px;
+  box-shadow:0 0 0 6px #f2c230,0 10px 24px rgba(0,0,0,.35);z-index:4;pointer-events:none;transition:transform .8s cubic-bezier(.5,-.3,.6,1),opacity .8s;animation:twig .9s ease-in-out 2}
 .yardbtn{font-family:var(--font-kid);font-weight:700;font-size:20px;background:var(--panel);color:#fff;border:2px solid var(--lane);border-radius:16px;padding:10px 20px;cursor:pointer}
 .yard{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;max-height:46vh;overflow-y:auto;padding:4px}
 .ycar{position:relative;background:#cfe6ff;border-radius:14px;padding:4px 4px 0}
@@ -85,7 +95,7 @@ body{overflow:hidden}
     <div class="left"><a class="chip icon" id="kHome" href="../../index.html" aria-label="Home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg></a>
       <button class="chip icon" id="kMusic" type="button"></button></div>
     <div class="ttl">TRAIN TRIP</div>
-    <div class="right"><span class="score" id="score"></span><button class="chip icon help" id="kHelp" type="button" aria-label="How to play">?</button></div>
+    <div class="right"><span class="score" id="score"></span><button class="chip bookbtn" id="book" type="button" aria-label="My stickers">📒 <b id="bookN">0</b></button><button class="chip icon help" id="kHelp" type="button" aria-label="How to play">?</button></div>
   </header>
   <div id="view">
     <canvas id="cv"></canvas>
@@ -93,6 +103,7 @@ body{overflow:hidden}
     <div class="askc" id="ask" hidden><button class="spk" id="spk" type="button" aria-label="Hear it again">🔊</button><span id="askT"></span></div>
     <button class="horn" id="horn" type="button" aria-label="Toot the horn">📯</button>
     <div class="mid" id="mid"></div>
+    <div class="bookov" id="bookov" hidden><div class="stcard"><h2>My stickers</h2><p id="bookC"></p><div class="sbook" id="sbook"></div><button class="gobtn" id="bookX" type="button">Back to the train 🚂</button></div></div>
   </div>
 </div>
 <script>
@@ -250,12 +261,12 @@ const LEGS=[],STOPS=[],FORKS=[],RIVERS=[],TUNNELS=[],STATIONS=[];let sp=0,lastBi
 function station(x,name){const st={type:"station",stop:x,name,x0:x-480,x1:x+90};STATIONS.push(st);return st}
 function newLeg(x0){let b;do b=U.pick(R,Object.keys(BIO));while(b===lastBiome);lastBiome=b;let x=x0+360;const n=U.ri(R,3,5);
   for(let k=0;k<n;k++){
-    if((b==="mountains"&&R()<.75)||(b==="forest"&&R()<.4)){const t0=x+140,t1=t0+U.ri(R,300,460);TUNNELS.push({x0:t0,x1:t1,off:0,H:U.ri(R,70,120),trees:U.ri(R,0,3)});x=t1+260}
+    if((b==="mountains"&&R()<.75)||(b==="forest"&&R()<.4)){const t0=x+140,t1=t0+U.ri(R,300,460);TUNNELS.push({x0:t0,x1:t1,off:0,H:U.ri(R,20,80),trees:U.ri(R,0,3)});x=t1+260}
     else if((b==="lake"&&R()<.7)||(b==="prairie"&&R()<.35)||(b==="town"&&R()<.3)){const r0=x+170,w=U.ri(R,100,150);RIVERS.push({x0:r0,x1:r0+w,offs:[0]});x=r0+w+260}
     else x+=U.ri(R,380,600);
     const f={type:"fork",stop:x-10,xs:x,xm:x+260,xe:x+780,xf:x+1040,n:NO,offs:NO===2?[-82,82]:[-112,0,112],choice:null,q:null,signs:[],miss:0};
     if(R()<.4){const r0=f.xm+190+U.ri(R,0,110);RIVERS.push({x0:r0,x1:r0+U.ri(R,100,135),offs:f.offs})}
-    else{const k2=U.ri(R,0,NO-1);TUNNELS.push({x0:f.xm+110,x1:f.xe-30,off:f.offs[k2],H:U.ri(R,30,46),trees:U.ri(R,0,2),fork:f})}
+    else{const k2=U.ri(R,0,NO-1);TUNNELS.push({x0:f.xm+110,x1:f.xe-30,off:f.offs[k2],H:NO===3?0:U.ri(R,10,40),trees:NO===3?0:U.ri(R,0,2),fork:f})}
     FORKS.push(f);STOPS.push(f);x=f.xf}
   const st=station(x+560,stName(save.stations+1+LEGS.length-legsDone));st.leg=true;STOPS.push(st);LEGS.push({x0,x1:st.stop+200,biome:b});return st}
 let legsDone=0;
@@ -299,7 +310,8 @@ function genMid(x,b){const y=()=>HOR+4;
     if(r<.6)return{w:70,gap:U.ri(R,140,300),d:x=>{const Y=y();ctx.fillStyle="#d9a93c";for(let k=0;k<3;k++){ctx.beginPath();ctx.arc(x+k*22,Y-7,7,0,7);ctx.fill()}}};
     return{w:60,gap:U.ri(R,160,340),d:x=>{const Y=y();house(x,Y,34,20,"#c0392b","#7b241c")}}}
   if(b==="forest"||b==="mountains"){const n=U.ri(R,4,8),hs=Array.from({length:n},()=>U.ri(R,16,34)),col=b==="forest"?"#2f6b3a":"#3f7550";return{w:n*14,gap:U.ri(R,40,160),d:x=>{const Y=y();hs.forEach((h,k)=>pine(x+k*14,Y,h,col))}}}
-  if(b==="lake"){const w=U.ri(R,220,340);return{w,gap:w+U.ri(R,60,200),d:x=>{const Y=y();ctx.fillStyle="#5aa7e0";ctx.beginPath();ctx.ellipse(x+w/2,Y+3,w/2,7,0,0,7);ctx.fill();emo("⛵",x+w*.6,Y+2,18)}}}
+  if(b==="lake"){const w=U.ri(R,110,520),hh=U.ri(R,4,10),boats=Array.from({length:U.ri(R,0,w>250?2:1)},()=>[U.ri(R,15,85)/100,U.pick(R,["⛵","⛵","🛶"]),U.ri(R,14,20)]);
+    return{w,gap:w+U.ri(R,40,240),d:x=>{const Y=y();ctx.fillStyle="#5aa7e0";ctx.beginPath();ctx.ellipse(x+w/2,Y+3,w/2,hh,0,0,7);ctx.fill();for(const[f,e,z]of boats)emo(e,x+w*f,Y+2,z)}}}
   const n=U.ri(R,2,4),cs=Array.from({length:n},()=>U.pick(R,["#e8d3a8","#d98c5f","#a7c4e0","#f2e3c4","#cf9fb0"]));return{w:n*30,gap:U.ri(R,60,200),d:x=>{const Y=y();cs.forEach((c,k)=>house(x+k*30,Y,24,18,c,"#7b4b3a"))}}}
 function genNear(x,b){const lo=HOR+30,hi=Math.max(lo,BASE-150),y=U.ri(R,0,1000)/1000;if(blocked(x))return{w:40,gap:70,d:null};const Y=()=>lo+(Math.max(lo,BASE-150)-lo)*y;
   const r=R(),gap=U.ri(R,70,200);
@@ -308,25 +320,29 @@ function genNear(x,b){const lo=HOR+30,hi=Math.max(lo,BASE-150),y=U.ri(R,0,1000)/
       for(let k=0;k<n;k++){ctx.beginPath();ctx.moveTo(x+k*7,yy);ctx.lineTo(x+k*7+2,yy-22);ctx.stroke();ctx.fillStyle="#d8b04a";ctx.beginPath();ctx.ellipse(x+k*7+2,yy-24,3,6,0,0,7);ctx.fill()}}}}
     if(r<.75){const h=U.ri(R,50,80);return{w:40,gap,d:x=>leafy(x,Y(),h,"#5d9a3f")}}
     return{w:44,gap,d:x=>{const yy=Y();ctx.fillStyle="#b9c2cb";ctx.fillRect(x,yy-34,22,34);ctx.beginPath();ctx.ellipse(x+11,yy-34,11,6,0,Math.PI,0);ctx.fill();ctx.fillStyle="#98a2ad";ctx.fillRect(x+16,yy-34,4,34)}}}
-  if(b==="forest"){if(r<.15)return animal(U.pick(R,["🫎","🦌","🐿️","🐻"]),U.ri(R,34,48));const h=U.ri(R,60,120);return{w:h*.8,gap:U.ri(R,30,110),d:x=>pine(x,Y(),h,R2col(x))}}
-  if(b==="mountains"){if(r<.12)return animal(U.pick(R,["🐐","🦌"]),U.ri(R,32,42));if(r<.2)return{w:30,gap,d:x=>emo("🦅",x,Math.max(30,HOR-40)+(Math.sin(T+x)*6),26)};
+  if(b==="forest"){if(r<.15)return animal(U.pick(R,["🫎","🦌","🐿️","🐻"]),U.ri(R,34,48));const h=U.ri(R,60,120),col=U.pick(R,["#2f6b3a","#285f33","#326f3c"]);return{w:h*.8,gap:U.ri(R,30,110),d:x=>pine(x,Y(),h,col)}}
+  if(b==="mountains"){if(r<.12)return animal(U.pick(R,["🐐","🦌"]),U.ri(R,32,42));if(r<.2){const ph=R()*6,up=U.ri(R,30,70),z=U.ri(R,22,30);return{w:30,gap,d:x=>emo("🦅",x,Math.max(30,HOR-up)+Math.sin(T*1.3+ph)*5,z)}}
     if(r<.45){const w=U.ri(R,26,50);return{w,gap,d:x=>{const yy=Y();ctx.fillStyle="#8f8a83";ctx.beginPath();ctx.ellipse(x+w/2,yy-w*.3,w/2,w*.32,0,0,7);ctx.fill();ctx.fillStyle="#a8a39b";ctx.beginPath();ctx.ellipse(x+w*.4,yy-w*.38,w*.25,w*.15,0,0,7);ctx.fill()}}}
     const h=U.ri(R,55,100);return{w:h*.8,gap:U.ri(R,40,140),d:x=>pine(x,Y(),h,"#356b45")}}
   if(b==="lake"){if(r<.2)return animal(U.pick(R,["🦆","🛶","🦫"]),U.ri(R,30,40));if(r<.45){const n=U.ri(R,4,8);return{w:n*6,gap,d:x=>{const yy=Y();ctx.strokeStyle="#5b7a3a";ctx.lineWidth=2.5;for(let k=0;k<n;k++){ctx.beginPath();ctx.moveTo(x+k*6,yy);ctx.lineTo(x+k*6+(k%2?3:-2),yy-26-(k%3)*6);ctx.stroke()}ctx.fillStyle="#7a4a2a";ctx.fillRect(x+4,yy-34,4,10)}}}
     const h=U.ri(R,50,85);return{w:40,gap,d:x=>leafy(x,Y(),h,"#4f9a4a")}}
   if(r<.55){const w=U.ri(R,46,70),h=U.ri(R,34,52),c=U.pick(R,["#e8d3a8","#d98c5f","#a7c4e0","#f2e3c4","#cf9fb0","#b5d99c"]);return{w:w+10,gap:U.ri(R,30,90),d:x=>house(x,Y(),w,h,c,"#7b4b3a")}}
   if(r<.7)return animal(U.pick(R,["🏪","🏫","⛪","🚲"]),U.ri(R,40,52));const h=U.ri(R,50,80);return{w:40,gap,d:x=>leafy(x,Y(),h,"#5d9a3f")}}
-const R2col=x=>(Math.floor(x)%3)?"#2f6b3a":"#285f33";
 function genPole(x,b){if(blocked(x)||b==="town")return{w:30,gap:240,d:null};return{w:10,gap:240,pole:true,d:x=>{const y=BASE-140;ctx.fillStyle="#7a5230";ctx.fillRect(x-2,y-64,4,64);ctx.fillRect(x-12,y-58,24,3)}}}
 function genFront(x,b){const lo=BASE+172;if(lo>vh-8||blocked(x))return{w:40,gap:80,d:null};const y=U.ri(R,0,1000)/1000,Y=()=>Math.min(vh-4,lo+(vh-4-lo)*y),r=R(),gap=U.ri(R,60,180);
-  if(b==="lake"&&r<.3){const w=U.ri(R,260,420);return{w,gap:w+60,d:x=>{const t=BASE+168;if(t>vh)return;ctx.fillStyle="#4aa3df";ctx.beginPath();ctx.roundRect(x,t,w,vh-t+30,40);ctx.fill();
-    ctx.strokeStyle="rgba(255,255,255,.5)";ctx.lineWidth=2;for(let k=0;k<3;k++){const yy=t+18+k*18;if(yy>vh)break;ctx.beginPath();ctx.moveTo(x+30+k*20+((T*14)%30),yy);ctx.lineTo(x+70+k*20+((T*14)%30),yy);ctx.stroke()}
-    emo("🦆",x+w*.4+Math.sin(T*.7)*10,t+44,30)}}}
+  if((b==="lake"&&r<.32)||(b!=="lake"&&b!=="town"&&r<.06)){const w=U.ri(R,b==="lake"?140:110,b==="lake"?580:260),dt=U.ri(R,0,40),rad=U.ri(R,24,60);
+    const ducks=Array.from({length:U.ri(R,0,Math.min(4,1+Math.floor(w/120)))},()=>({f:U.ri(R,12,85)/100,ph:R()*6,sp:.4+R()*.6,z:U.ri(R,22,32),dy:U.ri(R,0,30),e:R()<.2?"🐤":U.pick(R,["🦆","🦆","🦢"])}));
+    const pads=Array.from({length:U.ri(R,0,4)},()=>[U.ri(R,8,92)/100,U.ri(R,10,46),U.ri(R,7,12)]),reeds=R()<.6,rip=Array.from({length:U.ri(R,1,4)},()=>[U.ri(R,10,70)/100,U.ri(R,12,50),U.ri(R,20,60)]);
+    return{w,gap:w+U.ri(R,40,220),d:x=>{const t=BASE+168+dt;if(t>vh-12)return;ctx.fillStyle="#4aa3df";ctx.beginPath();ctx.roundRect(x,t,w,vh-t+40,rad);ctx.fill();
+      ctx.strokeStyle="rgba(255,255,255,.5)";ctx.lineWidth=2;for(const[f,yy,l]of rip){const xx=x+w*f+((T*10+yy)%24);if(t+yy>vh)continue;ctx.beginPath();ctx.moveTo(xx,t+yy);ctx.lineTo(Math.min(x+w-12,xx+l),t+yy);ctx.stroke()}
+      ctx.fillStyle="#5e9e3c";for(const[f,yy,z]of pads){if(t+yy>vh)continue;ctx.beginPath();ctx.ellipse(x+w*f,t+yy,z,z*.45,0,.3,6.1);ctx.lineTo(x+w*f,t+yy);ctx.fill()}
+      if(reeds){ctx.strokeStyle="#5b7a3a";ctx.lineWidth=2.4;for(let k=0;k<5;k++){ctx.beginPath();ctx.moveTo(x+6+k*5,t+14);ctx.lineTo(x+4+k*6,t-10-(k%3)*7);ctx.stroke()}}
+      for(const d of ducks){const yy=t+d.z+8+d.dy;if(yy>vh+6)continue;emo(d.e,x+w*d.f+Math.sin(T*d.sp+d.ph)*12,yy,d.z)}}}}
   if(r<.4){const n=U.ri(R,3,6);return{w:n*5,gap,d:x=>{const yy=Y();ctx.strokeStyle=b==="prairie"?"#b08a2e":"#3f7f33";ctx.lineWidth=2.2;for(let k=0;k<n;k++){ctx.beginPath();ctx.moveTo(x+k*5,yy);ctx.lineTo(x+k*5+(k-n/2)*2,yy-12-(k%2)*6);ctx.stroke()}}}}
-  if(r<.6)return{w:24,gap,d:x=>emo(pick2(x,["🌼","🌷","🌸","🍄"]),x,Y(),22)};
+  if(r<.6){const kind=b==="forest"&&R()<.4?"🍄":U.pick(R,["🌼","🌷","🌸","🌻","🍄"]),n=U.ri(R,1,4),fl=Array.from({length:n},(_,k)=>[k*U.ri(R,12,20),U.ri(R,-6,6),U.ri(R,16,26),R()<.25?U.pick(R,["🌼","🌷","🌸"]):kind]);
+    return{w:n*20+10,gap:gap+n*14,d:x=>{const yy=Y();for(const[dx,dy,z,e]of fl)emo(e,x+dx,yy+dy,z)}}}
   if(r<.7)return{w:30,gap:gap+80,d:x=>emo(b==="forest"?"🐿️":b==="prairie"?"🐇":b==="mountains"?"🪨":"🐇",x,Y(),26)};
   const w=U.ri(R,16,30);return{w,gap,d:x=>{const yy=Y();ctx.fillStyle="#9b958d";ctx.beginPath();ctx.ellipse(x+w/2,yy-w*.25,w/2,w*.28,0,0,7);ctx.fill()}}}
-const pick2=(x,a)=>a[Math.abs(Math.floor(x/7))%a.length];
 function genFg(){if(vh-BASE<230)return{w:60,gap:600,d:null};const w=U.ri(R,90,150),col=U.pick(R,["#2e6b2a","#3c7d32","#356f2c"]);
   return{w,gap:U.ri(R,600,1300),d:x=>{const y=vh+18;ctx.fillStyle=col;ctx.beginPath();ctx.ellipse(x+w*.3,y,w*.3,w*.32,0,0,7);ctx.ellipse(x+w*.62,y+4,w*.36,w*.4,0,0,7);ctx.fill()}}}
 
@@ -347,15 +363,17 @@ function drawBridges(r){if(r.x1<camX-200||r.x0>camX+vw+200)return;const x0=r.x0-
   for(const o of r.offs){const y=BASE+o;ctx.fillStyle="#6f7680";for(let x=x0+16;x<x1-10;x+=50)ctx.fillRect(x,y+14,10,60);ctx.fillStyle="#7a5232";ctx.fillRect(x0,y+4,x1-x0,11);
     ctx.strokeStyle="#8a5c36";ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(x0,y-28);ctx.lineTo(x1,y-28);ctx.stroke();ctx.lineWidth=2.4;
     for(let x=x0;x<=x1;x+=22){ctx.beginPath();ctx.moveTo(x,y-28);ctx.lineTo(x,y+4);ctx.stroke()}}}
-function portal(t){if(t.x1<camX-200||t.x0>camX+vw+200)return;const y=BASE+t.off;ctx.fillStyle="#191919";
-  for(const px of [t.x0+22,t.x1-22]){ctx.beginPath();ctx.moveTo(px-34-camX,y+12);ctx.lineTo(px-34-camX,y-52);ctx.arc(px-camX,y-52,34,Math.PI,0);ctx.lineTo(px+34-camX,y+12);ctx.fill()}}
-function hill(t){if(t.x1<camX-200||t.x0>camX+vw+200)return;const y=BASE+t.off,a=t.x0+22-camX,b=t.x1-22-camX,top=y-60-t.H;
-  ctx.fillStyle="#8a7d6c";ctx.beginPath();ctx.moveTo(a,y+22);ctx.lineTo(a,y-56);ctx.quadraticCurveTo(a+10,top,(a+b)/2,top);ctx.quadraticCurveTo(b-10,top,b,y-56);ctx.lineTo(b,y+22);ctx.closePath();ctx.fill();
-  ctx.fillStyle="#6d6253";ctx.beginPath();ctx.moveTo((a+b)/2,top);ctx.quadraticCurveTo(b-10,top,b,y-56);ctx.lineTo(b,y+22);ctx.lineTo((a+b)/2+20,y+22);ctx.fill();
-  ctx.fillStyle="#6aa84f";ctx.beginPath();ctx.moveTo(a+8,top+20);ctx.quadraticCurveTo(a+14,top,(a+b)/2,top);ctx.quadraticCurveTo(b-14,top,b-8,top+20);ctx.quadraticCurveTo((a+b)/2,top+8,a+8,top+20);ctx.fill();
-  for(let k=0;k<t.trees;k++)pine(a+(b-a)*(.25+.25*k),top+12,30+8*k,"#2f6b3a");
-  ctx.strokeStyle="#b3a794";ctx.lineWidth=8;for(const px of [a,b]){ctx.beginPath();ctx.arc(px,y-52,40,Math.PI,0);ctx.stroke()}}
-function inTunnel(x,y){return TUNNELS.some(t=>x>t.x0+22&&x<t.x1-22&&Math.abs(BASE+t.off-y)<6)}
+/* a tunnel: a rocky hill with an arched mouth at each end, set into the rock; the train is cut off at the middle of each mouth (see drawTrain) */
+const MOUTH=36;
+function tunnel(t){if(t.x1<camX-200||t.x0>camX+vw+200)return;const y=BASE+t.off,a=t.x0-camX,b=t.x1-camX,top=y-96-t.H,mid=(a+b)/2;
+  ctx.fillStyle="#8a7d6c";ctx.beginPath();ctx.moveTo(a-6,y+22);ctx.lineTo(a-6,y-62);ctx.quadraticCurveTo(a,top,mid,top);ctx.quadraticCurveTo(b,top,b+6,y-62);ctx.lineTo(b+6,y+22);ctx.closePath();ctx.fill();
+  ctx.fillStyle="#76695a";ctx.beginPath();ctx.moveTo(mid,top);ctx.quadraticCurveTo(b,top,b+6,y-62);ctx.lineTo(b+6,y+22);ctx.lineTo(mid+30,y+22);ctx.fill();
+  ctx.fillStyle="#6aa84f";ctx.beginPath();ctx.moveTo(a+14,top+18);ctx.quadraticCurveTo(a+18,top-2,mid,top-2);ctx.quadraticCurveTo(b-18,top-2,b-14,top+18);ctx.quadraticCurveTo(mid,top+9,a+14,top+18);ctx.fill();
+  for(let k=0;k<t.trees;k++)pine(a+(b-a)*(.3+.2*k),top+10,30+8*k,"#2f6b3a");
+  for(const cx of [a+MOUTH,b-MOUTH]){const r=MOUTH-6;ctx.fillStyle="#161616";ctx.beginPath();ctx.moveTo(cx-r,y+8);ctx.lineTo(cx-r,y-58);ctx.arc(cx,y-58,r,Math.PI,0);ctx.lineTo(cx+r,y+8);ctx.closePath();ctx.fill();
+    ctx.strokeStyle="#b3a794";ctx.lineWidth=8;ctx.lineJoin="round";ctx.beginPath();ctx.moveTo(cx-r-4,y+8);ctx.lineTo(cx-r-4,y-58);ctx.arc(cx,y-58,r+4,Math.PI,0);ctx.lineTo(cx+r+4,y+8);ctx.stroke()}
+  railLine(()=>y,t.x0-10,t.x0+MOUTH);railLine(()=>y,t.x1-MOUTH,t.x1+10)}
+function inTunnel(x,y){return TUNNELS.some(t=>x>t.x0+MOUTH&&x<t.x1-MOUTH&&Math.abs(BASE+t.off-y)<6)}
 function drawSignal(f){const x=f.stop+30-camX;if(x<-40||x>vw+40)return;ctx.fillStyle="#6b737d";ctx.fillRect(x-3,BASE-98,6,92);ctx.fillStyle="#24282e";ctx.beginPath();ctx.roundRect(x-11,BASE-128,22,36,6);ctx.fill();
   const go=f.choice!=null;ctx.fillStyle=go?"#3a2020":"#ff3b2f";ctx.beginPath();ctx.arc(x,BASE-118,6,0,7);ctx.fill();ctx.fillStyle=go?"#3dff6a":"#1f3a24";ctx.beginPath();ctx.arc(x,BASE-102,6,0,7);ctx.fill()}
 function drawStationBack(st){const x=st.stop-camX;if(x<-600||x>vw+600)return;const bx=x-380,by=BASE-24;
@@ -405,7 +423,9 @@ function drawCar(c){const k=c.k,col=c.c,rr=rnd(c.seed||1);
   wheel(-30,-8,8);wheel(-14,-8,8);wheel(14,-8,8);wheel(30,-8,8)}
 function unitAt(fx,L,draw){const cx=fx-L/2,y=trackY(cx),a=Math.atan2(trackY(fx-6)-trackY(fx-L+6),L-12);
   if(cx-camX<-L||cx-camX>vw+L)return;ctx.save();ctx.translate(cx-camX,y);ctx.rotate(a);draw();ctx.restore()}
-function drawTrain(){let fx=tx;unitAt(fx,ENG,drawEngine);fx-=ENG+GAP;for(const c of save.cars.slice(0,40)){unitAt(fx,CAR,()=>drawCar(c));fx-=CAR+GAP}}
+function drawTrain(){const cut=TUNNELS.filter(t=>t.x1>camX-200&&t.x0<camX+vw+200&&Math.abs(trackY((t.x0+t.x1)/2)-(BASE+t.off))<3);
+  ctx.save();if(cut.length){ctx.beginPath();ctx.rect(-50,-50,vw+100,vh+100);for(const t of cut)ctx.rect(t.x0+MOUTH-camX,-50,t.x1-t.x0-2*MOUTH,vh+100);ctx.clip("evenodd")}
+  let fx=tx;unitAt(fx,ENG,drawEngine);fx-=ENG+GAP;for(const c of save.cars.slice(0,40)){unitAt(fx,CAR,()=>drawCar(c));fx-=CAR+GAP}ctx.restore()}
 
 /* smoke and confetti */
 const puffs=[],bits=[];
@@ -430,7 +450,9 @@ $("spk").onclick=()=>{const f=STOPS[sp];if(f&&f.q)TS.say(f.q.say)};
 function tap(f,k){if(mode!=="ask"||STOPS[sp]!==f||f.choice!=null)return;const q=f.q,o=q.opts[k],sg=f.signs[k];
   if(o.key===q.ans){f.choice=k;TS.music.fx("good");sg.el.classList.remove("glow");sg.el.classList.add("yes");f.signs.forEach((x,j)=>{if(j!==k)x.el.classList.add("gone")});
     TS.say(U.pick(R,["Yes!","Great!","You got it!","Right track!","All aboard!"])+" "+o.say[0].toUpperCase()+o.say.slice(1)+"!");
-    learnt(q.kind,!f.miss);save.forks++;SV.save();sp++;mode="go";setTimeout(()=>{$("ask").hidden=true;toot();mode="run"},900);return}
+    learnt(q.kind,!f.miss);save.forks++;const got=maybeSticker(f,!f.miss);save.sinceStk=sinceStk;SV.save();sp++;mode="go";
+    if(got)setTimeout(()=>TS.say("A sticker! A "+got[1]+" for your sticker book!"),1000);
+    setTimeout(()=>{$("ask").hidden=true;toot();mode="run"},got?2300:900);return}
   f.miss++;legMiss++;TS.music.fx("bad");sg.el.classList.add("no");
   const right=f.signs[q.opts.findIndex(x=>x.key===q.ans)].el,left=f.signs.filter(x=>!x.el.classList.contains("no")).length;
   TS.say("That's "+o.say+". "+(f.miss>=2||left===1?"This sign is the one. Tap it!":q.hint));
@@ -440,6 +462,30 @@ function placeSigns(){for(const f of FORKS){if(!f.signs.length)continue;const sx
   if(sx<-200&&f.choice!=null){f.signs.forEach(x=>x.el.remove());f.signs=[];continue}
   if(f.choice!=null&&tx>f.xm-20)f.signs[f.choice].el.classList.add("gone");
   f.signs.forEach((x,k)=>{const w=x.el.offsetWidth,h=x.el.offsetHeight;x.el.style.transform="translate("+(sx-w/2)+"px,"+((BASE+f.offs[k])*s-h/2)+"px)"})}}
+
+/* ---------- stickers: sometimes a right answer pops out a sticker for the sticker book ---------- */
+const STK=(()=>{const f=TS.players.fav&&TS.players.fav(),fav=f?f.em:[];const base=[["🚂","steam train"],["🚄","fast train"],["🚇","subway train"],["🚋","tram"],["🚞","mountain train"],["🚉","station"],
+  ["🦬","bison"],["🫎","moose"],["🦌","deer"],["🐻","bear"],["🦫","beaver"],["🦉","owl"],["🦅","eagle"],["🐿️","squirrel"],["🐺","wolf"],["🦊","fox"],["🐇","bunny"],["🦆","duck"],["🐸","frog"],["🦋","butterfly"],
+  ["⭐","star"],["🌈","rainbow"],["🎈","balloon"],["🍦","ice cream"],["🍩","donut"],["🧸","teddy bear"],["🚀","rocket"],["🦖","dinosaur"],["🦄","unicorn"],["🏆","trophy"],["🌻","sunflower"],["🍁","maple leaf"],
+  ["❄️","snowflake"],["🌞","sunshine"],["🐶","puppy"],["🐱","kitty"],["🚜","tractor"],["🚒","fire truck"],["⚽","soccer ball"],["🎉","party"]];
+  const seen=new Set(),out=[];for(const x of fav.concat(base))if(!seen.has(x[0])){seen.add(x[0]);out.push(x)}return out})();
+save.stk=save.stk||{};let sinceStk=save.sinceStk||0;
+function bookN(){$("bookN").textContent=Object.keys(save.stk).length}
+function maybeSticker(f,firstTry){if(!firstTry){sinceStk=0;return null}sinceStk++;
+  if(!(R()<.33||sinceStk>=3))return null;sinceStk=0;save.sinceStk=0;
+  const fresh=STK.filter(x=>!save.stk[x[0]]),st=U.pick(R,fresh.length?fresh:STK);save.stk[st[0]]=(save.stk[st[0]]||0)+1;SV.save();
+  const k=f.choice,el=document.createElement("div");el.className="stk";el.textContent=st[0];
+  const sx=(f.xm+46-camX)*s,sy=(BASE+f.offs[k])*s-60*s;el.style.transform="translate("+sx+"px,"+sy+"px)";$("view").appendChild(el);TS.music.fx("win");
+  setTimeout(()=>{const b=$("book").getBoundingClientRect(),v=$("view").getBoundingClientRect();el.style.animation="none";
+    el.style.transform="translate("+(b.left+b.width/2-v.left)+"px,"+(b.top+b.height/2-v.top)+"px) scale(.25)";el.style.opacity=".2"},1300);
+  setTimeout(()=>{el.remove();bookN();$("book").classList.remove("bump");void $("book").offsetWidth;$("book").classList.add("bump")},2150);
+  return st}
+let paused=false;
+function openBook(){paused=true;const have=STK.filter(x=>save.stk[x[0]]).length;$("bookC").textContent=have+" of "+STK.length+" stickers";
+  $("sbook").innerHTML=STK.map(x=>save.stk[x[0]]?'<i title="'+x[1]+'">'+x[0]+(save.stk[x[0]]>1?"<b>×"+save.stk[x[0]]+"</b>":"")+"</i>":'<i class="no">?</i>').join("");
+  $("bookov").hidden=false;TS.say(have?"You have "+have+" stickers!":"No stickers yet. Pick the right tracks to find some!")}
+$("book").onclick=openBook;$("bookX").onclick=()=>{$("bookov").hidden=true;paused=false};
+$("sbook").addEventListener("click",e=>{const i=e.target.closest("i");if(!i||i.classList.contains("no"))return;const x=STK.find(y=>i.textContent.startsWith(y[0]));if(x)TS.say(x[1])});
 
 /* ---------- stations and presents ---------- */
 function card(html){$("mid").innerHTML=html?'<div class="stcard">'+html+"</div>":""}
@@ -472,7 +518,7 @@ function atStation(st){mode="station";legsDone++;save.stations++;SV.save();score
 let last=0;
 function frame(t){const dt=Math.min(.05,(t-(last||t))/1000);last=t;T+=dt;
   const tgt=STOPS[sp];
-  if(mode==="run"&&tgt){const d=tgt.stop-tx,want=Math.min(CRUISE,Math.sqrt(Math.max(0,2*DEC*d))+4);v=v>want?want:Math.min(want,v+ACC*dt);
+  if(mode==="run"&&tgt&&!paused){const d=tgt.stop-tx,want=Math.min(CRUISE,Math.sqrt(Math.max(0,2*DEC*d))+4);v=v>want?want:Math.min(want,v+ACC*dt);
     tx=Math.min(tgt.stop,tx+v*dt);wheelA+=v*dt/13;if(tgt.stop-tx<.5){tx=tgt.stop;v=0;if(tgt.type==="fork"){mode="ask";askNow(tgt)}else{sp++;atStation(tgt)}}}
   camX=tx-vw*FRONT;
   if(tgt&&tgt.type==="fork"&&!tgt.q&&tgt.xs-camX<vw+500)setupFork(tgt);
@@ -495,18 +541,18 @@ function draw(){ctx.setTransform(dpr*s,0,0,dpr*s,0,0);
   const P2=LAY[4],o=lcam(P2),ps=P2.items.filter(i=>i.pole);ctx.strokeStyle="rgba(40,40,40,.55)";ctx.lineWidth=1.2;
   for(let k=1;k<ps.length;k++){if(ps[k].x-ps[k-1].x>250)continue;for(const dy of [-60,-50]){const y=BASE-140+dy+4;ctx.beginPath();ctx.moveTo(ps[k-1].x-o,y);ctx.quadraticCurveTo((ps[k-1].x+ps[k].x)/2-o,y+12,ps[k].x-o,y);ctx.stroke()}}
   layer(P2);
-  for(const st of STATIONS)drawStationBack(st);for(const f of FORKS)drawSignal(f);for(const t of TUNNELS)portal(t);for(const r of RIVERS)drawBridges(r);
-  drawTracks();drawTrain();for(const t of TUNNELS)hill(t);
+  for(const st of STATIONS)drawStationBack(st);for(const f of FORKS)drawSignal(f);for(const r of RIVERS)drawBridges(r);
+  drawTracks();for(const t of TUNNELS)tunnel(t);drawTrain();
   for(const p of puffs){ctx.fillStyle="rgba(240,240,240,"+Math.max(0,p.a)+")";ctx.beginPath();ctx.arc(p.x-camX,p.y,p.r,0,7);ctx.fill()}
   for(const st of STATIONS)drawStationFront(st);layer(LAY[5]);layer(LAY[6]);
   for(const b of bits){ctx.fillStyle=b.c;ctx.fillRect(b.x-b.r/2,b.y-b.r/2,b.r+3,b.r+6)}}
 
 /* ---------- start at the station the player last reached ---------- */
 if(!CanvasRenderingContext2D.prototype.roundRect)CanvasRenderingContext2D.prototype.roundRect=function(x,y,w,h,r){this.moveTo(x+r,y);this.arcTo(x+w,y,x+w,y+h,r);this.arcTo(x+w,y+h,x,y+h,r);this.arcTo(x,y+h,x,y,r);this.arcTo(x,y,x+w,y,r);this.closePath();return this};
-resize();score();const st0=station(0,stName(save.stations));STOPS.push(st0);sp=1;newLeg(0);
+resize();score();bookN();const st0=station(0,stName(save.stations));STOPS.push(st0);sp=1;newLeg(0);
 startCard();requestAnimationFrame(frame);
 TS.howto.first("trip","Train Trip",HOWTO);
-window.__trip={gives,get station(){return STATIONS.find(x=>x.stop===tx)},get mode(){return mode},get fork(){const f=STOPS[sp];return f&&f.type==="fork"?f:null},tap,save,get tx(){return tx},
+window.__trip={STK,openBook,tunnels:()=>TUNNELS,gives,get station(){return STATIONS.find(x=>x.stop===tx)},get mode(){return mode},get fork(){const f=STOPS[sp];return f&&f.type==="fork"?f:null},tap,save,get tx(){return tx},
   /* tests: answer the waiting Y right (or wrong), skip ahead to the next stop */
   right(){const f=STOPS[sp];if(f&&f.q)tap(f,f.q.opts.findIndex(o=>o.key===f.q.ans))},wrong(){const f=STOPS[sp];if(f&&f.q)tap(f,f.q.opts.findIndex(o=>o.key!==f.q.ans&&!f.signs[f.q.opts.indexOf(o)].el.classList.contains("no")))},
   skip(){const f=STOPS[sp];if(f&&mode==="run")tx=f.stop-1}};
