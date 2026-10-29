@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#161b21">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box;height:100%}body{margin:0}[hidden]{display:none!important}</style>
+<title>Hiding Bugs · Tile Solve</title>
+<meta name="apple-mobile-web-app-title" content="Tile Solve">
+<link rel="apple-touch-icon" href="../../icon-180.png">
+<link rel="icon" type="image/png" href="../../icon-512.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Barlow:wght@400;600;700&display=swap">
+<link rel="stylesheet" href="../../shared/ts.css?v=80d9b501">
+<link rel="stylesheet" href="../../shared/game.css?v=80d9b501">
+</head>
+<body>
+<script src="../../shared/ts.js?v=80d9b501"></script>
+<script src="../../shared/kit.js?v=80d9b501"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&display=swap">
+<link rel="stylesheet" href="../../shared/learn.css?v=80d9b501">
+<script src="../../shared/learn.js?v=80d9b501"></script>
+<script>
+(()=>{const U=TS_LEARN.util;
+const choices=(r,v,k,lo,hi,step=1,spread=3)=>{const c=[];for(let x=lo;x<=hi;x+=step)if(x!==v&&Math.abs(x-v)<=spread*step)c.push(x);const o=U.sample(r,c,Math.min(k-1,c.length));
+  for(let x=lo;o.length<k-1&&x<=hi;x+=step)if(x!==v&&!o.includes(x))o.push(x);return U.shuffle(r,o.concat([v]))};
+TS_LEARN({id:"hidebugs",name:"Hiding Bugs",howto:[["🐞", "Some bugs are hiding under a leaf!"], ["👀", "You know how many bugs there are in all."], ["🤔", "Count the ones you can see. How many are hiding?"], ["👆", "Tap the number that's hiding."]],
+make(n,i,r,a){
+  /* Hidden partner (number bonds: part-part-whole). Pre-K wholes of 3-5 with the whole shown as dots; K wholes of 5-10 ("5 is 3 and 2");
+     grade 1 to 20 as an equation (_ + 7 = 12); grade 2 with tens (60 = 40 + _). */
+  const BUG=U.pick(r,["🐞","🐛","🐜","🐝","🦋"]),k=a<0?3:4;let w,h;
+  if(a<0)w=U.ri(r,3,n<=12?4:5);else if(a===0)w=n<=12?5:U.ri(r,5,10);else if(a===1)w=U.ri(r,8,20);else w=10*U.ri(r,3,10);
+  if(a>=2)h=10*U.ri(r,1,w/10-1);else h=U.ri(r,1,w-1);
+  const s=w-h,pics=s<=12?'<span class="lr-hide">'+("<i>"+BUG+"</i>").repeat(s)+'<i class="leaf"><b>?</b></i></span>':"";
+  let ask,say;
+  if(a<0){ask="There are "+w+" bugs. How many are hiding?";say="There are "+w+" bugs in all. I can see "+s+". How many are hiding under the leaf?"}
+  else if(a===0){ask=w+" is "+s+" and <b>?</b>";say=w+" bugs in all. "+s+" you can see. How many are hiding? "+w+" is "+s+" and how many?"}
+  else if(a===1){ask=s+" + <b>?</b> = "+w;say=s+" plus what makes "+w+"?"}
+  else{ask=w+" = "+s+" + <b>?</b>";say=w+" is "+s+" plus what?"}
+  const whole=a<0?'<span class="lr-hide" style="font-size:16px;gap:8px">All the bugs: '+U.numdots(w)+"</span>":"";
+  const opts=a>=2?choices(r,h,k,10,w-10,10,2):choices(r,h,k,1,Math.max(w-1,k),1,a<0?4:3);
+  return{type:"pick",cols:a<0?3:2,say,prompt:'<span class="ask">'+ask+"</span>"+whole+pics,
+    options:opts.map(x=>({key:x,html:a<0?U.numdots(x):String(x),say:x===h?"Yes! "+s+" and "+h+" make "+w+".":String(x)})),answer:h}}});
+})();
+</script>
+</body>
+</html>

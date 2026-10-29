@@ -31,6 +31,7 @@ VALIDATE = """((lo,hi)=>{const bad=[];let rounds=0;
       if(R.cells.some(c=>!(c.v>0)))bad.push(id+' bad cell');if(R.solution.length<2)bad.push(id+' trivial')}
     else if(R.type==='sort'){const bk=R.bins.map(b=>b.key);if(R.items.some(x=>!bk.includes(x.key)))bad.push(id+' item without bin');if(R.items.length<2)bad.push(id+' few items');
       if(bk.some(k=>!R.items.some(x=>x.key===k)))bad.push(id+' empty bin');if(R.items.some(x=>!x||!x.html))bad.push(id+' bad item')}
+    else if(R.type==='hunt'){if(!R.cells.some(c=>c.ok))bad.push(id+' nothing to find');if(R.cells.every(c=>c.ok))bad.push(id+' all targets')}
     else bad.push(id+' unexpected type')}}
   return{bad:bad.slice(0,6),n:bad.length,rounds}})"""
 

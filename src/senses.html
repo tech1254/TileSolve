@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!--HEAD:Five Senses-->
+</head>
+<body>
+<!--KIT-->
+<!--LEARN-->
+<script>
+(()=>{const U=TS_LEARN.util;
+TS_LEARN({id:"senses",name:"Five Senses",howto:[["👀", "We learn about the world with our five senses: see, hear, smell, taste and touch."], ["👆", "Tap the right body part, or sort things by the sense you'd use."], ["🦉", "Later: which animals have super senses?"], ["🔊", "Tap the speaker to hear it again."]],
+make(n,i,r,a){
+  /* Alberta K: environments and objects are explored with the five senses. Pre-K: which body part? K: sort by sense, soft/loud hunts. Grade 1+: animals' super senses. */
+  const SN={see:["👀","eyes","see"],hear:["👂","ears","hear"],smell:["👃","nose","smell"],taste:["👅","tongue","taste"],touch:["✋","hands","feel"]};
+  const TH={see:[["🌈","the rainbow"],["🎆","the fireworks"],["⭐","the stars"]],hear:[["🔔","the bell"],["🥁","the drum"],["🎺","the trumpet"]],smell:[["🌸","the flower"],["🧄","the garlic"],["🍞","fresh bread"]],
+    taste:[["🍋","the lemon"],["🍦","the ice cream"],["🍯","the honey"]],touch:[["🧸","the soft teddy"],["🧊","the cold ice"],["🌵","the prickly cactus"]]};
+  const big=h=>'<span style="font-size:clamp(40px,12vw,56px);line-height:1">'+h+"</span>",k=a<0?3:4;
+  const part=()=>{const s=U.pick(r,Object.keys(SN)),t=U.pick(r,TH[s]),opts=U.shuffle(r,[s].concat(U.sample(r,Object.keys(SN).filter(x=>x!==s),k-1)));
+    return{type:"pick",cols:a<0?3:2,say:"What do you use to "+SN[s][2]+" "+t[1]+"?",prompt:'<span class="ask">What do you use to <b>'+SN[s][2]+"</b> "+t[1]+"?</span><span class=\"lr-emo\">"+t[0]+"</span>",
+      options:opts.map(x=>({key:x,html:big(SN[x][0])+'<span style="display:block;font-size:15px">'+SN[x][1]+"</span>",say:x===s?"Yes! You "+SN[s][2]+" with your "+SN[s][1]+".":"your "+SN[x][1]})),answer:s}};
+  if(a<0)return part();
+  const K=a===0?["part","sort","hunt"][i%3]:["animal","sort","hunt","animal"][i%4];
+  if(K==="part")return part();
+  if(K==="sort"){const keys=U.sample(r,Object.keys(SN),a===0?3:4),items=[];
+    for(const s of keys)for(const t of U.sample(r,TH[s],keys.length===3?2:1))items.push({key:s,html:'<span class="lr-em">'+t[0]+"</span>",aria:t[1].replace(/^the /,"")});
+    while(items.length<6){const s=U.pick(r,keys),t=U.pick(r,TH[s]);if(!items.some(x=>x.aria===t[1].replace(/^the /,"")))items.push({key:s,html:'<span class="lr-em">'+t[0]+"</span>",aria:t[1].replace(/^the /,"")})}
+    return{type:"sort",say:"Which sense would you use most?",prompt:'<span class="ask">Which sense would you use?</span>',bins:keys.map(s=>({key:s,html:SN[s][0],label:SN[s][2]})),items:U.shuffle(r,items)}}
+  if(K==="hunt"){const H=U.pick(r,[["soft",[["🧸","teddy"],["🪶","feather"],["🧶","yarn"],["🐑","sheep's wool"],["🧦","sock"]],[["🪨","rock: it's hard"],["🔨","hammer: it's hard"],["🧱","brick: it's hard"],["🥥","coconut: it's hard"]]],
+      ["loud",[["🥁","drum"],["🚒","fire truck"],["🎺","trumpet"],["📯","horn"],["🦁","lion's roar"]],[["🪶","feather: it's quiet"],["🐌","snail: it's quiet"],["🦋","butterfly: it's quiet"],["📖","book: it's quiet"]]],
+      ["sweet",[["🍦","ice cream"],["🍯","honey"],["🍓","strawberry"],["🍬","candy"]],[["🍋","lemon: it's sour"],["🧂","salt: it's salty"],["🥨","pretzel: it's salty"],["🧄","garlic"]]]]);
+    const cells=U.sample(r,H[1],4).map(x=>({html:big(x[0]),ok:true,aria:x[1]})).concat(U.sample(r,H[2],4).map(x=>({html:big(x[0]),ok:false,aria:x[1].split(":")[0],why:x[1]})));
+    return{type:"hunt",cols:4,say:"Tap all the "+H[0]+" things.",prompt:'<span class="ask">Tap all the <b>'+H[0]+"</b> things</span>",cells:U.shuffle(r,cells)}}
+  const A=[["🦉","owl","spot a mouse at night with its huge eyes"],["🐕","dog","smell things far away"],["🦅","eagle","see a mouse from high in the sky"],["🐍","snake","smell with its tongue"],["🦇","bat","find its way in the dark by listening to echoes"]];
+  const t=U.pick(r,A),opts=U.shuffle(r,[t].concat(U.sample(r,A.filter(x=>x!==t),3)));
+  return{type:"pick",cols:2,say:"Which animal can "+t[2]+"?",prompt:'<span class="ask">Which animal can '+t[2]+"?</span>",
+    options:opts.map(x=>({key:x[1],html:big(x[0]),say:x===t?"Yes! The "+x[1]+" can "+x[2]+".":"the "+x[1]})),answer:t[1]}}});
+})();
+</script>
+</body>
+</html>

@@ -406,6 +406,80 @@ r"""make(n,i,r,a){
   return{type:"sort",say:"Sort the things by their shape.",prompt:'<span class="ask">Sort them by shape</span>',bins:kinds.map(bin),
     items:U.shuffle(r,items).map(k=>{const o=U.pick(r,OBJ[k]);return{key:k,html:'<span class="lr-em">'+o[0]+"</span>",aria:o[1]}})}}""")
 
+
+# helper used by the new number games: k distinct choices near v, inside lo..hi (pre-K keeps them apart)
+NEAR_JS = r"""const choices=(r,v,k,lo,hi,step=1,spread=3)=>{const c=[];for(let x=lo;x<=hi;x+=step)if(x!==v&&Math.abs(x-v)<=spread*step)c.push(x);const o=U.sample(r,c,Math.min(k-1,c.length));
+  for(let x=lo;o.length<k-1&&x<=hi;x+=step)if(x!==v&&!o.includes(x))o.push(x);return U.shuffle(r,o.concat([v]))};"""
+
+G["quicklook"] = ("Quick Look", [["👀","Some dots flash on the screen for a moment."],["⚡","Don't count them one by one. Just look!"],["👆","Tap how many you saw."],["🔁","You can look again once."]],
+r"""make(n,i,r,a){
+  /* Subitizing (Clements & Sarama): see a small amount at a glance. Pre-K 1-4 then 5 on dice, then lines;
+     K 1-5 any layout, then 6-7 as two groups; grade 1 6-10 on ten frames and dice pairs; grade 2 10-20 on double frames. Short looks so there's no time to count. */
+  let v,kind,split=0,ms=2000,k=a<0?3:4,lo=1,hi=a<0?5:a===0?7:a===1?10:20;
+  if(a<0){v=U.ri(r,1,n<=8?4:5);kind=n<=15?"dice":U.pick(r,["dice","line"])}
+  else if(a===0){ms=1500;if(n<=12||i%2===0){v=U.ri(r,1,5);kind=U.pick(r,["dice","line","scatter"])}else{v=U.ri(r,6,7);kind="pair";split=U.ri(r,v-5,5)}}
+  else if(a===1){ms=1500;v=U.ri(r,6,10);kind=U.pick(r,["frame","pair"]);if(kind==="pair")split=U.ri(r,Math.max(1,v-6),Math.min(6,v-1))}
+  else{v=U.ri(r,10,20);kind="frame";lo=8}
+  const opts=choices(r,v,k,lo,hi,1,a<0?4:2);
+  return{type:"pick",cols:a<0?3:2,flash:ms,say:"Quick look! How many dots?",prompt:'<span class="ask">Quick look! How many?</span><span class="lr-flash">'+U.dotpic(v,kind,r,split)+"</span>",
+    options:opts.map(x=>({key:x,html:a<0?U.numdots(x):String(x),say:String(x)})),answer:v}}""")
+
+G["hidebugs"] = ("Hiding Bugs", [["🐞","Some bugs are hiding under a leaf!"],["👀","You know how many bugs there are in all."],["🤔","Count the ones you can see. How many are hiding?"],["👆","Tap the number that's hiding."]],
+r"""make(n,i,r,a){
+  /* Hidden partner (number bonds: part-part-whole). Pre-K wholes of 3-5 with the whole shown as dots; K wholes of 5-10 ("5 is 3 and 2");
+     grade 1 to 20 as an equation (_ + 7 = 12); grade 2 with tens (60 = 40 + _). */
+  const BUG=U.pick(r,["🐞","🐛","🐜","🐝","🦋"]),k=a<0?3:4;let w,h;
+  if(a<0)w=U.ri(r,3,n<=12?4:5);else if(a===0)w=n<=12?5:U.ri(r,5,10);else if(a===1)w=U.ri(r,8,20);else w=10*U.ri(r,3,10);
+  if(a>=2)h=10*U.ri(r,1,w/10-1);else h=U.ri(r,1,w-1);
+  const s=w-h,pics=s<=12?'<span class="lr-hide">'+("<i>"+BUG+"</i>").repeat(s)+'<i class="leaf"><b>?</b></i></span>':"";
+  let ask,say;
+  if(a<0){ask="There are "+w+" bugs. How many are hiding?";say="There are "+w+" bugs in all. I can see "+s+". How many are hiding under the leaf?"}
+  else if(a===0){ask=w+" is "+s+" and <b>?</b>";say=w+" bugs in all. "+s+" you can see. How many are hiding? "+w+" is "+s+" and how many?"}
+  else if(a===1){ask=s+" + <b>?</b> = "+w;say=s+" plus what makes "+w+"?"}
+  else{ask=w+" = "+s+" + <b>?</b>";say=w+" is "+s+" plus what?"}
+  const whole=a<0?'<span class="lr-hide" style="font-size:16px;gap:8px">All the bugs: '+U.numdots(w)+"</span>":"";
+  const opts=a>=2?choices(r,h,k,10,w-10,10,2):choices(r,h,k,1,Math.max(w-1,k),1,a<0?4:3);
+  return{type:"pick",cols:a<0?3:2,say,prompt:'<span class="ask">'+ask+"</span>"+whole+pics,
+    options:opts.map(x=>({key:x,html:a<0?U.numdots(x):String(x),say:x===h?"Yes! "+s+" and "+h+" make "+w+".":String(x)})),answer:h}}""")
+
+G["dotmatch"] = ("Dot Match", [["🎲","The same number can look different."],["👀","Look at the card at the top."],["👆","Find the card that shows the same number."],["🔊","Tap the speaker to hear it again."]],
+r"""make(n,i,r,a){
+  /* Same number, different look; then dots and numerals; then numerals and number words. The main numeral-learning game for pre-readers. */
+  const W=["zero","one","two","three","four","five","six","seven","eight","nine","ten","eleven","twelve","thirteen","fourteen","fifteen","sixteen","seventeen","eighteen","nineteen","twenty"];
+  const k=a<0?3:4,LOOKS=v=>v<=6?["dice","line","scatter"]:v<=10?["frame","line","scatter"]:["frame"];
+  let v,mode;
+  if(a<0){v=U.ri(r,1,n<=12?4:5);mode=n<=12||i%2===0?"dots":"num"}
+  else if(a===0){v=U.ri(r,1,n<=12?6:10);mode=["dots","num","fromnum"][i%3]}
+  else{v=U.ri(r,a===1?1:10,20);mode=i%2?"word":"fromnum"}
+  const opts=choices(r,v,k,a>=1&&v>=10?10:1,a<0?5:a===0?10:20,1,a<0?4:2);
+  const look=LOOKS(v),shown=U.pick(r,look);
+  const pic=(x,not)=>{const l=LOOKS(x).filter(y=>y!==not);return U.dotpic(x,U.pick(r,l.length?l:LOOKS(x)),r)};
+  let top,html,ask;
+  if(mode==="dots"){top=U.dotpic(v,shown,r);html=x=>pic(x,shown);ask="Find the same number of dots"}
+  else if(mode==="num"){top=U.dotpic(v,shown,r);html=x=>a<0?U.numdots(x):String(x);ask="Which number is this?"}
+  else if(mode==="fromnum"){top='<b style="font-size:clamp(56px,16vw,80px)">'+v+"</b>";html=x=>pic(x);ask="Find "+v+" dots"}
+  else{top='<b style="font-size:clamp(34px,10vw,48px)">'+W[v]+"</b>";html=x=>String(x);ask="Which number is "+W[v]+"?"}
+  return{type:"pick",cols:2,say:ask+".",prompt:'<span class="ask">'+ask+'</span><span class="lr-flash" style="min-height:0">'+top+"</span>",
+    options:opts.map(x=>({key:x,html:html(x),say:String(x)})),answer:v}}""")
+
+G["counton"] = ("Count On", [["🐸","Some frogs are already in the pond. More hop in!"],["🧠","Start at the number in the pond, then count on."],["👆","Tap how many there are now."],["🔊","Tap the speaker to hear it again."]],
+r"""make(n,i,r,a){
+  /* Counting on (and back) from a hidden group: K start to 5, add 1-3; grade 1 start to 20, add 1-4, some count back; grade 2 to 100 by tens.
+     Train fans see passengers getting on a train. */
+  const tr=(TS.players.current()||{}).fav==="trains",who=tr?["🧍","people","on the train","get on","get off"]:["🐸","frogs","in the pond","hop in","hop out"];
+  let s,add,back=false,step=1;
+  if(a<0){s=U.ri(r,1,3);add=1}else if(a===0){s=U.ri(r,2,5);add=U.ri(r,1,3)}
+  else if(a===1){s=U.ri(r,5,20);add=U.ri(r,1,4);back=i%3===2&&s-add>=2}
+  else{step=10;s=U.ri(r,2,8)*10+U.ri(r,0,9);add=10*U.ri(r,1,3);back=i%3===2&&s-add>=5}
+  const tot=back?s-add:s+add,seq=[];for(let x=s;back?x>=tot:x<=tot;x+=back?-step:step)seq.push(x);
+  const movers=step===10?Array.from({length:add/10},()=>'<i class="ten">10 '+who[0]+"</i>").join(""):("<i>"+who[0]+"</i>").repeat(add);
+  const home='<span class="home'+(tr?" train":"")+'">'+(tr?"🚃 ":"")+s+"<small>"+who[1]+"</small></span>";
+  const verb=v=>add===1?v.replace(/^(\w+)/,m=>m==="hop"?"hops":m+"s"):v;
+  const say="There are "+s+" "+who[1]+" "+who[2]+". "+add+(back?" ":" more ")+verb(back?who[4]:who[3])+". How many are "+(back?"left":"there now")+"?";
+  const opts=choices(r,tot,a<0?3:4,step===10?10:1,step===10?100:a===1?24:10,step,2);
+  return{type:"pick",cols:a<0?3:2,say,prompt:'<span class="ask">'+s+" "+(back?"−":"+")+" "+add+" = <b>?</b></span>"+'<span class="lr-hop">'+home+'<span class="in">'+(back?"⬅️ ":"")+movers+(back?"":" ⬅️")+"</span></span>",
+    options:opts.map(x=>({key:x,html:a<0?U.numdots(x):String(x),say:x===tot?seq.join("… ")+"! "+tot+".":String(x)})),answer:tot}}""")
+
 # Extra script a game needs before TS_LEARN runs.
 PRE = {"trace": r"""const TRACE_ORDER=(n,a)=>{const ORDER="LTIEFHVXWAKMNYZOCQGSJUDPBR",DIG="0123456789";
   if(a!==undefined&&a>=1&&n%3===0)return DIG[(n/3)%10];return n>26&&a!==undefined&&a<0?DIG[(n-27)%10]:ORDER[(n-1)%26]};""","abc": r"""const ABC={UP:"ABCDEFGHIJKLMNOPQRSTUVWXYZ",
@@ -427,6 +501,8 @@ PRE = {"trace": r"""const TRACE_ORDER=(n,a)=>{const ORDER="LTIEFHVXWAKMNYZOCQGSJ
   SEGS:[[0,7],[7,16],[16,22],[22,26]],
   NOTE:[60,60,67,67,69,69,67,65,65,64,64,62,62,62,62,60,67,67,65,64,64,62,67,65,64,60]};
 """}
+
+for _g in ["quicklook", "hidebugs", "dotmatch", "counton"]: PRE[_g] = NEAR_JS
 
 for gid,(name,howto,body) in G.items():
     html = f'''<!DOCTYPE html>

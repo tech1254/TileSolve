@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#161b21">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box;height:100%}body{margin:0}[hidden]{display:none!important}</style>
+<title>Dot Match · Little Learners</title>
+<meta name="apple-mobile-web-app-title" content="Little Learners">
+<link rel="apple-touch-icon" href="../../icon-180.png">
+<link rel="icon" type="image/png" href="../../icon-512.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Barlow:wght@400;600;700&display=swap">
+<link rel="stylesheet" href="../../shared/ts.css?v=80d9b501">
+<link rel="stylesheet" href="../../shared/game.css?v=80d9b501">
+</head>
+<body>
+<script src="../../shared/ts.js?v=80d9b501"></script>
+<script src="../../shared/kit.js?v=80d9b501"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&display=swap">
+<link rel="stylesheet" href="../../shared/learn.css?v=80d9b501">
+<script src="../../shared/learn.js?v=80d9b501"></script>
+<script>
+(()=>{const U=TS_LEARN.util;
+const choices=(r,v,k,lo,hi,step=1,spread=3)=>{const c=[];for(let x=lo;x<=hi;x+=step)if(x!==v&&Math.abs(x-v)<=spread*step)c.push(x);const o=U.sample(r,c,Math.min(k-1,c.length));
+  for(let x=lo;o.length<k-1&&x<=hi;x+=step)if(x!==v&&!o.includes(x))o.push(x);return U.shuffle(r,o.concat([v]))};
+TS_LEARN({id:"dotmatch",name:"Dot Match",howto:[["🎲", "The same number can look different."], ["👀", "Look at the card at the top."], ["👆", "Find the card that shows the same number."], ["🔊", "Tap the speaker to hear it again."]],
+make(n,i,r,a){
+  /* Same number, different look; then dots and numerals; then numerals and number words. The main numeral-learning game for pre-readers. */
+  const W=["zero","one","two","three","four","five","six","seven","eight","nine","ten","eleven","twelve","thirteen","fourteen","fifteen","sixteen","seventeen","eighteen","nineteen","twenty"];
+  const k=a<0?3:4,LOOKS=v=>v<=6?["dice","line","scatter"]:v<=10?["frame","line","scatter"]:["frame"];
+  let v,mode;
+  if(a<0){v=U.ri(r,1,n<=12?4:5);mode=n<=12||i%2===0?"dots":"num"}
+  else if(a===0){v=U.ri(r,1,n<=12?6:10);mode=["dots","num","fromnum"][i%3]}
+  else{v=U.ri(r,a===1?1:10,20);mode=i%2?"word":"fromnum"}
+  const opts=choices(r,v,k,a>=1&&v>=10?10:1,a<0?5:a===0?10:20,1,a<0?4:2);
+  const look=LOOKS(v),shown=U.pick(r,look);
+  const pic=(x,not)=>{const l=LOOKS(x).filter(y=>y!==not);return U.dotpic(x,U.pick(r,l.length?l:LOOKS(x)),r)};
+  let top,html,ask;
+  if(mode==="dots"){top=U.dotpic(v,shown,r);html=x=>pic(x,shown);ask="Find the same number of dots"}
+  else if(mode==="num"){top=U.dotpic(v,shown,r);html=x=>a<0?U.numdots(x):String(x);ask="Which number is this?"}
+  else if(mode==="fromnum"){top='<b style="font-size:clamp(56px,16vw,80px)">'+v+"</b>";html=x=>pic(x);ask="Find "+v+" dots"}
+  else{top='<b style="font-size:clamp(34px,10vw,48px)">'+W[v]+"</b>";html=x=>String(x);ask="Which number is "+W[v]+"?"}
+  return{type:"pick",cols:2,say:ask+".",prompt:'<span class="ask">'+ask+'</span><span class="lr-flash" style="min-height:0">'+top+"</span>",
+    options:opts.map(x=>({key:x,html:html(x),say:String(x)})),answer:v}}});
+})();
+</script>
+</body>
+</html>

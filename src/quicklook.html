@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!--HEAD:Quick Look-->
+</head>
+<body>
+<!--KIT-->
+<!--LEARN-->
+<script>
+(()=>{const U=TS_LEARN.util;
+const choices=(r,v,k,lo,hi,step=1,spread=3)=>{const c=[];for(let x=lo;x<=hi;x+=step)if(x!==v&&Math.abs(x-v)<=spread*step)c.push(x);const o=U.sample(r,c,Math.min(k-1,c.length));
+  for(let x=lo;o.length<k-1&&x<=hi;x+=step)if(x!==v&&!o.includes(x))o.push(x);return U.shuffle(r,o.concat([v]))};
+TS_LEARN({id:"quicklook",name:"Quick Look",howto:[["👀", "Some dots flash on the screen for a moment."], ["⚡", "Don't count them one by one. Just look!"], ["👆", "Tap how many you saw."], ["🔁", "You can look again once."]],
+make(n,i,r,a){
+  /* Subitizing (Clements & Sarama): see a small amount at a glance. Pre-K 1-4 then 5 on dice, then lines;
+     K 1-5 any layout, then 6-7 as two groups; grade 1 6-10 on ten frames and dice pairs; grade 2 10-20 on double frames. Short looks so there's no time to count. */
+  let v,kind,split=0,ms=2000,k=a<0?3:4,lo=1,hi=a<0?5:a===0?7:a===1?10:20;
+  if(a<0){v=U.ri(r,1,n<=8?4:5);kind=n<=15?"dice":U.pick(r,["dice","line"])}
+  else if(a===0){ms=1500;if(n<=12||i%2===0){v=U.ri(r,1,5);kind=U.pick(r,["dice","line","scatter"])}else{v=U.ri(r,6,7);kind="pair";split=U.ri(r,v-5,5)}}
+  else if(a===1){ms=1500;v=U.ri(r,6,10);kind=U.pick(r,["frame","pair"]);if(kind==="pair")split=U.ri(r,Math.max(1,v-6),Math.min(6,v-1))}
+  else{v=U.ri(r,10,20);kind="frame";lo=8}
+  const opts=choices(r,v,k,lo,hi,1,a<0?4:2);
+  return{type:"pick",cols:a<0?3:2,flash:ms,say:"Quick look! How many dots?",prompt:'<span class="ask">Quick look! How many?</span><span class="lr-flash">'+U.dotpic(v,kind,r,split)+"</span>",
+    options:opts.map(x=>({key:x,html:a<0?U.numdots(x):String(x),say:String(x)})),answer:v}}});
+})();
+</script>
+</body>
+</html>

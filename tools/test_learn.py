@@ -5,7 +5,7 @@ from tsutil import *
 
 OUT = pathlib.Path(sys.argv[1]) if len(sys.argv) > 1 else pathlib.Path(".")
 check = Checker(); errors = []
-LEARN = ["trains", "abc", "syllables", "blend", "missletter", "case", "sound", "trace", "count", "numorder", "moreless", "missnum", "tenframe", "shapesort", "shapehunt", "colours", "sizeorder", "position", "shapes3d"]
+LEARN = ["trains", "abc", "syllables", "blend", "missletter", "case", "sound", "trace", "count", "numorder", "moreless", "missnum", "tenframe", "shapesort", "shapehunt", "colours", "sizeorder", "position", "shapes3d", "quicklook", "hidebugs", "dotmatch", "counton", "animals", "senses", "seasons"]
 
 def player(grade, pid="kk"):
     seen = json.dumps({g: 1 for g in LEARN + GAMES})
@@ -102,6 +102,29 @@ with sync_playwright() as p:
     pg.goto(URL("position")); pg.wait_for_function("window.__learn && __learn.R", timeout=10000)
     pw = pg.evaluate("[-1,0,1].map(a=>{const s=new Set();for(let n=1;n<=30;n++){const R=__learn.make(n,0,TS.rngFrom(n),a);R.options.forEach(o=>s.add(o.key))}return[...s].sort()})")
     check(pw[0] == ["in", "on", "under"] and "between" not in pw[1] and "between" in pw[2], f"Where's the Cat: in/on/under first, then next to/behind/in front of, then between ({pw})")
+    # Number and science research rules (batch 4)
+    pg.goto(URL("quicklook")); pg.wait_for_function("window.__learn && __learn.R", timeout=10000)
+    ql = pg.evaluate("[-1,0,1,2].map(a=>{const v=[];for(let n=1;n<=30;n++){const R=__learn.make(n,n%5,TS.rngFrom(n),a);v.push(R.answer);if(!R.flash||!/lr-flash/.test(R.prompt))return 'no flash'}return[Math.min(...v),Math.max(...v)]})")
+    check(ql == [[1, 5], [1, 7], [6, 10], [10, 20]], f"Quick Look: dots flash briefly; pre-K 1-5, K to 7, grade 1 6-10, grade 2 10-20 ({ql})")
+    pg.wait_for_timeout(2300)
+    check(pg.evaluate("document.querySelector('#lrPrompt .lr-flash').classList.contains('hid')") and pg.is_visible(".lr-again"), "the dots hide after a moment and 👀 Look again shows them once more")
+    pg.goto(URL("hidebugs")); pg.wait_for_function("window.__learn && __learn.R", timeout=10000)
+    hb = pg.evaluate("[-1,0,1,2].map(a=>{let ok=true;for(let n=1;n<=30;n++){const R=__learn.make(n,0,TS.rngFrom(n),a);if(!R.options.some(o=>o.key===R.answer))ok=false}return ok})")
+    check(all(hb), "Hiding Bugs: the hidden number is always one of the choices")
+    pg.goto(URL("counton")); pg.wait_for_function("window.__learn && __learn.R", timeout=10000)
+    co = pg.evaluate("(()=>{const R=__learn.make(5,0,TS.rngFrom(3),0);return R.options.find(o=>o.key===R.answer).say})()")
+    check("…" in co, f"Count On: the answer is counted on out loud ({co})")
+    pg.goto(URL("animals")); pg.wait_for_function("window.__learn && __learn.R", timeout=10000)
+    an = pg.evaluate("""[-1,0,1,2].map(a=>{const ks=new Set();let bad=0;for(let n=1;n<=12;n++)for(let i=0;i<5;i++){const R=__learn.make(n,i,TS.rngFrom(n*7+i),a);
+      ks.add(R.type==='sort'?R.bins.map(b=>b.key).sort().join('/'):R.type+':'+R.prompt.replace(/<[^>]+>/g,'').split(' ').slice(0,3).join(' '));
+      if(R.type==='sort'&&(R.items.length>6||R.bins.length>4||R.items.some(x=>!R.bins.some(b=>b.key===x.key))))bad++}return{n:ks.size,ks:[...ks],bad}})""")
+    check(all(x["bad"] == 0 for x in an), "Animal Sort: at most 6 cards and 4 homes, and every card has a home")
+    check("fly/walk" in an[0]["ks"] and not any("mammal" in k for k in an[0]["ks"]) and an[0]["n"] >= 4, f"Animal Sort pre-K: fly or walk, sounds, babies, wings; no 'mammal' words ({an[0]['ks']})")
+    check(any("Why is" in k for k in an[1]["ks"]) and "no/yes" in an[1]["ks"], f"Animal Sort K: why animals move and alive / not alive ({an[1]['ks']})")
+    check("away/sleep/stay" in an[2]["ks"] and any(k.count("/") == 3 and "both" in k for k in an[2]["ks"]), f"Animal Sort grade 1: Alberta winter and fly/swim 'both' rounds ({an[2]['ks']})")
+    check(any(k.startswith("order") for k in an[3]["ks"]), f"Animal Sort grade 2: life cycles ({an[3]['ks']})")
+    tr = pg.evaluate("(()=>{for(let n=1;n<=60;n++)for(let i=0;i<5;i++){const R=__learn.make(n,i,TS.rngFrom(n+i),1);if(R.type==='sort'){const w=R.items.find(x=>x.aria==='whale'&&x.why);if(w)return w.why}}return ''})()")
+    check("mammal" in tr, f"tricky animals explain themselves ({tr[:60]})")
     pg.goto(URL("shapes3d")); pg.wait_for_function("window.__learn && __learn.R", timeout=10000)
     s3 = pg.evaluate("[-1,1].map(a=>{const t=new Set();for(let i=0;i<6;i++){const R=__learn.make(4,i,TS.rngFrom(i),a);t.add(R.type+(R.type==='sort'?R.bins.length:''))}return[...t].sort()})")
     check("sort2" in s3[0] and "hunt" in s3[1] and "sort4" in s3[1], f"3D Shapes: ball and box shapes first, then four solids and 'what rolls?' ({s3})")

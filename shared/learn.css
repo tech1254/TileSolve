@@ -222,3 +222,27 @@
 .p-in .box{left:22%;right:22%;bottom:6%;height:46%;background:#c98b4a;border:3px solid #8b5a2b;border-radius:3px;z-index:3}.p-in .pet{bottom:34%;z-index:2}
 .p-between .tree{font-size:clamp(32px,10vw,44px);bottom:4%}.p-between .l{left:0}.p-between .r{right:0}.p-between .pet{bottom:4%}
 .lr-solid{width:clamp(56px,17vw,80px);height:auto}
+
+/* Quick look: the picture shows for a moment, then hides */
+.lr-flash{display:flex;justify-content:center;align-items:center;flex-basis:100%;min-height:clamp(90px,26vw,130px);border-radius:16px;background:rgba(255,255,255,.06);margin:6px 0;transition:opacity .2s}
+.lr-flash.hid>*{visibility:hidden}
+.lr-flash.hid{background:rgba(255,255,255,.08) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Ctext x='20' y='29' font-size='26' text-anchor='middle' fill='%23ffffff55'%3E%3F%3C/text%3E%3C/svg%3E") center/60px no-repeat}
+.lr-again{font:inherit;font-size:15px;font-weight:700;border:0;border-radius:999px;padding:7px 14px;background:#2b3a4a;color:#fff;margin:2px auto 0;display:block}
+.lr-dots{height:clamp(80px,24vw,120px);width:auto;max-width:100%;fill:#f2c230}
+.lr-dots.line{height:clamp(28px,8vw,40px)}.lr-dots .b{fill:#e2412e}.lr-dots .cell{fill:none;stroke:#9aa3ad;stroke-width:1.5}.lr-dots .die{fill:#fff;stroke:#cfd6dd;stroke-width:3}
+.lr-dots.dice{background:#fff;border-radius:16%;fill:#262626}
+.lr-opt .lr-dots{height:clamp(54px,15vw,76px)}.lr-opt .lr-dots.line{height:clamp(20px,5vw,26px)}
+.lr-stage svg{width:clamp(44px,13vw,64px);height:clamp(44px,13vw,64px)}
+.lr-baby{font-size:.55em;display:inline-block}
+/* Hiding Bugs and Count On */
+.lr-hide{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:4px;font-size:clamp(28px,8vw,38px);flex-basis:100%}
+.lr-hide .leaf{position:relative;width:1.9em;height:1.5em;background:linear-gradient(135deg,#7cc35a,#2e7d32);border-radius:0 80% 0 80%;box-shadow:inset 0 0 0 2px rgba(0,0,0,.15);font-style:normal}
+.lr-hide .leaf b{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:.7em;color:#fff;text-shadow:0 1px 3px #000}
+.lr-hop{display:flex;justify-content:center;align-items:flex-end;gap:10px;flex-basis:100%;font-size:clamp(28px,8vw,38px)}
+.lr-hop .home{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:clamp(90px,26vw,120px);min-height:clamp(60px,17vw,80px);border-radius:50%;background:#2f62b8;color:#fff;font-weight:800;font-size:.9em}
+.lr-hop .home small{font-size:.4em;font-weight:600}.lr-hop .train{border-radius:12px;background:#c62828}
+.lr-hop .in i{display:inline-block;font-style:normal;animation:lrHop .9s ease-in-out infinite alternate}.lr-hop .in i:nth-child(2n){animation-delay:.2s}
+.lr-hop .ten{font-size:.6em;background:#2b3a4a;color:#fff;border-radius:10px;padding:3px 8px;margin:2px;font-style:normal;display:inline-block}
+@keyframes lrHop{to{transform:translateY(-10px)}}
+.lr-scene{display:flex;justify-content:center;align-items:center;gap:10px;flex-basis:100%;font-size:clamp(44px,13vw,64px)}
+.lr-scene .why{font-size:clamp(22px,6vw,30px)}

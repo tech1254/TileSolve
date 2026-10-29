@@ -15,7 +15,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Barlow:wght@400;600;700&display=swap">
-<link rel="stylesheet" href="shared/ts.css?v=917cd0fd">
+<link rel="stylesheet" href="shared/ts.css?v=80d9b501">
 <style>
 body{overflow-y:auto}
 .app{min-height:100%;max-width:760px;margin:0 auto;box-sizing:border-box;display:flex;flex-direction:column;gap:22px;
@@ -124,7 +124,7 @@ h1{font-family:var(--font-sign);font-weight:400;font-size:clamp(26px,6vw,36px);m
   </form>
 </div>
 
-<script src="shared/ts.js?v=917cd0fd"></script>
+<script src="shared/ts.js?v=80d9b501"></script>
 <script>
 (()=>{
 const{players,music}=TS,$=id=>document.getElementById(id);
@@ -171,6 +171,12 @@ const GAMES=[
   {id:"colours",name:"Colour Match",desc:"Colours and colour words",art:"🎨",href:"games/colours/index.html",g:["#7a4fb5","#3c2266"],group:"little"},
   {id:"position",name:"Where's the Cat?",desc:"On, under, behind, between",art:"🐱",href:"games/position/index.html",g:["#43a047","#1f5c22"],group:"little"},
   {id:"shapes3d",name:"3D Shapes",desc:"Balls, boxes, cans and cones",art:"🎲",href:"games/shapes3d/index.html",g:["#e2412e","#7a1d12"],group:"little"},
+  {id:"quicklook",name:"Quick Look",desc:"How many? Just look!",art:"👀",href:"games/quicklook/index.html",g:["#f5c518","#9a7a00"],group:"little"},
+  {id:"hidebugs",name:"Hiding Bugs",desc:"How many are under the leaf?",art:"🐞",href:"games/hidebugs/index.html",g:["#43a047","#1f5c22"],group:"little"},
+  {id:"dotmatch",name:"Dot Match",desc:"Same number, different look",art:"🎲",href:"games/dotmatch/index.html",g:["#3b6fd9","#1d3d85"],group:"little"},
+  {id:"counton",name:"Count On",desc:"More frogs hop in!",art:"🐸",href:"games/counton/index.html",g:["#1f8b6f","#0e4a3a"],group:"little"},
+  {id:"senses",name:"Five Senses",desc:"See, hear, smell, taste, touch",art:"👂",href:"games/senses/index.html",g:["#f06fb0","#8a2a5c"],group:"little"},
+  {id:"seasons",name:"Seasons in Alberta",desc:"Winter, spring, summer, fall",art:"🍂",href:"games/seasons/index.html",g:["#f08a24","#99500d"],group:"little"},
   {id:"sizeorder",name:"Size Order",desc:"Smallest to biggest",art:"📏",href:"games/sizeorder/index.html",g:["#c2255c","#6b1131"],group:"little"},
   {id:"syllables",name:"Clap the Syllables",desc:"How many beats in the word?",art:"👏",href:"games/syllables/index.html",g:["#f08a24","#99500d"],group:"little"},
   {id:"blend",name:"Robot Talk",desc:"Put the sounds together",art:"🤖",href:"games/blend/index.html",g:["#3b6fd9","#1d3d85"],group:"little"},
@@ -185,7 +191,7 @@ const GAMES=[
   {id:"sentence",name:"Sentence Builder",desc:"Put the words in order",art:"📝",href:"games/sentence/index.html",g:["#e06aa6","#8a2f5f"],group:"explore",grades:[1,5]},
   {id:"spelling",name:"Spelling Bee",desc:"Hear it, spell it",art:"🐝",href:"games/spelling/index.html",g:["#f2b705","#7a5c00"],group:"explore",grades:[1,7]},
   {id:"crossword",name:"Picture Crossword",desc:"Pictures are the clues",art:"✏️",href:"games/crossword/index.html",g:["#4fb3d9","#1f6585"],group:"explore",grades:[2,7]},
-  {id:"animals",name:"Animal Sort",desc:"Land, water, fur or feathers?",art:"🐾",href:"games/animals/index.html",g:["#6bb34a","#36651f"],group:"explore",grades:[0,5]},
+  {id:"animals",name:"Animal Sort",desc:"How they move, babies, winter",art:"🐾",href:"games/animals/index.html",g:["#6bb34a","#36651f"],group:"explore",grades:[0,5]},
   {id:"oddone",name:"Odd One Out",desc:"Which one doesn't belong?",art:"🔍",href:"games/oddone/index.html",g:["#c2255c","#6b1131"],group:"explore",grades:[0,5]},
   {id:"planets",name:"Planet Order",desc:"Planets and space",art:"🪐",href:"games/planets/index.html",g:["#1f2a6b","#0b1033"],group:"explore",grades:[2,7]},
   {id:"foodchain",name:"Food Chain",desc:"Who eats what?",art:"🦊",href:"games/foodchain/index.html",g:["#b86b1f","#5e3409"],group:"explore",grades:[2,7]},
@@ -219,8 +225,14 @@ function drawGames(){const g=$("gameGrid");g.innerHTML="";const cur=players.curr
     fits=x=>{if(!inApp(x))return false;if(APP==="little"||!x.grades)return true;const lo=LITTLE_EXTRAS.includes(x.id)?Math.max(3,x.grades[0]):x.grades[0];return g0>=lo&&g0<=x.grades[1]};
   const L=["little","Little learners","Letters, numbers and shapes"],X=APP==="little"?["explore","More to explore",""]:["explore","Learn & explore","Picked for "+players.gradeName(cur?cur.grade:3)],
     P=APP==="little"?["puzzles","Music","Earn 🎵 by playing"]:["puzzles","Puzzles","Every grade"];
-  let secs=APP==="little"?[L,X,P]:[X,P];
-  secs.forEach(([key,title,sub])=>{const list=GAMES.filter(x=>(x.group||"puzzles")===key&&fits(x));if(!list.length)return;
+  // Little Learners lists its games by subject
+  const SUBJ={letters:["abc","trace","sound","rhyme","syllables","blend","missletter","case"],numbers:["trains","count","quicklook","dotmatch","numorder","moreless","tenframe","hidebugs","counton","missnum","patterns"],
+    shapes:["shapesort","shapehunt","colours","position","shapes3d","sizeorder"],science:["animals","senses","seasons","oddone"]};
+  const subj=x=>Object.keys(SUBJ).find(k=>SUBJ[k].includes(x.id))||(x.group==="puzzles"||!x.group?"puzzles":"science");
+  const LS=[["letters","Letters & sounds","🔤"],["numbers","Numbers","🔢"],["shapes","Shapes & space","🔺"],["science","Science & thinking","🔬"],P];
+  let secs=APP==="little"?LS:[X,P];
+  secs.forEach(([key,title,sub])=>{const list=GAMES.filter(x=>(APP==="little"?subj(x):(x.group||"puzzles"))===key&&fits(x));
+    if(APP==="little"&&SUBJ[key])list.sort((p,q)=>SUBJ[key].indexOf(p.id)-SUBJ[key].indexOf(q.id));if(!list.length)return;
     const h=document.createElement("h2");h.innerHTML=title+" <small>"+sub+"</small>";g.appendChild(h);
     const grid=document.createElement("div");grid.className="games";grid.dataset.group=key;g.appendChild(grid);
     list.forEach(x=>drawGame(grid,x))});

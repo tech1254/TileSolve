@@ -32,16 +32,21 @@ window.TS_LEARN=function(o){
     if(due>=0&&S.i<S.total-1){R=JSON.parse(S.retry.splice(due,1)[0].data);R.isRetry=true}
     else{const nEff=o.adapt===false?S.n:Math.max(1,Math.min(40,S.n+S.adj));R=o.make(nEff,S.i,S.rng,K.age-1)}
     R.done=false;R.miss=0;dots();$("lrPrompt").innerHTML=R.prompt||"";K.tip(R.isRetry?"Let's try this one again!":R.text||R.say||"");
-    const b=$("lrBody");b.innerHTML="";b.className="lr-body lr-"+R.type;b.removeAttribute("style");TYPES[R.type].draw(b);TS.say(R.say);stats()}
+    const b=$("lrBody");b.innerHTML="";b.className="lr-body lr-"+R.type;b.removeAttribute("style");TYPES[R.type].draw(b);TS.say(R.say);stats();
+    if(R.flash){const f=$("lrPrompt").querySelector(".lr-flash");if(f){clearTimeout(S.ft);const hide=()=>{S.ft=setTimeout(()=>f.classList.add("hid"),R.flash)};hide();
+      const ag=document.createElement("button");ag.type="button";ag.className="lr-again";ag.textContent="👀 Look again";ag.onclick=()=>{ag.remove();f.classList.remove("hid");clearTimeout(S.ft);hide()};$("lrPrompt").appendChild(ag)}}}
   function dots(){$("lrDots").innerHTML=Array.from({length:S.total},(_,k)=>'<i class="'+(k<S.i?"done":k===S.i?"cur":"")+'"></i>').join("")}
   function stats(){K.stat(Math.min(S.i+1,S.total)+"/"+S.total,"Round");K.sub("Oops "+S.miss)}
   function oops(el,picked){S.miss++;R.miss=(R.miss||0)+1;stats();TS.music.fx("bad");if(el){el.classList.remove("lr-no");void el.offsetWidth;el.classList.add("lr-no")}
     const m=R.miss,b=body();
     // 1st: say what was picked and ask again; 2nd: take away a wrong choice (or point at the answer); 3rd+: show the answer to tap
-    if(m===1)TS.say((picked?"That's "+picked+". ":"Not quite. ")+(R.say||""));
-    else if(m===2){TS.say(picked?"That's "+picked+". Try again!":"Try again!");if(R.type==="pick")dropOne(b);else flash(TYPES[R.type].target(b))}
+    const said=picked&&picked[0]==="~"?picked.slice(1)+" ":picked?"That's "+picked+". ":"";
+    if(m===1)TS.say((said||"Not quite. ")+(R.say||""));
+    else if(m===2){TS.say(said+"Try again!");if(R.type==="pick")dropOne(b);else flash(TYPES[R.type].target(b))}
     else{TS.say("Tap the one that's glowing!");K.tip("Tap the one that's glowing!");const t=TYPES[R.type].target(b);flash(t);if(t)t.classList.add("lr-show")}
-    if(b)b.classList.add("peek")} // numerals that had faded their dots show them again
+    if(b)b.classList.add("peek");
+    // a quick-look picture comes back after the second miss
+    const fl=$("lrPrompt").querySelector(".lr-flash.hid");if(fl&&m>=2)fl.classList.remove("hid")} // numerals that had faded their dots show them again
   function dropOne(b){const left=[...b.querySelectorAll(".lr-opt:not([disabled])")].filter(x=>x.dataset.key!==String(R.answer));if(left.length>1){const x=left[Math.floor(Math.random()*left.length)];x.disabled=true;x.classList.add("lr-off")}}
   function roundDone(){if(R.done)return;R.done=true;TS.music.fx("good");
     // missed rounds come back once; clean rounds in a row step the difficulty up, rough ones step it down
@@ -153,7 +158,7 @@ window.TS_LEARN=function(o){
 
   /* ---------- sorting: drag an item onto a bin, or tap the item then the bin ---------- */
   function drop(x,bin){const it=R.items[+x.dataset.k];setSel(null);
-    if(it.key===bin.dataset.bin){bin.querySelector(".lr-binin").appendChild(x);x.classList.add("in");TS.music.fx("tap");if(--R.left===0)roundDone()}else oops(bin)}
+    if(it.key===bin.dataset.bin){bin.querySelector(".lr-binin").appendChild(x);x.classList.add("in");TS.music.fx("tap");if(it.say)TS.say(it.say);if(--R.left===0)roundDone()}else oops(bin,it.why)}
   function setSel(x){document.querySelectorAll(".lr-item.sel").forEach(e=>e.classList.remove("sel"));R.sel=x;if(x)x.classList.add("sel")}
   let D=null;
   document.addEventListener("pointerdown",e=>{if(!R||R.done||K.busy)return;
@@ -278,13 +283,32 @@ TS_LEARN.util=(()=>{
     else d='<svg class="lr-dice wide" viewBox="0 0 110 46" aria-hidden="true">'+Array.from({length:Math.min(v,10)},(_,k)=>'<circle cx="'+(11+(k%5)*22)+'" cy="'+(k<5?12:34)+'" r="8.5"/>').join("")+"</svg>";
     const m=(TS.store.get("tilesolve:p:"+((TS.players.current()||{}).id||"none")+":numerals",{})[v])||0;
     return'<span class="lr-nd'+(m>=6?" gone":m>=3?" fade":"")+'"><b>'+v+"</b>"+d+"</span>"}
+  /* dot pictures: dice, line, scatter, frame (ten frames, 2 for 11-20), pair (two dice, second one red) */
+  const DICEP={1:[[50,50]],2:[[28,28],[72,72]],3:[[25,25],[50,50],[75,75]],4:[[28,28],[72,28],[28,72],[72,72]],5:[[25,25],[75,25],[50,50],[25,75],[75,75]],6:[[28,22],[72,22],[28,50],[72,50],[28,78],[72,78]]};
+  function dotpic(v,kind,r,split){let P=[],vb="0 0 100 100",grid="";const R2=r||Math.random;
+    if(kind==="dice"&&DICEP[v])P=DICEP[v].map(([x,y])=>[x,y,12,0]);
+    else if(kind==="pair"){const a=split,b=v-split;P=DICEP[a].map(([x,y])=>[x,y,12,0]).concat(DICEP[b].map(([x,y])=>[x+110,y,12,1]));vb="0 0 210 100";
+      grid='<rect x="2" y="2" width="96" height="96" rx="14" class="die"/><rect x="112" y="2" width="96" height="96" rx="14" class="die"/>'}
+    else if(kind==="line"){P=Array.from({length:v},(_,k)=>[13+k*24,13,10,0]);vb="0 0 "+(v*24+2)+" 26"}
+    else if(kind==="scatter"&&v<=16){const cells=sample(R2,[...Array(16).keys()],v);P=cells.map(c=>[14+(c%4)*24+ri(R2,-4,4),14+((c/4)|0)*24+ri(R2,-4,4),9,0])}
+    else{const F=v>10?2:1;vb="0 0 112 "+(F===2?96:46);
+      for(let f=0;f<F;f++)for(let j=0;j<10;j++)grid+='<rect x="'+(1+(j%5)*22)+'" y="'+(1+(j<5?0:22)+f*50)+'" width="22" height="22" class="cell"/>';
+      P=Array.from({length:v},(_,k)=>{const f=Math.floor(k/10),j=k%10;return[12+(j%5)*22,12+(j<5?0:22)+f*50,8,0]})}
+    return'<svg class="lr-dots '+kind+'" viewBox="'+vb+'" aria-hidden="true">'+grid+P.map(([x,y,rr,c])=>'<circle cx="'+x+'" cy="'+y+'" r="'+rr+'"'+(c?' class="b"':"")+"/>").join("")+"</svg>"}
+  const STAGE={chrysalis:'<svg viewBox="0 0 60 100"><path d="M30 4v10" stroke="#6d4520" stroke-width="4"/><path d="M30 14C14 26 12 58 22 80c4 9 12 9 16 0 10-22 8-54-8-66Z" fill="#7cb342" stroke="#33691e" stroke-width="3"/><path d="M24 40h12M23 54h14M25 68h10" stroke="#33691e" stroke-width="2"/></svg>',
+    tadpole:'<svg viewBox="0 0 100 60"><path d="M40 30C60 14 82 22 96 30 82 38 60 46 40 30Z" fill="#455a64"/><ellipse cx="30" cy="30" rx="22" ry="17" fill="#37474f"/><circle cx="22" cy="25" r="4" fill="#fff"/><circle cx="21" cy="25" r="2"/></svg>',
+    froglet:'<svg viewBox="0 0 100 70"><path d="M58 40C74 34 88 38 98 44 88 50 74 52 58 46Z" fill="#558b2f"/><ellipse cx="38" cy="40" rx="26" ry="18" fill="#7cb342"/><circle cx="26" cy="26" r="8" fill="#7cb342"/><circle cx="26" cy="25" r="4" fill="#fff"/><circle cx="25" cy="25" r="2"/><path d="M24 56l-8 10M48 56l6 10" stroke="#558b2f" stroke-width="5" stroke-linecap="round"/></svg>',
+    frogspawn:'<svg viewBox="0 0 100 70">'+[[22,22],[42,16],[62,22],[82,30],[30,42],[52,40],[72,48],[40,60],[60,60],[16,52]].map(([x,y])=>'<circle cx="'+x+'" cy="'+y+'" r="10" fill="#cfe8f3" stroke="#90a4ae" stroke-width="2"/><circle cx="'+x+'" cy="'+y+'" r="3.5" fill="#263238"/>').join("")+"</svg>"};
+  const stage=k=>'<span class="lr-stage">'+STAGE[k]+"</span>";
+  // a baby animal: the grown-up emoji drawn small
+  const baby=em=>'<span class="lr-baby">'+em+"</span>";
   /* a train car (or engine) drawn as SVG; label goes on the side */
   function car(col,label,engine){const L=label==null?"":String(label);
     const body=engine?'<path d="M8 20h34v-12h16v12h8a6 6 0 0 1 6 6v18H8z" fill="'+col+'"/><rect x="46" y="11" width="9" height="9" rx="2" fill="#cfe9ff"/><rect x="14" y="2" width="8" height="18" fill="#3a3a3a"/><path d="M72 44l8 6H72z" fill="#555"/>'
       :'<rect x="6" y="10" width="68" height="34" rx="6" fill="'+col+'"/><rect x="12" y="15" width="16" height="11" rx="2" fill="#e8f6ff"/><rect x="52" y="15" width="16" height="11" rx="2" fill="#e8f6ff"/><rect x="2" y="36" width="5" height="4" fill="#555"/><rect x="73" y="36" width="5" height="4" fill="#555"/>';
     return'<svg class="lr-car" viewBox="0 0 80 56" aria-hidden="true">'+body+'<circle cx="22" cy="47" r="7" fill="#2b2f36"/><circle cx="58" cy="47" r="7" fill="#2b2f36"/><circle cx="22" cy="47" r="2.5" fill="#bbb"/><circle cx="58" cy="47" r="2.5" fill="#bbb"/>'+
       (L?'<text x="40" y="'+(engine?35:40)+'" text-anchor="middle" font-family="Andika,Verdana,sans-serif" font-weight="700" font-size="'+(L.length>2?17:26)+'" fill="#fff" stroke="rgba(0,0,0,.35)" stroke-width="1">'+L+"</text>":"")+"</svg>"}
-  return{ri,pick,shuffle,sample,mix,ramp,near,shape,SHAPES,SIDES,COLOURS,SHAPE_COLS,cluster,scatter,tens,frame,dist,pts,sampleLine,frac,pie,pizza,coin,cents,clock,numberline,fav,numdots,car,solid}})();
+  return{ri,pick,shuffle,sample,mix,ramp,near,shape,SHAPES,SIDES,COLOURS,SHAPE_COLS,cluster,scatter,tens,frame,dist,pts,sampleLine,frac,pie,pizza,coin,cents,clock,numberline,fav,numdots,car,solid,dotpic,stage,baby}})();
 
 /* Letter and number shapes for tracing, drawn in a 100x100 box (top line y=10, middle y=50, bottom y=90).
    Each character is a list of strokes in writing order; each stroke is a list of points. */

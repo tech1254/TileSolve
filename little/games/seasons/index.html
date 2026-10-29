@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#161b21">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box;height:100%}body{margin:0}[hidden]{display:none!important}</style>
+<title>Seasons in Alberta · Little Learners</title>
+<meta name="apple-mobile-web-app-title" content="Little Learners">
+<link rel="apple-touch-icon" href="../../icon-180.png">
+<link rel="icon" type="image/png" href="../../icon-512.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Barlow:wght@400;600;700&display=swap">
+<link rel="stylesheet" href="../../shared/ts.css?v=80d9b501">
+<link rel="stylesheet" href="../../shared/game.css?v=80d9b501">
+</head>
+<body>
+<script src="../../shared/ts.js?v=80d9b501"></script>
+<script src="../../shared/kit.js?v=80d9b501"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&display=swap">
+<link rel="stylesheet" href="../../shared/learn.css?v=80d9b501">
+<script src="../../shared/learn.js?v=80d9b501"></script>
+<script>
+(()=>{const U=TS_LEARN.util;
+TS_LEARN({id:"seasons",name:"Seasons in Alberta",howto:[["🍂", "Winter, spring, summer and fall: Alberta has all four!"], ["👆", "Tap the right season, sort things, or put them in order."], ["🌬️", "Later: chinooks, and why winter is cold."], ["🔊", "Tap the speaker to hear it again."]],
+make(n,i,r,a){const unsort=(t,ans)=>{let s;do s=U.shuffle(r,t);while(s.map(x=>x.key).join()===ans.join());return s};
+  /* Alberta grade 1 Earth Systems (seasonal changes and how they affect plants and animals), K "environments change over time",
+     grade 2 Earth and Sun. Pre-K names the season; K dresses for the weather and orders the seasons; grade 1 signs of fall and winter, chinooks;
+     grade 2 why winter is colder and the parts of a day. */
+  const SE={winter:["❄️","winter",["☃️","⛸️","🛷","🧣"]],spring:["🌷","spring",["🌧️","🐣","🌱","🌈"]],summer:["☀️","summer",["🏖️","🍉","🏊","🍦"]],fall:["🍂","fall",["🎃","🍁","🍎","🌰"]]};
+  const big=h=>'<span style="font-size:clamp(38px,11vw,52px);line-height:1">'+h+"</span>",L=["winter","spring","summer","fall"];
+  const which=()=>{const s=U.pick(r,L),pics=U.sample(r,SE[s][2],2).join(" "),opts=a<0?U.shuffle(r,[s].concat(U.sample(r,L.filter(x=>x!==s),2))):L;
+    return{type:"pick",cols:2,say:"Which season is it?",prompt:'<span class="ask">Which season is it?</span><span class="lr-emo">'+pics+"</span>",
+      options:opts.map(x=>({key:x,html:big(SE[x][0])+'<span style="display:block;font-size:15px">'+x+"</span>",say:x===s?"Yes! It's "+s+".":x})),answer:s}};
+  if(a<0)return which();
+  const K=a===0?["which","clothes","loop"][i%3]:a===1?["signs","chinook","loop","signs","clothes"][i%5]:["why","day","signs","chinook"][i%4];
+  if(K==="which")return which();
+  if(K==="clothes")return{type:"sort",say:"What would you wear? Sort them: cold day or hot day.",prompt:'<span class="ask">Cold day or hot day?</span>',bins:[{key:"cold",html:"🥶",label:"Cold day"},{key:"hot",html:"🥵",label:"Hot day"}],
+    items:U.shuffle(r,U.sample(r,[["🧤","mittens"],["🧣","scarf"],["🥾","boots"],["🧥","coat"]],3).map(x=>({key:"cold",html:'<span class="lr-em">'+x[0]+"</span>",aria:x[1]})).concat(
+      U.sample(r,[["🩳","shorts"],["🕶️","sunglasses"],["👒","sun hat"],["🩴","flip flops"]],3).map(x=>({key:"hot",html:'<span class="lr-em">'+x[0]+"</span>",aria:x[1]}))))};
+  if(K==="loop"){const st=U.ri(r,0,3),seq=[0,1,2,3].map(k=>L[(st+k)%4]);
+    return{type:"order",size:72,say:"Start with "+seq[0]+". Put the seasons in order.",prompt:'<span class="ask">Start with '+seq[0]+": what comes next?</span>",
+      tiles:unsort(L.map(x=>({key:x,html:'<span class="lr-em">'+SE[x][0]+'</span><small style="display:block;font-size:11px">'+x+"</small>",say:x})),seq),answer:seq}}
+  if(K==="signs"){const s=U.pick(r,["fall","winter","spring"]),SG={fall:[["🍂","leaves change colour and fall"],["🦆","ducks fly south"],["🎃","pumpkins are ready"],["🐿️","squirrels store food"],["🍎","apples are picked"]],
+      winter:[["❄️","snow falls"],["⛸️","ponds freeze for skating"],["🦊","foxes grow thick fur"],["🌑","it gets dark early"],["⛄","snowmen"]],spring:[["🌷","flowers come up"],["🐣","baby animals are born"],["🌧️","rain showers"],["🦆","ducks come back"],["🌱","seeds sprout"]]};
+    const other=L.filter(x=>x!==s).flatMap(x=>(SG[x]||SE[x][2].map(e=>[e,""])).map(y=>[y[0],x])).filter(y=>!SG[s].some(z=>z[0]===y[0]));
+    const cells=U.sample(r,SG[s],4).map(x=>({html:big(x[0]),ok:true,aria:x[1]})).concat(U.sample(r,other,4).map(x=>({html:big(x[0]),ok:false,aria:"picture",why:"a sign of "+x[1]})));
+    return{type:"hunt",cols:4,say:"Tap all the signs of "+s+".",prompt:'<span class="ask">Tap all the signs of <b>'+s+"</b></span>",cells:U.shuffle(r,cells)}}
+  const Q={chinook:["In winter, a warm wind can blow over the Rocky Mountains and melt the snow. What is it called?","a chinook",["a chinook","a blizzard","a rainbow"],"⛰️🌬️☀️"],
+    why:["Why is winter colder than summer?","less sunlight",["less sunlight","the Sun turns off","the clouds eat the heat"],"🌍☀️"],
+    day:["What comes after the evening?","night",["night","morning","lunch"],"🌇"]};
+  if(K==="day"&&i%2){const D=[["🌅","morning"],["☀️","noon"],["🌇","evening"],["🌙","night"]];
+    return{type:"order",size:72,say:"Put the parts of the day in order.",prompt:'<span class="ask">Put the day in order</span>',tiles:unsort(D.map(x=>({key:x[1],html:'<span class="lr-em">'+x[0]+'</span><small style="display:block;font-size:11px">'+x[1]+"</small>",say:x[1]})),D.map(x=>x[1])),answer:D.map(x=>x[1])}}
+  const q=Q[K]||Q.chinook;
+  return{type:"pick",cols:1,say:q[0],prompt:'<span class="ask">'+q[0]+'</span><span class="lr-emo">'+q[3]+"</span>",
+    options:U.shuffle(r,q[2]).map(x=>({key:x,html:'<span style="font-size:20px">'+x+"</span>",say:x===q[1]?(K==="why"?"Yes! In winter the days are short and the sunlight is weaker.":K==="chinook"?"Yes! A chinook can melt the snow in a day.":"Yes! Night comes after evening."):x})),answer:q[1]}}});
+})();
+</script>
+</body>
+</html>
