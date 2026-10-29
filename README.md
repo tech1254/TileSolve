@@ -78,6 +78,8 @@ Songs are earned: the first is free, then each song needs 5 more 🎵. Players e
 
 ## Puzzle games
 
+**Ball Run** (every grade): a ball rolls along a track in the sky; drag or hold ◀ ▶ to steer. Narrow bridges, zigzags, walls, sweeping bars, moving platforms and jump pads that always land you on the next platform. Flags are checkpoints, and gems are a bonus. Tracks get longer, faster and trickier by level and grade. `tools/test_ballrun.py` drives every grade's levels with a careful self-steering ball to prove each one can be finished without falling.
+
 - **Unblock the Car** (`games/car/`): slide cars until the red one can drive out. 1,000 levels from a bank of pre-generated, verified puzzles; the par is each puzzle's exact shortest solution. Difficulty ramps by grade: for grade 3, it's properly challenging by about level 30.
 - **Picture Puzzle** (`games/picture/`): eight original cartoon pictures (animals and space). Two modes, 40 levels each:
   - *Drop-in*: drag pieces from the tray into the picture. Pieces get smaller as levels go on, and later levels turn the pieces (tap to turn them back). A wrong drop counts as an "oops".

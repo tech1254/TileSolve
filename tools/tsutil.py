@@ -17,7 +17,7 @@ PLAYERS = json.dumps({"list": [{"id": "k1", "name": "Mia", "avatar": "🐯", "gr
 GAMES = ["car", "picture-drop", "picture-slide", "memory", "pattern", "flood", "blocks", "numbers", "words", "sudoku", "pipes", "lights", "pixels", "boxes", "wordsearch",
          "abc", "missletter", "case", "sound", "trace", "count", "numorder", "moreless", "missnum", "tenframe", "shapesort", "shapehunt", "colours", "sizeorder",
          "maketen", "times", "fractions", "money", "clock", "numberline", "patterns", "rhyme", "sentence", "spelling", "crossword",
-         "animals", "oddone", "planets", "foodchain", "places", "robot", "tunes", "carols"]
+         "animals", "oddone", "planets", "foodchain", "places", "robot", "tunes", "carols", "ballrun"]
 # Test player starts with every "How to play" card already seen (tools/test_howto.py tests the cards themselves).
 SEEN = json.dumps({g: 1 for g in GAMES})
 INIT = (f"if(!localStorage.getItem('tilesolve:players'))localStorage.setItem('tilesolve:players', {json.dumps(PLAYERS)});"

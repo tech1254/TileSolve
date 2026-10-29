@@ -153,7 +153,7 @@ with sync_playwright() as p:
         cg = b.new_context(viewport={"width": 390, "height": 844}); cg.add_init_script(player(grade, f"h{grade}"))
         hp = watch_errors(cg.new_page(), errors); hp.goto(HOME_URL); hp.wait_for_timeout(300)
         n = hp.locator(".games[data-group='little'] .game").count()
-        check((n == 15) == shows and hp.locator(".games[data-group='puzzles'] .game").count() == 16,
+        check((n == 15) == shows and hp.locator(".games[data-group='puzzles'] .game").count() == 17,
               f"grade {grade}: Little learners {'shown' if shows else 'hidden'} ({n}), puzzles shown")
         cg.close()
 

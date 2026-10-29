@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#161b21">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box;height:100%}body{margin:0}[hidden]{display:none!important}</style>
+<title>Ball Run · Tile Solve</title>
+<meta name="apple-mobile-web-app-title" content="Tile Solve">
+<link rel="apple-touch-icon" href="../../icon-180.png">
+<link rel="icon" type="image/png" href="../../icon-512.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Barlow:wght@400;600;700&display=swap">
+<link rel="stylesheet" href="../../shared/ts.css?v=f62baa0f">
+<link rel="stylesheet" href="../../shared/game.css?v=f62baa0f">
+<style>
+.br-wrap{position:relative;width:100%;max-width:640px;flex:1;min-height:380px;display:flex}
+.br-cv{width:100%;height:100%;display:block;border-radius:16px;touch-action:none;user-select:none;-webkit-user-select:none;background:#8fd0ff}
+.br-msg{position:absolute;left:0;right:0;top:38%;text-align:center;font:400 clamp(26px,8vw,44px) var(--font-sign);color:#fff;text-shadow:0 3px 0 rgba(0,0,0,.35);pointer-events:none}
+.br-pad{display:flex;gap:10px;justify-content:center;width:100%;max-width:640px}
+.br-pad button{flex:1;height:64px;border:0;border-radius:16px;font:800 30px var(--font-body);background:var(--panel,#262b36);color:var(--text);touch-action:none;user-select:none;-webkit-user-select:none}
+.br-pad button.on{background:var(--paint);color:var(--night)}
+</style>
+</head>
+<body>
+<script src="../../shared/ts.js?v=f62baa0f"></script>
+<script src="../../shared/kit.js?v=f62baa0f"></script>
+<script>
+(()=>{
+/* Ball Run: a ball rolls along a track floating in the sky. Steer left and right (drag anywhere, or hold the ◀ ▶ buttons, or arrow keys)
+   to stay on the track, dodge walls and sweeping bars, ride moving platforms, hit the yellow jump pads over gaps, and grab gems.
+   Fall off and you start again from the last flag. Drawn in simple 3D on a canvas (boxes seen from a camera behind the ball). */
+let K,S=null;
+const W0=3; // normal track width
+// per grade: [starting speed, speed added per level]
+const PACE={1:[5,.05],2:[5.5,.06],3:[6,.07],4:[6.5,.075],5:[7,.08],6:[7.5,.085],7:[8,.09]};
+function rnd(n){return K.rng(n)}
+/* ---------- the track: a list of pieces laid end to end along z ----------
+   Zigzag platforms overlap by 0.6 so there's room to cross; sweeping bars always leave a gap. */
+function build(n){const r=rnd(n),ri=(a,b)=>a+Math.floor(r()*(b-a+1)),pick=a=>a[Math.floor(r()*a.length)];
+  const T={plats:[],walls:[],gems:[],pads:[],flags:[],pieces:[],len:0};let z=0,cx=0;
+  const plat=(x0,x1,z0,z1,o={})=>T.plats.push({x0,x1,z0,z1,...o});
+  plat(-W0/2,W0/2,-6,8);z=8; // start
+  const kinds=["straight","gems","narrow"];if(n>=3)kinds.push("zigzag","walls");if(n>=5)kinds.push("jump");if(n>=8)kinds.push("sweeper");if(n>=12)kinds.push("moving");if(n>=18)kinds.push("narrow","jump","walls");
+  const count=Math.min(40,7+Math.floor(n*.75));let last="";
+  for(let i=0;i<count;i++){let k=pick(kinds);if(k===last&&k!=="straight")k="gems";last=k;T.pieces.push({k,z0:z});
+    if(i>0&&i%Math.max(4,Math.floor(count/3))===0){T.flags.push(z+1)} // checkpoints
+    if(k==="straight"||k==="gems"){const L=ri(6,9);plat(cx-W0/2,cx+W0/2,z,z+L);if(k==="gems"){const gx=cx+(ri(-1,1))*.9;for(let g=1;g<L;g+=1.5)T.gems.push({x:gx,z:z+g,got:0})}z+=L}
+    else if(k==="narrow"){const w=Math.max(1,1.6-n*.02),L=ri(5,8),ox=cx+(r()-.5)*.8;plat(cx-W0/2,cx+W0/2,z,z+3);plat(ox-w/2,ox+w/2,z+3,z+3+L,{c:1});
+      for(let g=2;g<L;g+=2)T.gems.push({x:ox,z:z+3+g,got:0});plat(cx-W0/2,cx+W0/2,z+3+L,z+4.5+L);z+=4.5+L}
+    else if(k==="zigzag"){const w=1.8;let s=r()<.5?-1:1;for(let j=0;j<3;j++){const ox=cx+s*.6;plat(ox-w/2,ox+w/2,z,z+4.2,{c:1});T.gems.push({x:ox,z:z+2,got:0});z+=4;s=-s}plat(cx-W0/2,cx+W0/2,z,z+2);z+=2}
+    else if(k==="walls"){const L=10;plat(cx-W0/2,cx+W0/2,z,z+L);
+      for(const wz of [z+3,z+7]){const gap=Math.max(1.1,1.6-n*.01),gx=cx+(r()-.5)*(W0-gap);
+        if(gx-gap/2>cx-W0/2+.05)T.walls.push({x0:cx-W0/2,x1:gx-gap/2,z0:wz,z1:wz+.6,h:.9});
+        if(gx+gap/2<cx+W0/2-.05)T.walls.push({x0:gx+gap/2,x1:cx+W0/2,z0:wz,z1:wz+.6,h:.9});T.gems.push({x:gx,z:wz+.3,got:0})}z+=L}
+    else if(k==="jump"){plat(cx-W0/2,cx+W0/2,z,z+4);const gapL=ri(3,4)+(n>25?1:0),gem={x:cx,z:z+4+gapL/2,y:1.5,got:0};
+      T.pads.push({x0:cx-W0/2,x1:cx+W0/2,z0:z+2.6,z1:z+3.6,land:z+4+gapL+1.5,gem});T.gems.push(gem);z+=4+gapL;plat(cx-W0/2,cx+W0/2,z,z+4);z+=4}
+    else if(k==="sweeper"){const L=9;plat(cx-W0/2,cx+W0/2,z,z+L);T.walls.push({x0:-.55,x1:.55,z0:z+4,z1:z+4.5,h:.7,move:{a:W0/2-.55,base:cx,w:1.3+n*.008,ph:r()*6}});z+=L}
+    else if(k==="moving"){plat(cx-W0/2,cx+W0/2,z,z+2);z+=2;const w=1.6;T.plats.push({x0:-w/2,x1:w/2,z0:z,z1:z+5,c:2,move:{a:.7,base:cx,w:1.1,ph:r()*6}});z+=5;plat(cx-W0/2,cx+W0/2,z,z+2);z+=2}
+  }
+  plat(cx-W0/2,cx+W0/2,z,z+10,{finish:z+3});T.finish=z+3;T.len=z+10;
+  return T}
+const at=(o,t)=>o.move?o.move.base+o.move.a*Math.sin(t*o.move.w+o.move.ph):0; // x offset of a moving piece
+function platAt(x,z,t){for(const p of S.T.plats){if(z<p.z0||z>p.z1)continue;const dx=at(p,t);if(x>=p.x0+dx-.12&&x<=p.x1+dx+.12)return p}return null}
+
+/* ---------- game ---------- */
+function start(n){if(S&&S.raf)cancelAnimationFrame(S.raf);
+  K.stage.insertAdjacentHTML("beforeend",'<div class="br-wrap"><canvas class="br-cv" id="brCv" aria-label="Ball Run track"></canvas><div class="br-msg" id="brMsg">Tap to roll!</div></div>'+
+    '<div class="br-pad"><button type="button" id="brL" aria-label="Steer left">◀</button><button type="button" id="brR" aria-label="Steer right">▶</button></div>');
+  const cv=document.getElementById("brCv"),T=build(n),[s0,ds]=PACE[K.grade];
+  S={n,T,cv,ctx:cv.getContext("2d"),x:0,y:0,z:0,vy:0,vx:0,roll:0,speed:s0+ds*Math.min(n,40),t:0,running:false,falls:0,gems:0,check:0,steer:0,drag:null,
+    last:performance.now(),done:false,dying:0,slow:1,god:false,camX:0};
+  // gems over gaps float at about the top of the jump at this speed
+  for(const pd of T.pads){const t=(pd.land-pd.z0)/S.speed;pd.gem.y=Math.max(.6,Math.min(2.4,(9*t)*(9*t)/36*.8))}
+  K.stat("0/"+T.gems.length,"Gems");K.sub();K.tip("Drag left and right (or hold ◀ ▶) to steer. Stay on the track and reach the finish!");
+  const msg=document.getElementById("brMsg");
+  const go=()=>{if(!S.running&&!S.done&&!K.busy){S.running=true;msg.textContent=""}};
+  cv.addEventListener("pointerdown",e=>{e.preventDefault();go();S.drag={x:e.clientX,bx:S.x};cv.setPointerCapture&&cv.setPointerCapture(e.pointerId)});
+  cv.addEventListener("pointermove",e=>{if(!S.drag)return;const w=cv.getBoundingClientRect().width;S.target=S.drag.bx+(e.clientX-S.drag.x)/w*4.2});
+  const end=()=>{S.drag=null;S.target=null};cv.addEventListener("pointerup",end);cv.addEventListener("pointercancel",end);
+  const hold=(id,d)=>{const b=document.getElementById(id);b.addEventListener("pointerdown",e=>{e.preventDefault();go();S.steer=d;b.classList.add("on")});
+    for(const ev of ["pointerup","pointerleave","pointercancel"])b.addEventListener(ev,()=>{if(S.steer===d)S.steer=0;b.classList.remove("on")})};
+  hold("brL",-1);hold("brR",1);
+  const loop=t=>{if(S.cv!==cv)return;const dt=Math.min(.033,(t-S.last)/1000);S.last=t;step(dt);draw();S.raf=requestAnimationFrame(loop)};S.raf=requestAnimationFrame(loop)}
+addEventListener("keydown",e=>{if(!S)return;if(e.key==="ArrowLeft"){S.steer=-1;if(!S.running&&!K.busy){S.running=true;document.getElementById("brMsg").textContent=""}}if(e.key==="ArrowRight"){S.steer=1;if(!S.running&&!K.busy){S.running=true;document.getElementById("brMsg").textContent=""}}});
+addEventListener("keyup",e=>{if(S&&(e.key==="ArrowLeft"||e.key==="ArrowRight"))S.steer=0});
+function step(dt){if(!S.running||S.done)return;S.t+=dt;
+  if(S.dying){S.dying-=dt;S.y-=dt*9;if(S.dying<=0)respawn();return}
+  const sp=S.speed*S.slow;S.z+=sp*dt;S.roll+=sp*dt/.5;
+  // steering: drag sets a target x, buttons and keys push sideways
+  if(S.target!=null)S.x+=(S.target-S.x)*Math.min(1,dt*14);else S.x+=S.steer*4*dt;
+  if(S.auto)S.auto(S);
+  // ride moving platforms
+  const p=S.y<=.01?platAt(S.x,S.z,S.t):null;if(p&&p.move){const nx=at(p,S.t+dt)-at(p,S.t);S.x+=nx;if(S.drag)S.drag.bx+=nx}
+  // jump pads
+  if(S.y<=.01)for(const pd of S.T.pads)if(S.z>=pd.z0&&S.z<=pd.z1&&S.x>=pd.x0&&S.x<=pd.x1){const t=(pd.land-S.z)/(S.speed*S.slow);S.vy=9*t;S.y=.02;TS.music.fx("good")} // just enough to land on the next platform
+  if(S.y>0||S.vy>0){S.vy-=18*dt;S.y+=S.vy*dt;if(S.y<=0){if(platAt(S.x,S.z,S.t)||S.god){S.y=0;S.vy=0}else if(S.y<-.3)return fall("Whoops!")}}
+  else if(!platAt(S.x,S.z,S.t)&&!S.god)return fall("Whoops!");
+  // walls and sweepers
+  if(!S.god&&S.y<.8)for(const w of S.T.walls){const dx=at(w,S.t);if(S.z+.35>=w.z0&&S.z-.35<=w.z1&&S.x+.35>=w.x0+dx&&S.x-.35<=w.x1+dx)return fall("Bonk!")}
+  for(const g of S.T.gems)if(!g.got&&Math.abs(g.z-S.z)<.6&&Math.abs(g.x-S.x)<.65&&Math.abs((g.y||.5)-S.y-.5)<.9){g.got=1;S.gems++;TS.music.fx("tap");K.stat(S.gems+"/"+S.T.gems.length,"Gems")}
+  for(let i=0;i<S.T.flags.length;i++)if(S.z>=S.T.flags[i]&&S.check<i+1)S.check=i+1;
+  if(S.z>=S.T.finish){S.done=true;const st=S.falls===0?3:S.falls<=2?2:1;
+    setTimeout(()=>K.win({stars:st,text:(S.falls?"Made it with "+S.falls+" fall"+(S.falls>1?"s":""):"No falls!")+" · "+S.gems+" of "+S.T.gems.length+" gems"}),600)}}
+function fall(word){S.falls++;if(S.onFall)S.onFall(word);S.dying=.6;S.vy=0;TS.music.fx("bad");K.sub("Falls "+S.falls);const m=document.getElementById("brMsg");m.textContent=word;
+  setTimeout(()=>{if(m.textContent===word)m.textContent=""},900)}
+function respawn(){const z=S.check?S.T.flags[S.check-1]:0;S.z=z;S.y=0;S.vy=0;S.dying=0;const p=S.T.plats.find(q=>z>=q.z0&&z<=q.z1&&!q.move);S.x=p?(p.x0+p.x1)/2:0;S.target=null;if(S.drag)S.drag.bx=S.x;
+  S.running=false;document.getElementById("brMsg").textContent="Tap to roll!"}
+
+/* ---------- drawing: boxes in simple perspective, far ones first ---------- */
+function draw(){const cv=S.cv,r=cv.getBoundingClientRect(),dpr=window.devicePixelRatio||1;
+  if(cv.width!==Math.round(r.width*dpr)||cv.height!==Math.round(r.height*dpr)){cv.width=Math.round(r.width*dpr);cv.height=Math.round(r.height*dpr)}
+  const c=S.ctx,W=r.width,H=r.height;c.setTransform(dpr,0,0,dpr,0,0);
+  S.camX+=(S.x*.7-S.camX)*.12;const cz=S.z-5.2,cy=3.1+Math.max(0,S.y)*.4,f=Math.min(W,H)*1.05,hz=H*.24,FAR=48;
+  const P=(x,y,z)=>{const d=Math.max(.3,z-cz),s=f/d;return[W/2+(x-S.camX)*s,hz+(cy-y)*s]};
+  const sky=c.createLinearGradient(0,0,0,H);sky.addColorStop(0,"#5fb6ff");sky.addColorStop(.5,"#bfe6ff");sky.addColorStop(1,"#e9f7ff");c.fillStyle=sky;c.fillRect(0,0,W,H);
+  c.fillStyle="rgba(255,255,255,.75)";for(let i=0;i<6;i++){const x=((i*173-S.z*3)%(W+240)+W+240)%(W+240)-120,y=H*.08+i*17%60;c.beginPath();c.ellipse(x,y,60,16,0,0,7);c.ellipse(x+40,y-8,40,14,0,0,7);c.fill()}
+  const fog=(hex,d)=>{const k=Math.min(.75,Math.max(0,(d-12)/40));const n=parseInt(hex.slice(1),16),R=n>>16,G=n>>8&255,B=n&255;return"rgb("+Math.round(R+(220-R)*k)+","+Math.round(G+(240-G)*k)+","+Math.round(B+(255-B)*k)+")"};
+  const poly=(pts,col)=>{c.fillStyle=col;c.beginPath();pts.forEach((p,i)=>i?c.lineTo(p[0],p[1]):c.moveTo(p[0],p[1]));c.closePath();c.fill()};
+  function box(x0,x1,y0,y1,z0,z1,top,side,front){z0=Math.max(z0,cz+.4);if(z1<=z0)return;const d=(z0+z1)/2-cz;
+    if(x1<S.camX)poly([P(x1,y1,z0),P(x1,y1,z1),P(x1,y0,z1),P(x1,y0,z0)],fog(side,d));
+    if(x0>S.camX)poly([P(x0,y1,z0),P(x0,y1,z1),P(x0,y0,z1),P(x0,y0,z0)],fog(side,d));
+    poly([P(x0,y0,z0),P(x1,y0,z0),P(x1,y1,z0),P(x0,y1,z0)],fog(front,d));
+    if(y1<cy)poly([P(x0,y1,z0),P(x1,y1,z0),P(x1,y1,z1),P(x0,y1,z1)],fog(top,d))}
+  const vis=o=>o.z1>cz+.4&&o.z0<cz+FAR;
+  const ballBehind=S.y<-.35;if(ballBehind)ball(P,c,f,cz);
+  // platforms (far to near), striped tops, then the finish line, pads and flags on them
+  const plats=S.T.plats.filter(vis).sort((a,b)=>b.z0-a.z0);
+  for(const p of plats){const dx=at(p,S.t),x0=p.x0+dx,x1=p.x1+dx,top=p.c===2?"#7fb2ff":p.c===1?"#ffd7f0":"#f3eefe";
+    box(x0,x1,-.7,0,p.z0,p.z1,top,p.c===2?"#3d6fd1":"#9a8fd6",p.c===2?"#4f80e0":"#b3a8ee");
+    for(let s=Math.ceil(Math.max(p.z0,cz+.5)/2)*2;s<p.z1;s+=4){const e=Math.min(s+2,p.z1);poly([P(x0,0,s),P(x1,0,s),P(x1,0,e),P(x0,0,e)],fog(p.c===2?"#6aa2f5":p.c===1?"#ffc4e6":"#e4dcfb",s-cz))}
+    if(p.finish&&p.finish>cz+.5){const z=p.finish,n=8;for(let i=0;i<n;i++)for(let j=0;j<2;j++)poly([P(x0+(x1-x0)*i/n,.01,z+j*.4),P(x0+(x1-x0)*(i+1)/n,.01,z+j*.4),P(x0+(x1-x0)*(i+1)/n,.01,z+(j+1)*.4),P(x0+(x1-x0)*i/n,.01,z+(j+1)*.4)],(i+j)%2?"#222":"#fff")}}
+  for(const pd of S.T.pads)if(vis(pd)){poly([P(pd.x0,.01,Math.max(pd.z0,cz+.5)),P(pd.x1,.01,Math.max(pd.z0,cz+.5)),P(pd.x1,.01,pd.z1),P(pd.x0,.01,pd.z1)],"#ffcf2e");
+    const m=(pd.x0+pd.x1)/2;poly([P(m-.5,.02,pd.z0+.2),P(m,.02,pd.z1-.1),P(m+.5,.02,pd.z0+.2)],"#e58a00")}
+  // things standing on the track, far to near: walls, gems, flags, ball
+  const items=[];
+  for(const w of S.T.walls)if(vis(w))items.push({z:w.z0,d:()=>{const dx=at(w,S.t);box(w.x0+dx,w.x1+dx,0,w.h,w.z0,w.z1,"#ff8a65",w.move?"#c62828":"#d84315",w.move?"#e53935":"#f4511e")}});
+  for(const g of S.T.gems)if(!g.got&&g.z>cz+.6&&g.z<cz+FAR)items.push({z:g.z,d:()=>{const[x,y]=P(g.x,(g.y||.5)+Math.sin(S.t*4+g.z)*.08,g.z),s=f/(g.z-cz)*.28;
+    c.fillStyle="#29b6f6";c.beginPath();c.moveTo(x,y-s);c.lineTo(x+s*.8,y-s*.2);c.lineTo(x,y+s);c.lineTo(x-s*.8,y-s*.2);c.closePath();c.fill();c.fillStyle="rgba(255,255,255,.7)";c.beginPath();c.moveTo(x,y-s);c.lineTo(x+s*.3,y-s*.2);c.lineTo(x,y);c.closePath();c.fill()}});
+  S.T.flags.forEach((z,i)=>{if(z>cz+.6&&z<cz+FAR)items.push({z,d:()=>{const p=platAt(0,z,S.t)||{x0:-1.5,x1:1.5},[a,b]=P(p.x1-.1,0,z),[,t]=P(p.x1-.1,1.6,z),s=f/(z-cz);
+    c.strokeStyle="#555";c.lineWidth=Math.max(1,s*.05);c.beginPath();c.moveTo(a,b);c.lineTo(a,t);c.stroke();poly([[a,t],[a+s*.5,t+s*.15],[a,t+s*.3]],S.check>i?"#43a047":"#ffb300")}})});
+  if(!ballBehind)items.push({z:S.z,d:()=>ball(P,c,f,cz)});
+  items.sort((a,b)=>b.z-a.z).forEach(o=>o.d());
+  // progress
+  c.fillStyle="rgba(255,255,255,.5)";c.fillRect(12,10,W-24,6);c.fillStyle="#f2c230";c.fillRect(12,10,(W-24)*Math.min(1,S.z/S.T.finish),6)}
+function ball(P,c,f,cz){const R=.5,[x,y]=P(S.x,S.y+R,S.z),s=f/(S.z-cz)*R;
+  if(S.y>=-.05){const[sx,sy]=P(S.x,0,S.z);c.fillStyle="rgba(40,30,80,.25)";c.beginPath();c.ellipse(sx,sy,s*.9,s*.3,0,0,7);c.fill()}
+  const g=c.createRadialGradient(x-s*.35,y-s*.4,s*.1,x,y,s);g.addColorStop(0,"#ff9f80");g.addColorStop(.6,"#e53935");g.addColorStop(1,"#8e1c1c");
+  c.fillStyle=g;c.beginPath();c.arc(x,y,s,0,7);c.fill();
+  // a stripe that turns as the ball rolls
+  c.save();c.beginPath();c.arc(x,y,s,0,7);c.clip();const k=Math.sin(S.roll);c.fillStyle="rgba(255,255,255,.85)";c.fillRect(x-s,y+k*s*.9-s*.12,s*2,s*.24*Math.abs(Math.cos(S.roll))+s*.05);c.restore()}
+
+/* Hint: slows the ball down and the next fall doesn't count. */
+function hint(){if(!S||S.done)return;S.slow=Math.max(.7,S.slow*.85);S.shield=true;K.tip("🐢 Slower now, and your next fall won't count.")}
+const _fall=fall;fall=function(w){if(S.shield){S.shield=false;S.falls--;}_fall(w)};
+K=TS_KIT({id:"ballrun",name:"Ball Run",levels:40,start,hint,
+  howto:[["🔴","Your ball rolls by itself along a track in the sky."],["👆","Drag left and right, or hold ◀ ▶, to steer."],["🧱","Dodge walls and red bars. Yellow pads make you jump!"],["🚩","Fall off? You start again from the last flag. Grab 💎 on the way!"]],
+  label:n=>{const s=PACE[K.grade];return"⚡"+(s[0]+s[1]*n).toFixed(1)}});
+window.__game={get S(){return S},K,build,platAt,step,at};// for tools/test_ballrun.py
+K.start();
+})();
+</script>
+</body>
+</html>
