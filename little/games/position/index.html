@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#161b21">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box;height:100%}body{margin:0}[hidden]{display:none!important}</style>
+<title>Where's the Cat? · Little Learners</title>
+<meta name="apple-mobile-web-app-title" content="Little Learners">
+<link rel="apple-touch-icon" href="../../icon-180.png">
+<link rel="icon" type="image/png" href="../../icon-512.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Barlow:wght@400;600;700&display=swap">
+<link rel="stylesheet" href="../../shared/ts.css?v=917cd0fd">
+<link rel="stylesheet" href="../../shared/game.css?v=917cd0fd">
+</head>
+<body>
+<script src="../../shared/ts.js?v=917cd0fd"></script>
+<script src="../../shared/kit.js?v=917cd0fd"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&display=swap">
+<link rel="stylesheet" href="../../shared/learn.css?v=917cd0fd">
+<script src="../../shared/learn.js?v=917cd0fd"></script>
+<script>
+(()=>{const U=TS_LEARN.util;
+
+TS_LEARN({id:"position",name:"Where's the Cat?",howto:[["🐱", "The cat likes to hide!"], ["👂", "Listen: is it ON, UNDER, IN, NEXT TO, BEHIND, IN FRONT OF, or BETWEEN?"], ["👆", "Tap the picture that matches."], ["🔊", "Tap the speaker to hear it again."]],
+make(n,i,r,a){
+  /* Position words, in the order children learn them (research: in, on, under first; then next to, behind, in front of; then between). */
+  const WORDS=a<0?["on","under","in"]:a===0?["on","under","in","next to","behind","in front of"]:["on","under","in","next to","behind","in front of","between"];
+  const PETS=U.fav([["🐱","cat"],["🐶","dog"],["🐰","bunny"],["🐻","bear"],["🐸","frog"]]),[pet,name]=U.pick(r,PETS);
+  const scene=w=>'<span class="lr-pos p-'+w.replace(/ /g,"-")+'">'+(w==="in"?'<i class="pet">'+pet+'</i><i class="box"></i>':w==="between"?'<i class="tree l">🌳</i><i class="pet">'+pet+'</i><i class="tree r">🌳</i>':'<i class="table"></i><i class="pet">'+pet+"</i>")+"</span>";
+  const t=U.pick(r,WORDS),k=a<0?3:4,opts=[t].concat(U.sample(r,WORDS.filter(x=>x!==t),k-1)),obj=t==="in"?"box":t==="between"?"trees":"table";
+  return{type:"pick",cols:2,say:"Find the "+name+" "+t+" the "+obj+".",
+    prompt:'<span class="ask">The '+name+" is <b>"+t.toUpperCase()+"</b> the "+obj+"</span>",options:U.shuffle(r,opts).map(w=>({key:w,html:scene(w),say:w,aria:name+" "+w})),answer:t}}});
+})();
+</script>
+</body>
+</html>

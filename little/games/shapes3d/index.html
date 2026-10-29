@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#161b21">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box;height:100%}body{margin:0}[hidden]{display:none!important}</style>
+<title>3D Shapes · Little Learners</title>
+<meta name="apple-mobile-web-app-title" content="Little Learners">
+<link rel="apple-touch-icon" href="../../icon-180.png">
+<link rel="icon" type="image/png" href="../../icon-512.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Barlow:wght@400;600;700&display=swap">
+<link rel="stylesheet" href="../../shared/ts.css?v=917cd0fd">
+<link rel="stylesheet" href="../../shared/game.css?v=917cd0fd">
+</head>
+<body>
+<script src="../../shared/ts.js?v=917cd0fd"></script>
+<script src="../../shared/kit.js?v=917cd0fd"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&display=swap">
+<link rel="stylesheet" href="../../shared/learn.css?v=917cd0fd">
+<script src="../../shared/learn.js?v=917cd0fd"></script>
+<script>
+(()=>{const U=TS_LEARN.util;
+
+TS_LEARN({id:"shapes3d",name:"3D Shapes",howto:[["⚽", "Things around us have 3D shapes: balls are spheres, cans are cylinders."], ["👀", "Look at the real thing."], ["👆", "Sort it, or tap the one that matches."], ["🔊", "Tap the speaker to hear it again."]],
+make(n,i,r,a){
+  /* Alberta K/1 geometry: describe and sort 3D objects; grade 1 names sphere, cube, cylinder, cone; then "which ones roll?" (properties). */
+  const OBJ={sphere:[["⚽","soccer ball"],["🏀","basketball"],["🌍","globe"],["🍊","orange"],["🎾","tennis ball"],["🔮","crystal ball"]],cube:[["🎲","dice"],["🧊","ice cube"],["🎁","gift box"],["📦","box"]],
+    cylinder:[["🥫","can"],["🔋","battery"],["🧻","paper roll"],["🪵","log"],["🕯️","candle"]],cone:[["🍦","ice cream cone"],["🥕","carrot"],["🎄","tree"]]};
+  const NAME={sphere:"sphere (ball shape)",cube:"cube (box shape)",cylinder:"cylinder (can shape)",cone:"cone"},kinds=a<0?["sphere","cube"]:a===0?["sphere","cube","cylinder"]:["sphere","cube","cylinder","cone"];
+  const bin=k=>({key:k,html:U.solid(k),label:a<0?(k==="sphere"?"ball shape":"box shape"):k});
+  if(a>=1&&i%3===2){const roll=new Set(["sphere","cylinder","cone"]),cells=[];for(let k=0;k<8;k++){const kk=U.pick(r,kinds),o=U.pick(r,OBJ[kk]);cells.push({html:'<span style="font-size:2.2em">'+o[0]+"</span>",ok:roll.has(kk),aria:o[1],why:"a "+kk+": it doesn't roll"})}
+    if(!cells.some(c=>c.ok))cells[0]={html:'<span style="font-size:2.2em">⚽</span>',ok:true,aria:"ball"};if(cells.every(c=>c.ok))cells[1]={html:'<span style="font-size:2.2em">🎲</span>',ok:false,aria:"dice",why:"a cube: it doesn't roll"};
+    return{type:"hunt",cols:4,say:"Tap everything that can roll.",prompt:'<span class="ask">Tap everything that can <b>roll</b></span>',cells}}
+  if(i%2===1){const t=U.pick(r,kinds),o=U.pick(r,OBJ[t]),opts=U.shuffle(r,kinds).slice(0,a<0?2:3);if(!opts.includes(t))opts[0]=t;
+    return{type:"pick",cols:opts.length,say:"What shape is the "+o[1]+"?",prompt:'<span class="ask">What shape is it?</span><span class="lr-emo">'+o[0]+"</span>",
+      options:U.shuffle(r,opts).map(k=>({key:k,html:U.solid(k)+'<span style="display:block;font-size:15px">'+(a<0?(k==="sphere"?"ball":"box"):k)+"</span>",say:NAME[k]})),answer:t}}
+  const items=[];for(const k of kinds)items.push(k);while(items.length<(a<0?4:6))items.push(U.pick(r,kinds));
+  return{type:"sort",say:"Sort the things by their shape.",prompt:'<span class="ask">Sort them by shape</span>',bins:kinds.map(bin),
+    items:U.shuffle(r,items).map(k=>{const o=U.pick(r,OBJ[k]);return{key:k,html:'<span class="lr-em">'+o[0]+"</span>",aria:o[1]}})}}});
+})();
+</script>
+</body>
+</html>

@@ -5,7 +5,7 @@ from tsutil import *
 
 OUT = pathlib.Path(sys.argv[1]) if len(sys.argv) > 1 else pathlib.Path(".")
 check = Checker(); errors = []
-LEARN = ["trains", "abc", "syllables", "blend", "missletter", "case", "sound", "trace", "count", "numorder", "moreless", "missnum", "tenframe", "shapesort", "shapehunt", "colours", "sizeorder"]
+LEARN = ["trains", "abc", "syllables", "blend", "missletter", "case", "sound", "trace", "count", "numorder", "moreless", "missnum", "tenframe", "shapesort", "shapehunt", "colours", "sizeorder", "position", "shapes3d"]
 
 def player(grade, pid="kk"):
     seen = json.dumps({g: 1 for g in LEARN + GAMES})
@@ -85,6 +85,26 @@ with sync_playwright() as p:
     pg.goto(URL("blend")); pg.wait_for_function("window.__learn && __learn.R", timeout=10000)
     parts = pg.evaluate("[-1,0,1,2].map(a=>__learn.make(5,0,TS.rngFrom(a+9),a).prompt.replace(/<[^>]+>/g,'|').split('|').filter(Boolean).pop())")
     check(" · " in parts[0] and len(parts[1].split(" · ")) == 2 and len(parts[2].split(" · ")) == 3, f"Robot Talk: word parts, then onset-rime, then every sound ({parts})")
+
+    # Shapes and space research rules
+    pg.goto(URL("shapehunt")); pg.wait_for_function("window.__learn && __learn.R", timeout=10000)
+    sh = pg.evaluate("""(()=>{let near=0,whys=0,forms=new Set();for(let n=1;n<=40;n++){const r=TS.rngFrom(n);for(let i=0;i<5;i++){const R=__learn.make(n,i,r,0);
+      if(/almost/.test(R.say)){near++;if(R.cells.some(c=>!c.ok&&/^not a|^an oval|^a rectangle|^a square/.test(c.why||"")))whys++}
+      if(/triangles/.test(R.say))R.cells.filter(c=>c.ok).forEach(c=>forms.add(c.html.replace(/.*<polygon points="([^"]+)".*/,"$1")))}}return{near,whys,forms:forms.size}})()""")
+    check(sh["near"] >= 5 and sh["whys"] == sh["near"] and sh["forms"] >= 3, f"Shape Hunt: many kinds of triangles, plus 'almost' shapes that explain why they're not ({sh})")
+    pg.goto(URL("shapesort")); pg.wait_for_function("window.__learn && __learn.R", timeout=10000)
+    ss = pg.evaluate("(()=>{let t=0,s='';for(let n=1;n<=40;n++){const r=TS.rngFrom(n);for(let a=-1;a<=2;a++){const R=__learn.make(n,0,r,a);s+=R.say+JSON.stringify(R.bins.map(b=>b.label))+R.items.map(x=>x.aria).join()}}return /diamond/i.test(s)})()")
+    check(not ss, "Shape Sort never calls a shape a diamond")
+    pg.goto(URL("colours")); pg.wait_for_function("window.__learn && __learn.R", timeout=10000)
+    cc = pg.evaluate("(()=>{const c={};for(let n=1;n<=60;n++){const r=TS.rngFrom(n);const R=__learn.make(n,0,r,1);if(R.type==='pick')c[R.answer]=(c[R.answer]||0)+1}return c})()")
+    late = sum(cc.get(k, 0) for k in ("brown", "grey", "pink", "purple")) / 4; early = sum(cc.get(k, 0) for k in ("red", "blue", "green", "yellow", "orange")) / 5
+    check(late > early, f"Colour Match: brown, grey, pink and purple come up more often ({cc})")
+    pg.goto(URL("position")); pg.wait_for_function("window.__learn && __learn.R", timeout=10000)
+    pw = pg.evaluate("[-1,0,1].map(a=>{const s=new Set();for(let n=1;n<=30;n++){const R=__learn.make(n,0,TS.rngFrom(n),a);R.options.forEach(o=>s.add(o.key))}return[...s].sort()})")
+    check(pw[0] == ["in", "on", "under"] and "between" not in pw[1] and "between" in pw[2], f"Where's the Cat: in/on/under first, then next to/behind/in front of, then between ({pw})")
+    pg.goto(URL("shapes3d")); pg.wait_for_function("window.__learn && __learn.R", timeout=10000)
+    s3 = pg.evaluate("[-1,1].map(a=>{const t=new Set();for(let i=0;i<6;i++){const R=__learn.make(4,i,TS.rngFrom(i),a);t.add(R.type+(R.type==='sort'?R.bins.length:''))}return[...t].sort()})")
+    check("sort2" in s3[0] and "hunt" in s3[1] and "sort4" in s3[1], f"3D Shapes: ball and box shapes first, then four solids and 'what rolls?' ({s3})")
     pg.close()
 
     # My ABCs: the child's name letters first, a new letter each level, many kinds of rounds, ending with the song

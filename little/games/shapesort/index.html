@@ -15,20 +15,20 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Barlow:wght@400;600;700&display=swap">
-<link rel="stylesheet" href="../../shared/ts.css?v=41cce27d">
-<link rel="stylesheet" href="../../shared/game.css?v=41cce27d">
+<link rel="stylesheet" href="../../shared/ts.css?v=917cd0fd">
+<link rel="stylesheet" href="../../shared/game.css?v=917cd0fd">
 </head>
 <body>
-<script src="../../shared/ts.js?v=41cce27d"></script>
-<script src="../../shared/kit.js?v=41cce27d"></script>
+<script src="../../shared/ts.js?v=917cd0fd"></script>
+<script src="../../shared/kit.js?v=917cd0fd"></script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&display=swap">
-<link rel="stylesheet" href="../../shared/learn.css?v=41cce27d">
-<script src="../../shared/learn.js?v=41cce27d"></script>
+<link rel="stylesheet" href="../../shared/learn.css?v=917cd0fd">
+<script src="../../shared/learn.js?v=917cd0fd"></script>
 <script>
 (()=>{const U=TS_LEARN.util;
 
 TS_LEARN({id:"shapesort",name:"Shape Sort",howto:[["🔺", "Each shape has a home with its outline."], ["👆", "Drag a shape to its home, or tap the shape then tap its home."], ["🔄", "Shapes can be any colour, size, or turned around!"], ["🔊", "Tap the speaker to hear it again."]],
-make(n,i,r,a){const C=U.SHAPE_COLS,NM={circle:"circle",oval:"oval",square:"square",rectangle:"rectangle",triangle:"triangle",star:"star",heart:"heart",diamond:"diamond",pentagon:"pentagon",hexagon:"hexagon"};
+make(n,i,r,a){const C=U.SHAPE_COLS,NM={circle:"circle",oval:"oval",square:"square",rectangle:"rectangle",triangle:"triangle",star:"star",heart:"heart",diamond:"rhombus",pentagon:"pentagon",hexagon:"hexagon"};
   let kinds,bySides=false;
   if(a<0)kinds=n<=20?["circle","square"]:["circle","square","triangle"];
   else if(a===0)kinds=n<=10?["circle","square"]:n<=25?["circle","square","triangle"]:U.sample(r,["circle","square","triangle","star","heart"],3);
@@ -37,13 +37,15 @@ make(n,i,r,a){const C=U.SHAPE_COLS,NM={circle:"circle",oval:"oval",square:"squar
   else if(n<=12)kinds=U.sample(r,["triangle","square","pentagon","hexagon","diamond","rectangle"],4);
   else{bySides=true;kinds=["triangle","square","rectangle","diamond","pentagon","hexagon"]}
   const cnt=a<0?3:a===0?4:a===1?6:7,items=[];
-  const rot=k=>a<=0?0:k==="square"||k==="diamond"||k==="rectangle"?U.pick(r,[0,90,180]):U.ri(r,0,359);
+  // research: shapes turned and in different forms from K up (a tilted square is still a square), and colours that don't give the answer away
+  const rot=k=>a<0?0:k==="square"||k==="rectangle"?U.pick(r,[0,45,90,30]):U.ri(r,0,359);
   const bkey=k=>bySides?"s"+U.SIDES[k]:k;
   const binsK=bySides?[3,4,5,6].map(s=>"s"+s):kinds;
   // at least one item for each home, then random ones
   const pickKinds=bySides?[...[3,4,5,6].map(s=>U.pick(r,kinds.filter(k=>U.SIDES[k]===s)))]:kinds.slice();
   while(pickKinds.length<cnt)pickKinds.push(U.pick(r,kinds));
-  U.shuffle(r,pickKinds).forEach(k=>items.push({key:bkey(k),html:U.shape(k,U.pick(r,C),rot(k),.7+.3*r()),aria:NM[k]}));
+  const VAR={triangle:["triangle","tri_tall","tri_right","tri_wide"],rectangle:["rectangle","rect_long"]};
+  U.shuffle(r,pickKinds).forEach(k=>items.push({key:bkey(k),html:U.shape(a<0?k:U.pick(r,VAR[k]||[k]),U.pick(r,C),rot(k),.7+.3*r()),aria:NM[k]}));
   const bins=binsK.map(b=>bySides?{key:b,html:'<b class="sides">'+b.slice(1)+"</b>",label:b.slice(1)+" sides"}:{key:b,html:U.shape(b,"#cfd6dd",0,1,true),label:NM[b]});
   return{type:"sort",say:bySides?"Sort the shapes by how many sides they have.":"Put each shape in its home.",
     prompt:'<span class="ask">'+(bySides?"Sort by number of sides":"Put each shape in its home")+"</span>",bins,items}}});

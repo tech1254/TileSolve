@@ -82,7 +82,7 @@ window.TS_LEARN=function(o){
       solve(b){let x;while((x=this.target(b)))drop(x,b.querySelector('.lr-bin[data-bin="'+cssq(R.items[+x.dataset.k].key)+'"]'))}},
     hunt:{draw(b){b.style.setProperty("--cols",R.cols);R.left=R.cells.filter(c=>c.ok).length;
         R.cells.forEach((c,k)=>{const x=document.createElement("button");x.type="button";x.className="lr-cell";x.innerHTML=c.html;x.dataset.k=k;x.setAttribute("aria-label",c.aria||"picture");
-          x.onclick=()=>{if(R.done||K.busy||x.classList.contains("found"))return;if(c.ok){x.classList.add("found");TS.music.fx("tap");if(--R.left===0)roundDone()}else oops(x)};b.appendChild(x)})},
+          x.onclick=()=>{if(R.done||K.busy||x.classList.contains("found"))return;if(c.ok){x.classList.add("found");TS.music.fx("tap");if(--R.left===0)roundDone()}else oops(x,c.why)};b.appendChild(x)})},
       target(b){const k=R.cells.findIndex((c,i)=>c.ok&&!b.children[i].classList.contains("found"));return k<0?null:b.children[k]},
       hint(b){flash(this.target(b))},solve(b){let t;while(!R.done&&(t=this.target(b)))t.click()}},
     /* meet {type:"meet", up, low, pic, word, say, tapSay}: a big letter card; tapping it says its name and sound */
@@ -214,10 +214,20 @@ TS_LEARN.util=(()=>{
   const SHAPES={circle:'<circle cx="50" cy="50" r="40"/>',oval:'<ellipse cx="50" cy="50" rx="45" ry="27"/>',square:'<rect x="13" y="13" width="74" height="74" rx="4"/>',
     rectangle:'<rect x="5" y="27" width="90" height="46" rx="4"/>',triangle:'<polygon points="50,9 93,87 7,87"/>',star:'<polygon points="'+star()+'"/>',
     heart:'<path d="M50 88C20 66 6 50 6 33 6 19 17 9 30 9c9 0 16 5 20 13 4-8 11-13 20-13 13 0 24 10 24 24 0 17-14 33-44 55z"/>',
-    diamond:'<polygon points="50,5 88,50 50,95 12,50"/>',pentagon:'<polygon points="'+poly(5,44,-90)+'"/>',hexagon:'<polygon points="'+poly(6,44,0)+'"/>'};
-  const SIDES={triangle:3,square:4,rectangle:4,diamond:4,pentagon:5,hexagon:6,circle:0,oval:0,star:10,heart:0};
+    diamond:'<polygon points="50,5 88,50 50,95 12,50"/>',
+    // other kinds of triangles and rectangles, and "almost" shapes that are not (open, curved sides, a cut corner)
+    tri_tall:'<polygon points="50,4 70,95 30,95"/>',tri_right:'<polygon points="12,10 12,88 90,88"/>',tri_wide:'<polygon points="6,72 94,72 28,34"/>',
+    rect_long:'<rect x="3" y="37" width="94" height="26" rx="3"/>',rhombus:'<polygon points="50,8 80,50 50,92 20,50"/>',
+    open_tri:'<path d="M42 14 L8 86 L92 86 L58 14"/>',curvy_tri:'<path d="M50 8 Q72 52 93 87 Q50 66 7 87 Q28 52 50 8Z"/>',cut_tri:'<polygon points="36,22 64,22 93,86 7,86"/>',pentagon:'<polygon points="'+poly(5,44,-90)+'"/>',hexagon:'<polygon points="'+poly(6,44,0)+'"/>'};
+  const SIDES={tri_tall:3,tri_right:3,tri_wide:3,rect_long:4,rhombus:4,cut_tri:4,open_tri:0,curvy_tri:0,triangle:3,square:4,rectangle:4,diamond:4,pentagon:5,hexagon:6,circle:0,oval:0,star:10,heart:0};
   const shape=(kind,col,rot=0,sc=1,outline=false)=>'<svg class="lr-shp" viewBox="0 0 100 100" aria-hidden="true"><g transform="translate(50 50) rotate('+rot+') scale('+sc+') translate(-50 -50)" '+
-    (outline?'fill="none" stroke="'+col+'" stroke-width="5" stroke-dasharray="9 7" stroke-linejoin="round"':'fill="'+col+'" stroke="rgba(0,0,0,.28)" stroke-width="3" stroke-linejoin="round"')+">"+SHAPES[kind]+"</g></svg>";
+    (kind==="open_tri"?'fill="none" stroke="'+col+'" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"':outline?'fill="none" stroke="'+col+'" stroke-width="5" stroke-dasharray="9 7" stroke-linejoin="round"':'fill="'+col+'" stroke="rgba(0,0,0,.28)" stroke-width="3" stroke-linejoin="round"')+">"+SHAPES[kind]+"</g></svg>";
+  // 3D shapes drawn with light and shade
+  const solid=k=>'<svg class="lr-shp lr-solid" viewBox="0 0 100 100" aria-hidden="true">'+({
+    sphere:'<defs><radialGradient id="lrSph" cx=".35" cy=".32" r=".7"><stop offset="0" stop-color="#9fd0ff"/><stop offset="1" stop-color="#2f62b8"/></radialGradient></defs><circle cx="50" cy="52" r="40" fill="url(#lrSph)"/>',
+    cube:'<polygon points="18,34 52,22 84,32 50,45" fill="#ffd36b"/><polygon points="18,34 50,45 50,88 18,76" fill="#f0a020"/><polygon points="50,45 84,32 84,74 50,88" fill="#c47a10"/>',
+    cylinder:'<path d="M22 24 V78 A28 10 0 0 0 78 78 V24 Z" fill="#43a047"/><path d="M22 24 V78 A28 10 0 0 0 50 88 V34 A28 10 0 0 1 22 24Z" fill="#5cbf60"/><ellipse cx="50" cy="24" rx="28" ry="10" fill="#8fdc92"/>',
+    cone:'<path d="M50 8 L80 78 A30 11 0 0 1 20 78 Z" fill="#e2412e"/><path d="M50 8 L20 78 A30 11 0 0 0 46 89 Z" fill="#f2715f"/>'}[k]||"")+"</svg>";
   const COLOURS={red:"#e2412e",blue:"#3b6fd9",green:"#43a047",yellow:"#f5c518",orange:"#f08a24",purple:"#8f5bd6",pink:"#f06fb0",brown:"#8b5a2b",black:"#262626",white:"#fafafa",grey:"#9aa3ad"};
   const SHAPE_COLS=["#e2412e","#3b6fd9","#43a047","#f5c518","#f08a24","#8f5bd6","#f06fb0"];
   /* ---------- pictures of numbers ---------- */
@@ -274,7 +284,7 @@ TS_LEARN.util=(()=>{
       :'<rect x="6" y="10" width="68" height="34" rx="6" fill="'+col+'"/><rect x="12" y="15" width="16" height="11" rx="2" fill="#e8f6ff"/><rect x="52" y="15" width="16" height="11" rx="2" fill="#e8f6ff"/><rect x="2" y="36" width="5" height="4" fill="#555"/><rect x="73" y="36" width="5" height="4" fill="#555"/>';
     return'<svg class="lr-car" viewBox="0 0 80 56" aria-hidden="true">'+body+'<circle cx="22" cy="47" r="7" fill="#2b2f36"/><circle cx="58" cy="47" r="7" fill="#2b2f36"/><circle cx="22" cy="47" r="2.5" fill="#bbb"/><circle cx="58" cy="47" r="2.5" fill="#bbb"/>'+
       (L?'<text x="40" y="'+(engine?35:40)+'" text-anchor="middle" font-family="Andika,Verdana,sans-serif" font-weight="700" font-size="'+(L.length>2?17:26)+'" fill="#fff" stroke="rgba(0,0,0,.35)" stroke-width="1">'+L+"</text>":"")+"</svg>"}
-  return{ri,pick,shuffle,sample,mix,ramp,near,shape,SHAPES,SIDES,COLOURS,SHAPE_COLS,cluster,scatter,tens,frame,dist,pts,sampleLine,frac,pie,pizza,coin,cents,clock,numberline,fav,numdots,car}})();
+  return{ri,pick,shuffle,sample,mix,ramp,near,shape,SHAPES,SIDES,COLOURS,SHAPE_COLS,cluster,scatter,tens,frame,dist,pts,sampleLine,frac,pie,pizza,coin,cents,clock,numberline,fav,numdots,car,solid}})();
 
 /* Letter and number shapes for tracing, drawn in a 100x100 box (top line y=10, middle y=50, bottom y=90).
    Each character is a list of strokes in writing order; each stroke is a list of points. */

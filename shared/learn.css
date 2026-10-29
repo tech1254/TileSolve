@@ -207,3 +207,18 @@
 /* tracing stages: faded guide, then from memory (guide hidden; the start dot stays) */
 .lr-tsvg.fade .lr-guide{opacity:.28}
 .lr-tsvg.memory .lr-guide{opacity:0}
+
+/* Where's the Cat: little position scenes */
+.lr-pos{position:relative;display:block;width:clamp(96px,30vw,130px);height:clamp(84px,26vw,112px);margin:auto}
+.lr-pos i{position:absolute;font-style:normal;line-height:1}
+.lr-pos .pet{font-size:clamp(30px,9vw,40px);left:50%;transform:translateX(-50%);z-index:2}
+.lr-pos .table{left:14%;right:14%;top:44%;height:9%;background:#8b5a2b;border-radius:3px;z-index:3}
+.lr-pos .table::before,.lr-pos .table::after{content:"";position:absolute;top:100%;width:9%;height:clamp(28px,9vw,40px);background:#6d4520}
+.lr-pos .table::before{left:6%}.lr-pos .table::after{right:6%}
+.p-on .pet{bottom:57%}.p-under .pet{bottom:4%}
+.p-next-to .table{left:3%;right:42%}.p-next-to .pet{left:auto;right:4%;transform:none;bottom:4%}
+.p-behind .pet{bottom:46%;z-index:1;font-size:clamp(24px,7vw,32px);filter:brightness(.9)}.p-behind .table{top:46%;height:44%;border-radius:4px}.p-behind .table::before,.p-behind .table::after{display:none}
+.p-in-front-of .table{top:30%}.p-in-front-of .pet{bottom:2%;z-index:4;font-size:clamp(36px,11vw,48px)}
+.p-in .box{left:22%;right:22%;bottom:6%;height:46%;background:#c98b4a;border:3px solid #8b5a2b;border-radius:3px;z-index:3}.p-in .pet{bottom:34%;z-index:2}
+.p-between .tree{font-size:clamp(32px,10vw,44px);bottom:4%}.p-between .l{left:0}.p-between .r{right:0}.p-between .pet{bottom:4%}
+.lr-solid{width:clamp(56px,17vw,80px);height:auto}
