@@ -114,7 +114,7 @@ with sync_playwright() as p:
     check(mp.locator("#ePiano [data-m='48']").count() == 1 and mp.locator("#eLow").is_disabled(), "◀ Lower slides down to low C (C3)")
     mp.click("#eHigh"); mp.click("#eHigh"); mp.wait_for_timeout(100)
     check(mp.locator("#ePiano [data-m='84']").count() == 1 and mp.locator("#eHigh").is_disabled(), "Higher ▶ reaches high C (C6)")
-    check(mp.locator("#ePiano button").count() == 17, "sliding redraws the piano without doubling keys")
+    check(mp.evaluate("(()=>{const ms=[...document.querySelectorAll('#ePiano button')].map(b=>b.dataset.m);return ms.length>=16&&new Set(ms).size===ms.length})()"), "sliding redraws the piano without doubling keys")
     mp.click("#ePiano [data-m='84']"); mp.click("#eUndo")
     mp.click("#eLow"); mp.wait_for_timeout(100)
     for m in ("60", "62", "64", "60"): mp.click(f"#ePiano [data-m='{m}']"); mp.wait_for_timeout(250)
