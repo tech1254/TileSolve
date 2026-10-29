@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#161b21">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box;height:100%}body{margin:0}[hidden]{display:none!important}</style>
+<title>Robot Talk · Tile Solve</title>
+<meta name="apple-mobile-web-app-title" content="Tile Solve">
+<link rel="apple-touch-icon" href="../../icon-180.png">
+<link rel="icon" type="image/png" href="../../icon-512.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Barlow:wght@400;600;700&display=swap">
+<link rel="stylesheet" href="../../shared/ts.css?v=41cce27d">
+<link rel="stylesheet" href="../../shared/game.css?v=41cce27d">
+</head>
+<body>
+<script src="../../shared/ts.js?v=41cce27d"></script>
+<script src="../../shared/kit.js?v=41cce27d"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&display=swap">
+<link rel="stylesheet" href="../../shared/learn.css?v=41cce27d">
+<script src="../../shared/learn.js?v=41cce27d"></script>
+<script>
+(()=>{const U=TS_LEARN.util;
+
+TS_LEARN({id:"blend",name:"Robot Talk",howto:[["🤖", "The robot talks in little pieces: c... at."], ["👂", "Put the pieces together to make a word."], ["👆", "Tap the picture of the word the robot said."], ["🔊", "Tap the speaker to hear the robot again."]],
+make(n,i,r,a){
+  /* Blending: big parts first (pre-K: two words -> sun... flower), then onset-rime (K: c... at), then every sound (grade 1: c-a-t),
+     then 4 sounds with blends (grade 2: f-r-o-g). Alberta K ELAL: blend onset and rime; grade 1: blend up to 5 sounds. */
+  const SND={b:"buh",c:"kuh",d:"duh",f:"fff",g:"guh",h:"huh",j:"juh",k:"kuh",l:"lll",m:"mmm",n:"nnn",p:"puh",r:"rrr",s:"sss",t:"tuh",v:"vvv",w:"wuh",x:"ks",y:"yuh",z:"zzz",a:"aah",e:"eh",i:"ih",o:"aw",u:"uh"};
+  const COMP=[["sunflower","🌻",["sun","flower"]],["cupcake","🧁",["cup","cake"]],["rainbow","🌈",["rain","bow"]],["popcorn","🍿",["pop","corn"]],["snowman","⛄",["snow","man"]],
+    ["football","🏈",["foot","ball"]],["starfish","⭐",["star","fish"]],["pancake","🥞",["pan","cake"]],["toothbrush","🪥",["tooth","brush"]],["doghouse","🏠",["dog","house"]],["butterfly","🦋",["butter","fly"]],["seashell","🐚",["sea","shell"]]];
+  const CVC=[["cat","🐱"],["dog","🐶"],["sun","☀️"],["pig","🐷"],["bus","🚌"],["hat","🎩"],["bed","🛏️"],["fox","🦊"],["cup","☕"],["bug","🐛"],["map","🗺️"],["net","🥅"],["hen","🐔"],
+    ["jet","✈️"],["van","🚐"],["web","🕸️"],["pen","🖊️"],["box","📦"],["rat","🐀"],["bat","🦇"],["log","🪵"],["fan","🪭"],["pot","🍲"],["mop","🧹"],["leg","🦵"],["bib","👶"]];
+  const CCVC=[["frog","🐸"],["crab","🦀"],["drum","🥁"],["flag","🚩"],["sled","🛷"],["star","⭐"],["snail","🐌"],["plant","🪴"],["swim","🏊"],["clock","🕰️"],["truck","🚚"],["glove","🧤"]];
+  const lvl=a<0?0:a===0?1:a===1?2:3,list=lvl===0?COMP:lvl===3?CCVC.concat(CVC):CVC,w=U.pick(r,list),k=a<0?3:4;
+  const parts=lvl===0?w[2]:lvl===1?[w[0][0],w[0].slice(1)]:w[0].split("");
+  const spoken=lvl===0?parts.join("... "):lvl===1?SND[parts[0]]+"... "+parts[1]:parts.map(c=>SND[c]||c).join("... ");
+  const opts=[w].concat(U.sample(r,list.filter(x=>x!==w&&(lvl===0||x[0][0]!==w[0][0]||r()<.3)),k-1));
+  return{type:"pick",cols:2,say:"The robot says: "+spoken+". What word is it?",prompt:'<span class="ask">🤖 The robot says:</span><span class="lr-sent">'+parts.join(" · ")+"</span>",
+    options:U.shuffle(r,opts).map(x=>({key:x[0],html:'<span class="lr-word"><b>'+x[1]+"</b>"+x[0]+"</span>",say:x[0]})),answer:w[0]}}});
+})();
+</script>
+</body>
+</html>

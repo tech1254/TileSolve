@@ -124,10 +124,10 @@ window.TS_LEARN=function(o){
       solve(b){[...R.sel].filter(i=>!R.solution.includes(i)).forEach(i=>b.querySelector('.lr-cbt[data-k="'+i+'"]').click());
         R.solution.forEach(i=>{if(!R.sel.has(i))b.querySelector('.lr-cbt[data-k="'+i+'"]').click()})}},
     trace:{draw(b){R.strokes=(TS_LEARN.TRACE[R.ch]||TS_LEARN.TRACE.O).map(U.sampleLine);R.si=0;R.pi=0;
-        const P=R.strokes;b.innerHTML='<svg class="lr-tsvg" viewBox="0 0 100 100" role="img" aria-label="Trace '+R.ch+'"><line x1="0" y1="10" x2="100" y2="10" class="lr-ln"/><line x1="0" y1="50" x2="100" y2="50" class="lr-ln mid"/><line x1="0" y1="90" x2="100" y2="90" class="lr-ln"/>'+
+        const P=R.strokes;b.innerHTML='<svg class="lr-tsvg'+(R.mode&&R.mode!=="guided"?" "+R.mode:"")+'" viewBox="0 0 100 100" role="img" aria-label="Trace '+R.ch+'"><line x1="0" y1="10" x2="100" y2="10" class="lr-ln"/><line x1="0" y1="50" x2="100" y2="50" class="lr-ln mid"/><line x1="0" y1="90" x2="100" y2="90" class="lr-ln"/>'+
           P.map(p=>'<polyline class="lr-guide" points="'+U.pts(p)+'"/>').join("")+P.map((p,k)=>'<polyline class="lr-ink" data-s="'+k+'" points=""/>').join("")+
           '<circle class="lr-start" r="6.5"/><text class="lr-num" text-anchor="middle" dominant-baseline="central"></text><circle class="lr-demo" r="4.5" hidden/></svg>';
-        this.mark(b)},
+        this.mark(b);if(R.mode==="guided")setTimeout(()=>{if(!R.done&&R.si===0&&R.pi===0)this.hint(b)},700)}, // watch first
       mark(b){const P=R.strokes[R.si];if(!P)return;const s=b.querySelector(".lr-start"),t=b.querySelector(".lr-num"),[x,y]=P[R.pi];
         s.setAttribute("cx",x);s.setAttribute("cy",y);t.setAttribute("x",x);t.setAttribute("y",y);t.textContent=R.si+1;
         b.querySelectorAll(".lr-guide").forEach((g,k)=>g.classList.toggle("now",k===R.si))},

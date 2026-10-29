@@ -15,15 +15,15 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Barlow:wght@400;600;700&display=swap">
-<link rel="stylesheet" href="../../shared/ts.css?v=f25d63c9">
-<link rel="stylesheet" href="../../shared/game.css?v=f25d63c9">
+<link rel="stylesheet" href="../../shared/ts.css?v=41cce27d">
+<link rel="stylesheet" href="../../shared/game.css?v=41cce27d">
 </head>
 <body>
-<script src="../../shared/ts.js?v=f25d63c9"></script>
-<script src="../../shared/kit.js?v=f25d63c9"></script>
+<script src="../../shared/ts.js?v=41cce27d"></script>
+<script src="../../shared/kit.js?v=41cce27d"></script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&display=swap">
-<link rel="stylesheet" href="../../shared/learn.css?v=f25d63c9">
-<script src="../../shared/learn.js?v=f25d63c9"></script>
+<link rel="stylesheet" href="../../shared/learn.css?v=41cce27d">
+<script src="../../shared/learn.js?v=41cce27d"></script>
 <script>
 (()=>{const U=TS_LEARN.util;
 TS_LEARN({id:"rhyme",name:"Rhyme Time",howto:[["👂", "Rhyming words sound the same at the end: cat, hat, bat."], ["🔊", "Listen to the word."], ["👆", "Tap the picture or word that rhymes."], ["🔁", "Tap the speaker to hear it again."]],
@@ -41,7 +41,10 @@ make(n,i,r,a){
     const three=U.sample(r,fam.length>=3?fam:fam.concat(fam),3).filter((x,j,s)=>s.findIndex(y=>y.w===x.w)===j);const odd=U.pick(r,others[0]);
     if(three.length>=2){const opts=U.shuffle(r,three.concat([odd]));
       return{type:"pick",cols:2,say:"Which word does not rhyme? "+opts.map(x=>x.w).join(", "),prompt:'<span class="ask">Which one does NOT rhyme?</span>',options:opts.map(x=>tile(x,pic)),answer:odd.w}}}
-  const opts=[ans].concat(others.slice(0,k-1).map(f=>U.pick(r,f)));
+  // research: wrong choices start out sharing nothing with the answer, then share its first sound (cat/cup), then its vowel (cat/cap)
+  const V=x=>(x.w.match(/[aeiou]/)||[""])[0],near=a<=0?(x=>x.w[0]!==ans.w[0]&&V(x)!==V(ans)):a===1?(x=>x.w[0]===ans.w[0]):(x=>V(x)===V(ans)||x.w[0]===ans.w[0]);
+  const flat=others.flat().filter(x=>!fam.includes(x)),pref=U.shuffle(r,flat.filter(near)),rest=U.shuffle(r,flat.filter(x=>!near(x)&&(a>0||(x.w[0]!==ans.w[0]))));
+  const opts=[ans];for(const x of pref.concat(rest))if(opts.length<k&&!opts.some(o=>o.w===x.w))opts.push(x);
   return{type:"pick",cols:2,say:"What rhymes with "+q.w+"?",prompt:'<span class="ask">What rhymes with</span><span class="lr-word big1"><b>'+q.e+"</b>"+q.w+"</span>",
     options:U.shuffle(r,opts).map(x=>tile(x,pic)),answer:ans.w}}});
 })();

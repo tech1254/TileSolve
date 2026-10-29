@@ -5,7 +5,7 @@ from tsutil import *
 
 OUT = pathlib.Path(sys.argv[1]) if len(sys.argv) > 1 else pathlib.Path(".")
 check = Checker(); errors = []
-LEARN = ["trains", "abc", "missletter", "case", "sound", "trace", "count", "numorder", "moreless", "missnum", "tenframe", "shapesort", "shapehunt", "colours", "sizeorder"]
+LEARN = ["trains", "abc", "syllables", "blend", "missletter", "case", "sound", "trace", "count", "numorder", "moreless", "missnum", "tenframe", "shapesort", "shapehunt", "colours", "sizeorder"]
 
 def player(grade, pid="kk"):
     seen = json.dumps({g: 1 for g in LEARN + GAMES})
@@ -73,6 +73,19 @@ with sync_playwright() as p:
     check(due == [i0 + 3], f"the missed round is queued to come back 3 rounds later ({due})")
     check(pg.evaluate("__learn.S.adj") < 0, "two mistakes in a round makes the next rounds a little easier")
     pg.close(); sctx.close()
+
+    # Reading research rules
+    pg = watch_errors(ctx.new_page(), errors); pg.goto(URL("trace")); pg.wait_for_function("window.__learn && __learn.R", timeout=10000)
+    tr = pg.evaluate("(()=>{const out=[];for(let n=1;n<=26;n++){const r=TS.rngFrom(n);out.push([0,1,2].map(i=>{const R=__learn.make(n,i,r,-1);return R.ch+':'+R.mode}))}return out})()")
+    check(all(len({x.split(':')[0] for x in lv}) == 1 and [x.split(':')[1] for x in lv] == ["guided", "fade", "memory"] for lv in tr),
+          f"Trace: one letter per level (never b and d together): watch + trace, faded line, then from memory ({tr[0]})")
+    pg.goto(URL("sound")); pg.wait_for_function("window.__learn && __learn.R", timeout=10000)
+    bad = pg.evaluate("(()=>{const bad=[];for(let n=1;n<=40;n++){const r=TS.rngFrom(n);for(let i=0;i<4;i++){for(const a of[-1,0]){const R=__learn.make(n,i,r,a);const w=String(R.say).split('.')[0].toLowerCase();if(!/^[a-z][aeiouy]/.test(w))bad.push(w)}}}return bad})()")
+    check(not bad, f"First Sound: no blends or tricky first sounds for pre-K and K content {bad[:5]}")
+    pg.goto(URL("blend")); pg.wait_for_function("window.__learn && __learn.R", timeout=10000)
+    parts = pg.evaluate("[-1,0,1,2].map(a=>__learn.make(5,0,TS.rngFrom(a+9),a).prompt.replace(/<[^>]+>/g,'|').split('|').filter(Boolean).pop())")
+    check(" · " in parts[0] and len(parts[1].split(" · ")) == 2 and len(parts[2].split(" · ")) == 3, f"Robot Talk: word parts, then onset-rime, then every sound ({parts})")
+    pg.close()
 
     # My ABCs: the child's name letters first, a new letter each level, many kinds of rounds, ending with the song
     pg = watch_errors(ctx.new_page(), errors); pg.goto(URL("abc")); pg.wait_for_function("window.__learn && __learn.R", timeout=10000)

@@ -179,7 +179,7 @@ r'''make(n,i,r,a){const size=a>=2?20:a<0?5:10; // pre-K starts on a five-frame (
     options:U.near(r,more?20-k:k,4,0,20,2).map(v=>({key:v,html:String(v)})),answer:more?20-k:k}}''')
 
 G["shapesort"] = ("Shape Sort", [["🔺","Each shape has a home with its outline."],["👆","Drag a shape to its home, or tap the shape then tap its home."],["🔄","Shapes can be any colour, size, or turned around!"],["🔊","Tap the speaker to hear it again."]],
-r'''make(n,i,r,a){const C=U.SHAPE_COLS,NM={circle:"circle",oval:"oval",square:"square",rectangle:"rectangle",triangle:"triangle",star:"star",heart:"heart",diamond:"diamond",pentagon:"pentagon",hexagon:"hexagon"};
+r'''make(n,i,r,a){const C=U.SHAPE_COLS,NM={circle:"circle",oval:"oval",square:"square",rectangle:"rectangle",triangle:"triangle",star:"star",heart:"heart",diamond:"rhombus",pentagon:"pentagon",hexagon:"hexagon"};
   let kinds,bySides=false;
   if(a<0)kinds=n<=20?["circle","square"]:["circle","square","triangle"];
   else if(a===0)kinds=n<=10?["circle","square"]:n<=25?["circle","square","triangle"]:U.sample(r,["circle","square","triangle","star","heart"],3);
@@ -188,41 +188,56 @@ r'''make(n,i,r,a){const C=U.SHAPE_COLS,NM={circle:"circle",oval:"oval",square:"s
   else if(n<=12)kinds=U.sample(r,["triangle","square","pentagon","hexagon","diamond","rectangle"],4);
   else{bySides=true;kinds=["triangle","square","rectangle","diamond","pentagon","hexagon"]}
   const cnt=a<0?3:a===0?4:a===1?6:7,items=[];
-  const rot=k=>a<=0?0:k==="square"||k==="diamond"||k==="rectangle"?U.pick(r,[0,90,180]):U.ri(r,0,359);
+  // research: shapes turned and in different forms from K up (a tilted square is still a square), and colours that don't give the answer away
+  const rot=k=>a<0?0:k==="square"||k==="rectangle"?U.pick(r,[0,45,90,30]):U.ri(r,0,359);
   const bkey=k=>bySides?"s"+U.SIDES[k]:k;
   const binsK=bySides?[3,4,5,6].map(s=>"s"+s):kinds;
   // at least one item for each home, then random ones
   const pickKinds=bySides?[...[3,4,5,6].map(s=>U.pick(r,kinds.filter(k=>U.SIDES[k]===s)))]:kinds.slice();
   while(pickKinds.length<cnt)pickKinds.push(U.pick(r,kinds));
-  U.shuffle(r,pickKinds).forEach(k=>items.push({key:bkey(k),html:U.shape(k,U.pick(r,C),rot(k),.7+.3*r()),aria:NM[k]}));
+  const VAR={triangle:["triangle","tri_tall","tri_right","tri_wide"],rectangle:["rectangle","rect_long"]};
+  U.shuffle(r,pickKinds).forEach(k=>items.push({key:bkey(k),html:U.shape(a<0?k:U.pick(r,VAR[k]||[k]),U.pick(r,C),rot(k),.7+.3*r()),aria:NM[k]}));
   const bins=binsK.map(b=>bySides?{key:b,html:'<b class="sides">'+b.slice(1)+"</b>",label:b.slice(1)+" sides"}:{key:b,html:U.shape(b,"#cfd6dd",0,1,true),label:NM[b]});
   return{type:"sort",say:bySides?"Sort the shapes by how many sides they have.":"Put each shape in its home.",
     prompt:'<span class="ask">'+(bySides?"Sort by number of sides":"Put each shape in its home")+"</span>",bins,items}}''')
 
-G["shapehunt"] = ("Shape Hunt", [["🔍","Lots of shapes are mixed up."],["👂","Listen for which shape to find."],["👆","Tap every one of them!"],["🔊","Tap the speaker to hear it again."]],
-r'''make(n,i,r,a){const C=U.SHAPE_COLS,PL={circle:"circles",oval:"ovals",square:"squares",rectangle:"rectangles",triangle:"triangles",star:"stars",heart:"hearts",diamond:"diamonds",pentagon:"pentagons",hexagon:"hexagons"};
+G["shapehunt"] = ("Shape Hunt", [["🔍","Lots of shapes are mixed up."],["👂","Listen for which shape to find."],["📐","Triangles can be tall, skinny, tipped over or tiny. Careful: some shapes are only ALMOST right!"],["👆","Tap every one of them!"]],
+r'''make(n,i,r,a){
+  /* Research (Clements & Sarama; shape prototype studies): only 30% of 5-6 year olds accept all kinds of triangles, and few reject "almost" shapes.
+     So targets come in many forms and orientations, and from K content up some decoys are near-misses (open, curved sides, a cut corner). */
+  const C=U.SHAPE_COLS,PL={circle:"circles",square:"squares",rectangle:"rectangles",triangle:"triangles",star:"stars",heart:"hearts",pentagon:"pentagons",hexagon:"hexagons"};
+  const VAR={triangle:["triangle","tri_tall","tri_right","tri_wide"],square:["square"],circle:["circle"],rectangle:["rectangle","rect_long"],star:["star"],heart:["heart"],pentagon:["pentagon"],hexagon:["hexagon"]};
+  const NEAR={triangle:[["open_tri","not a triangle: it's open"],["curvy_tri","not a triangle: its sides are curved"],["cut_tri","not a triangle: it has 4 sides"]],
+    square:[["rectangle","a rectangle: its sides aren't all the same"],["rhombus","not a square: its corners aren't square"]],circle:[["oval","an oval, not a circle"]],rectangle:[["square","a square"]]};
   let cols,rows,kinds,bySides=false;
   if(a<0){cols=3;rows=2;kinds=["circle","square","triangle"]}
   else if(a===0){cols=3;rows=n<=15?3:4;kinds=n<=15?["circle","square","triangle"]:["circle","square","triangle","star","heart"]}
-  else if(a===1){cols=4;rows=4;kinds=["circle","square","triangle","rectangle","oval","star","heart"]}
-  else{cols=4;rows=5;kinds=["triangle","square","rectangle","diamond","pentagon","hexagon","circle","oval"];bySides=n>15}
-  const N=cols*rows,rot=k=>a<=0?0:k==="square"||k==="diamond"||k==="rectangle"?U.pick(r,[0,90]):U.ri(r,0,359);
-  const cell=(k,ok)=>({html:U.shape(k,U.pick(r,C),rot(k),.65+.35*r()),ok,aria:k});let cells=[],say,ask;
-  if(bySides){const s=U.pick(r,[3,4,5,6]),T=U.ri(r,3,6);const yes=kinds.filter(k=>U.SIDES[k]===s),no=kinds.filter(k=>U.SIDES[k]!==s);
-    for(let k=0;k<N;k++){const ok=k<T;cells.push(cell(U.pick(r,ok?yes:no),ok))}say="Tap all the shapes with "+s+" sides.";ask="Tap all shapes with "+s+" sides"}
-  else{const t=U.pick(r,kinds),T=a<0?2:U.ri(r,2,Math.min(5,Math.floor(N/3))),LIKE={square:"rectangle",rectangle:"square",circle:"oval",oval:"circle"};
-    const others=kinds.filter(k=>k!==t);for(let k=0;k<N;k++){const ok=k<T;cells.push(cell(ok?t:(a>=1&&LIKE[t]&&others.includes(LIKE[t])&&r()<.45?LIKE[t]:U.pick(r,others)),ok))}
-    say="Tap all the "+PL[t]+".";ask="Tap all the "+PL[t]+" "+U.shape(t,"#9aa3ad").replace('class="lr-shp"','class="lr-shp ic"')}
+  else if(a===1){cols=4;rows=4;kinds=["circle","square","triangle","rectangle","star","heart"]}
+  else{cols=4;rows=5;kinds=["triangle","square","rectangle","pentagon","hexagon","circle"];bySides=n>15}
+  const N=cols*rows,turn=()=>a<0?U.pick(r,[0,0,180]):U.ri(r,0,359);
+  const BASE={tri_tall:"triangle",tri_right:"triangle",tri_wide:"triangle",rect_long:"rectangle"};
+  const cell=(k,ok,why)=>({html:U.shape(k,U.pick(r,C),turn(),.6+.4*r()),ok,aria:ok||!/_|rhombus/.test(k)?BASE[k]||k:"shape",why});let cells=[],say,ask;
+  if(bySides){const s=U.pick(r,[3,4,5,6]),T=U.ri(r,3,6),yes=kinds.filter(k=>U.SIDES[k]===s),no=kinds.filter(k=>U.SIDES[k]!==s);
+    for(let k=0;k<N;k++){const ok=k<T;const kk=U.pick(r,ok?yes:no);cells.push(cell(ok?U.pick(r,VAR[kk]||[kk]):kk,ok,ok?"":"a shape with "+(U.SIDES[kk]||"no")+" sides"))}
+    say="Tap all the shapes with "+s+" sides.";ask="Tap all shapes with "+s+" sides"}
+  else{const t=a<0?U.pick(r,kinds):U.pick(r,kinds.filter(k=>NEAR[k]||r()<.3)),T=a<0?2:U.ri(r,2,Math.min(5,Math.floor(N/3))),others=kinds.filter(k=>k!==t);
+    const near=a<0?[]:(NEAR[t]||[]),nNear=Math.min(near.length,a===0?1:2);
+    for(let k=0;k<N;k++){if(k<T)cells.push(cell(a<0?t:U.pick(r,VAR[t]||[t]),true));
+      else if(k<T+nNear){const[nk,why]=near[k-T];cells.push(cell(nk,false,why))}
+      else{const o=U.pick(r,others);cells.push(cell(o,false,"a "+o))}}
+    say="Tap all the "+PL[t]+"."+(nNear?" Careful, some are only almost "+PL[t]+"!":"");ask="Tap all the "+PL[t]+" "+U.shape(t,"#9aa3ad").replace('class="lr-shp"','class="lr-shp ic"')}
   return{type:"hunt",cols,say,prompt:'<span class="ask">'+ask+"</span>",cells:U.shuffle(r,cells)}}''')
 
 G["colours"] = ("Colour Match", [["🎨","Each round is about colours."],["👆","Tap the right colour, or sort shapes into the basket of the same colour."],["📖","Later you read the colour word yourself!"],["🔊","Tap the speaker to hear it again."]],
 r'''make(n,i,r,a){const COL=U.COLOURS,K=["circle","square","triangle","star","heart","diamond"];
-  const NAMES=a<0?["red","blue","yellow","green"].slice(0,n<=15?3:4):a===0?["red","blue","green","yellow"]:a===1?["red","blue","green","yellow","orange","purple","pink","brown"]:Object.keys(COL);
-  if(a<0||(a===0&&n<=15)||i%2===0){const cs=U.sample(r,NAMES,a<0?(n<=15?2:3):a===0?3:4),t=cs[0],stroop=a>=2&&n>20,ink=stroop?U.pick(r,cs.slice(1)):null;
+  // research: colour words come slowly and brown, grey, pink and purple come last, so they get extra turns once they're in
+  const LATE=["brown","grey","pink","purple"],base=a<0?["red","blue","yellow","green"].slice(0,n<=15?3:4):a===0?(n<=12?["red","blue","green","yellow"]:["red","blue","green","yellow","orange","pink","purple"]):a===1?["red","blue","green","yellow","orange","purple","pink","brown","grey"]:Object.keys(COL);
+  const NAMES=base.concat(base.filter(c=>LATE.includes(c)));
+  if(a<0||(a===0&&n<=15)||i%2===0){const cs=U.sample(r,[...new Set(U.shuffle(r,NAMES))],a<0?(n<=15?2:3):a===0?3:4),t=cs[0],stroop=a>=2&&n>20,ink=stroop?U.pick(r,cs.slice(1)):null;
     const prompt=a<=0?'<span class="ask">Tap the '+t+" one</span>":'<span class="ask">'+(stroop?"Tap the colour the word SAYS":"Read the word. Tap that colour.")+'</span><span class="word" style="color:'+(stroop?COL[ink]:"#e9edf1")+'">'+t.toUpperCase()+"</span>";
     return{type:"pick",say:a<=0?"Tap the "+t+" one.":stroop?"Tap the colour the word says, not the colour of the letters.":"Read the colour word, then tap that colour.",prompt,
       options:U.shuffle(r,cs).map(c=>({key:c,html:U.shape(U.pick(r,K),COL[c]),aria:c,say:c})),answer:t}}
-  const bins=U.sample(r,NAMES,a<=0?2:a===1?3:4),cnt=a<=0?4:6,items=[];
+  const bins=U.sample(r,[...new Set(U.shuffle(r,NAMES))],a<=0?2:a===1?3:4),cnt=a<=0?4:6,items=[];
   const order=bins.slice();while(order.length<cnt)order.push(U.pick(r,bins));
   U.shuffle(r,order).forEach(c=>items.push({key:c,html:U.shape(U.pick(r,K),COL[c],0,.75+.25*r()),aria:c}));
   return{type:"sort",say:"Put each shape in the basket with the same colour.",prompt:'<span class="ask">Match the colours</span>',
@@ -362,6 +377,34 @@ r"""make(n,i,r,a){
   const opts=[w].concat(U.sample(r,list.filter(x=>x!==w&&(lvl===0||x[0][0]!==w[0][0]||r()<.3)),k-1));
   return{type:"pick",cols:2,say:"The robot says: "+spoken+". What word is it?",prompt:'<span class="ask">🤖 The robot says:</span><span class="lr-sent">'+parts.join(" · ")+"</span>",
     options:U.shuffle(r,opts).map(x=>({key:x[0],html:'<span class="lr-word"><b>'+x[1]+"</b>"+x[0]+"</span>",say:x[0]})),answer:w[0]}}""")
+
+
+G["position"] = ("Where's the Cat?", [["🐱","The cat likes to hide!"],["👂","Listen: is it ON, UNDER, IN, NEXT TO, BEHIND, IN FRONT OF, or BETWEEN?"],["👆","Tap the picture that matches."],["🔊","Tap the speaker to hear it again."]],
+r"""make(n,i,r,a){
+  /* Position words, in the order children learn them (research: in, on, under first; then next to, behind, in front of; then between). */
+  const WORDS=a<0?["on","under","in"]:a===0?["on","under","in","next to","behind","in front of"]:["on","under","in","next to","behind","in front of","between"];
+  const PETS=U.fav([["🐱","cat"],["🐶","dog"],["🐰","bunny"],["🐻","bear"],["🐸","frog"]]),[pet,name]=U.pick(r,PETS);
+  const scene=w=>'<span class="lr-pos p-'+w.replace(/ /g,"-")+'">'+(w==="in"?'<i class="pet">'+pet+'</i><i class="box"></i>':w==="between"?'<i class="tree l">🌳</i><i class="pet">'+pet+'</i><i class="tree r">🌳</i>':'<i class="table"></i><i class="pet">'+pet+"</i>")+"</span>";
+  const t=U.pick(r,WORDS),k=a<0?3:4,opts=[t].concat(U.sample(r,WORDS.filter(x=>x!==t),k-1)),obj=t==="in"?"box":t==="between"?"trees":"table";
+  return{type:"pick",cols:2,say:"Find the "+name+" "+t+" the "+obj+".",
+    prompt:'<span class="ask">The '+name+" is <b>"+t.toUpperCase()+"</b> the "+obj+"</span>",options:U.shuffle(r,opts).map(w=>({key:w,html:scene(w),say:w,aria:name+" "+w})),answer:t}}""")
+
+G["shapes3d"] = ("3D Shapes", [["⚽","Things around us have 3D shapes: balls are spheres, cans are cylinders."],["👀","Look at the real thing."],["👆","Sort it, or tap the one that matches."],["🔊","Tap the speaker to hear it again."]],
+r"""make(n,i,r,a){
+  /* Alberta K/1 geometry: describe and sort 3D objects; grade 1 names sphere, cube, cylinder, cone; then "which ones roll?" (properties). */
+  const OBJ={sphere:[["⚽","soccer ball"],["🏀","basketball"],["🌍","globe"],["🍊","orange"],["🎾","tennis ball"],["🔮","crystal ball"]],cube:[["🎲","dice"],["🧊","ice cube"],["🎁","gift box"],["📦","box"]],
+    cylinder:[["🥫","can"],["🔋","battery"],["🧻","paper roll"],["🪵","log"],["🕯️","candle"]],cone:[["🍦","ice cream cone"],["🥕","carrot"],["🎄","tree"]]};
+  const NAME={sphere:"sphere (ball shape)",cube:"cube (box shape)",cylinder:"cylinder (can shape)",cone:"cone"},kinds=a<0?["sphere","cube"]:a===0?["sphere","cube","cylinder"]:["sphere","cube","cylinder","cone"];
+  const bin=k=>({key:k,html:U.solid(k),label:a<0?(k==="sphere"?"ball shape":"box shape"):k});
+  if(a>=1&&i%3===2){const roll=new Set(["sphere","cylinder","cone"]),cells=[];for(let k=0;k<8;k++){const kk=U.pick(r,kinds),o=U.pick(r,OBJ[kk]);cells.push({html:'<span style="font-size:2.2em">'+o[0]+"</span>",ok:roll.has(kk),aria:o[1],why:"a "+kk+": it doesn't roll"})}
+    if(!cells.some(c=>c.ok))cells[0]={html:'<span style="font-size:2.2em">⚽</span>',ok:true,aria:"ball"};if(cells.every(c=>c.ok))cells[1]={html:'<span style="font-size:2.2em">🎲</span>',ok:false,aria:"dice",why:"a cube: it doesn't roll"};
+    return{type:"hunt",cols:4,say:"Tap everything that can roll.",prompt:'<span class="ask">Tap everything that can <b>roll</b></span>',cells}}
+  if(i%2===1){const t=U.pick(r,kinds),o=U.pick(r,OBJ[t]),opts=U.shuffle(r,kinds).slice(0,a<0?2:3);if(!opts.includes(t))opts[0]=t;
+    return{type:"pick",cols:opts.length,say:"What shape is the "+o[1]+"?",prompt:'<span class="ask">What shape is it?</span><span class="lr-emo">'+o[0]+"</span>",
+      options:U.shuffle(r,opts).map(k=>({key:k,html:U.solid(k)+'<span style="display:block;font-size:15px">'+(a<0?(k==="sphere"?"ball":"box"):k)+"</span>",say:NAME[k]})),answer:t}}
+  const items=[];for(const k of kinds)items.push(k);while(items.length<(a<0?4:6))items.push(U.pick(r,kinds));
+  return{type:"sort",say:"Sort the things by their shape.",prompt:'<span class="ask">Sort them by shape</span>',bins:kinds.map(bin),
+    items:U.shuffle(r,items).map(k=>{const o=U.pick(r,OBJ[k]);return{key:k,html:'<span class="lr-em">'+o[0]+"</span>",aria:o[1]}})}}""")
 
 # Extra script a game needs before TS_LEARN runs.
 PRE = {"trace": r"""const TRACE_ORDER=(n,a)=>{const ORDER="LTIEFHVXWAKMNYZOCQGSJUDPBR",DIG="0123456789";

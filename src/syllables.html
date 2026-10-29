@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!--HEAD:Clap the Syllables-->
+</head>
+<body>
+<!--KIT-->
+<!--LEARN-->
+<script>
+(()=>{const U=TS_LEARN.util;
+
+TS_LEARN({id:"syllables",name:"Clap the Syllables",howto:[["👏", "Words have beats. Clap them: but-ter-fly has 3!"], ["🔊", "Listen to the word in beats."], ["👆", "Tap how many claps."], ["🔁", "Tap the speaker to hear it again."]],
+make(n,i,r,a){
+  /* Phonological awareness goes from big parts to small ones (Reading Rockets / NELP): syllables come before single sounds.
+     Alberta K ELAL: count syllables in spoken words. Pre-K: 1-2 beats; K: 1-3; grade 1: up to 4 and "which word has 2 claps?". */
+  const W=[["cat","🐱",["cat"]],["dog","🐶",["dog"]],["sun","☀️",["sun"]],["bee","🐝",["bee"]],["fish","🐟",["fish"]],["ball","⚽",["ball"]],["frog","🐸",["frog"]],["cake","🎂",["cake"]],["train","🚆",["train"]],
+    ["apple","🍎",["ap","ple"]],["monkey","🐵",["mon","key"]],["rabbit","🐰",["rab","bit"]],["pencil","✏️",["pen","cil"]],["rainbow","🌈",["rain","bow"]],["tiger","🐯",["ti","ger"]],["pizza","🍕",["piz","za"]],
+    ["robot","🤖",["ro","bot"]],["zebra","🦓",["ze","bra"]],["rocket","🚀",["rock","et"]],["turtle","🐢",["tur","tle"]],["cookie","🍪",["cook","ie"]],["snowman","⛄",["snow","man"]],
+    ["banana","🍌",["ba","na","na"]],["butterfly","🦋",["but","ter","fly"]],["dinosaur","🦕",["di","no","saur"]],["elephant","🐘",["el","e","phant"]],["octopus","🐙",["oc","to","pus"]],
+    ["kangaroo","🦘",["kan","ga","roo"]],["tomato","🍅",["to","ma","to"]],["umbrella","☂️",["um","brel","la"]],["bicycle","🚲",["bi","cy","cle"]],["strawberry","🍓",["straw","ber","ry"]],
+    ["watermelon","🍉",["wa","ter","mel","on"]],["caterpillar","🐛",["cat","er","pil","lar"]],["alligator","🐊",["al","li","ga","tor"]],["helicopter","🚁",["hel","i","cop","ter"]],["avocado","🥑",["av","o","ca","do"]]];
+  const max=a<0?2:a===0?3:4,pool=W.filter(w=>w[2].length<=max),claps=k=>"👏".repeat(k);
+  if(a>=1&&i%3===2){const k=U.ri(r,1,max),hit=U.pick(r,pool.filter(w=>w[2].length===k)),others=U.sample(r,pool.filter(w=>w[2].length!==k),2);
+    return{type:"pick",cols:3,say:"Which word has "+k+" claps?",prompt:'<span class="ask">Which word has '+claps(k)+" ("+k+")?</span>",
+      options:U.shuffle(r,[hit].concat(others)).map(w=>({key:w[0],html:'<span class="lr-word"><b>'+w[1]+"</b>"+w[0]+"</span>",say:w[2].join(" - ")})),answer:hit[0]}}
+  const w=U.pick(r,pool),k=w[2].length,opts=Array.from({length:max},(_,j)=>j+1);
+  return{type:"pick",cols:Math.min(max,4),say:w[0]+". Clap it: "+w[2].join(" - ")+". How many claps?",prompt:'<span class="ask">How many claps?</span><span class="lr-word big1"><b>'+w[1]+"</b>"+w[2].join("·")+"</span>",
+    options:opts.map(v=>({key:v,html:'<span style="font-size:.5em;line-height:1.1">'+claps(v)+"</span><br>"+v,say:String(v)})),answer:k}}});
+})();
+</script>
+</body>
+</html>

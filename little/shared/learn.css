@@ -204,3 +204,6 @@
 .lr-track{display:flex;gap:2px;flex-basis:100%;justify-content:center;max-width:100%}
 .lr-track i{width:clamp(22px,7.2vw,40px);height:clamp(26px,8vw,40px);flex:0 1 auto;display:grid;place-items:center;font:700 clamp(13px,3.6vw,17px) var(--font-body);font-style:normal;background:#f6f1e3;color:#1d2230;border-radius:8px}
 .lr-track i.me{background:#9be38a;font-size:clamp(18px,5vw,24px)}
+/* tracing stages: faded guide, then from memory (guide hidden; the start dot stays) */
+.lr-tsvg.fade .lr-guide{opacity:.28}
+.lr-tsvg.memory .lr-guide{opacity:0}

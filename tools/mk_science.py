@@ -127,7 +127,7 @@ r'''make(n,i,r,a){
     else if(t===2){set=U.sample(r,Array.from({length:9},(_,j)=>10*j+10),3);do odd=U.ri(r,11,99);while(odd%10===0);why="tens"}
     else{set=U.sample(r,Array.from({length:12},(_,j)=>3*j+3),3);do odd=U.ri(r,4,36);while(odd%3===0);why="the 3 times table"}
     return{type:"pick",cols:2,say:"Which number does not belong?",prompt:'<span class="ask">Which number does not belong?</span>',
-      options:U.shuffle(r,set.concat([odd])).map(v=>({key:v,html:String(v)})),answer:odd}}
+      options:U.shuffle(r,set.concat([odd])).map(v=>({key:v,html:String(v),say:v===odd?"Yes! The others are "+why+".":String(v)})),answer:odd}}
   if(a>=3&&i%3===2){ // words
     const W=[["big","huge","giant","tiny"],["happy","glad","cheerful","sad"],["run","jump","skip","apple"],["red","blue","green","chair"],["cold","icy","frozen","hot"],
       ["quick","fast","speedy","slow"],["Monday","Friday","Sunday","March"],["circle","square","triangle","seven"],["cat","dog","horse","carrot"],["shout","yell","scream","whisper"]];
@@ -136,7 +136,7 @@ r'''make(n,i,r,a){
   const[g,list]=U.pick(r,C),oddFrom=a>=1&&near[g]&&r()<.6?C.find(c=>c[0]===near[g]):U.pick(r,C.filter(c=>c[0]!==g&&c[0]!==near[g]&&near[c[0]]!==g));
   const same=U.sample(r,list,k-1),odd=U.pick(r,oddFrom[1].filter(x=>!list.includes(x)));
   return{type:"pick",cols:2,say:"Which one does not belong?",prompt:'<span class="ask">Which one does not belong?</span>',
-    options:U.shuffle(r,same.concat([odd])).map(x=>({key:x,html:'<span style="font-size:56px;line-height:1">'+x+"</span>"})),answer:odd}}''', [0,5])
+    options:U.shuffle(r,same.concat([odd])).map(x=>({key:x,html:'<span style="font-size:56px;line-height:1">'+x+"</span>",say:x===odd?"Yes! The others are all "+g+".":""})),answer:odd}}''', [0,5])
 
 for gid,(name,howto,body,grades) in G.items():
     (SRC / f"{gid}.html").write_text(f'''<!DOCTYPE html>
