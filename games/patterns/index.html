@@ -15,19 +15,19 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Barlow:wght@400;600;700&display=swap">
-<link rel="stylesheet" href="../../shared/ts.css?v=0cd547ed">
-<link rel="stylesheet" href="../../shared/game.css?v=0cd547ed">
+<link rel="stylesheet" href="../../shared/ts.css?v=329e34e9">
+<link rel="stylesheet" href="../../shared/game.css?v=329e34e9">
 </head>
 <body>
-<script src="../../shared/ts.js?v=0cd547ed"></script>
-<script src="../../shared/kit.js?v=0cd547ed"></script>
+<script src="../../shared/ts.js?v=329e34e9"></script>
+<script src="../../shared/kit.js?v=329e34e9"></script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&display=swap">
-<link rel="stylesheet" href="../../shared/learn.css?v=0cd547ed">
-<script src="../../shared/learn.js?v=0cd547ed"></script>
+<link rel="stylesheet" href="../../shared/learn.css?v=329e34e9">
+<script src="../../shared/learn.js?v=329e34e9"></script>
 <script>
 (()=>{const U=TS_LEARN.util;
 TS_LEARN({id:"patterns",name:"Pattern Next",howto:[["🔁", "Patterns repeat or grow in a special way."], ["👀", "Look for the rule."], ["👆", "Tap what comes next."], ["🔊", "Tap the speaker to hear it again."]],
-make(n,i,r,a){const SETS=[["🔴","🔵","🟡","🟢"],["🐶","🐱","🐭","🐰"],["⭐","🌙","☀️","☁️"],["🍎","🍌","🍇","🍓"],["🔺","🟦","🟣","🔶"]];
+make(n,i,r,a){const SETS=[["🔴","🔵","🟡","🟢"],["🐶","🐱","🐭","🐰"],["⭐","🌙","☀️","☁️"],["🍎","🍌","🍇","🍓"],["🔺","🟦","🟣","🔶"]].concat(U.fav([]).length?[U.fav([]).slice(0,4)]:[]);
   const seqHtml=(xs)=>'<span class="ask">What comes next?</span><span class="seq">'+xs.map(x=>"<b"+(String(x).length>2?' class="sm"':"")+">"+x+"</b>").join("")+'<b class="q">?</b></span>';
   if(a<=1){ // pre-K/K: repeating patterns (up to 3 in the core); grade 1: up to 4
     const core=U.pick(r,a<0?["AB"]:a===0?["AB","AAB","ABC","ABB"]:["ABC","AABB","ABCD","ABBC","AAB"]),set=U.shuffle(r,U.pick(r,SETS)),L=core.length;

@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!--HEAD:Train Yard-->
+</head>
+<body>
+<!--KIT-->
+<!--LEARN-->
+<script>
+(()=>{const U=TS_LEARN.util;
+
+TS_LEARN({id:"trains",name:"Train Yard",howto:[["🚂", "All aboard! Every level has train jobs to do."], ["🔢", "Hook up the cars in number order, count the passengers, and load the train."], ["🎨", "Finish the colour pattern and spell your name with letter cars."], ["🚃", "Every level you finish adds a car to YOUR train!"]],
+rounds:a=>a<=0?5:6,
+winText:(S,K)=>{const pr=K.save.grades[K.age]||{stars:{}},cars=Math.max(1,Object.keys(pr.stars||{}).length);
+  return "🚂"+"🚃".repeat(Math.min(cars,12))+(cars>12?"+":"")+" Your train has "+cars+" car"+(cars>1?"s":"")+"!"},
+make(n,i,r,a){
+  /* Train-themed practice for a child who loves trains: number order, counting, ten-frame seats, patterns, letters of his name,
+     comparing train lengths, missing numbers and sorting cargo. Content one grade back (pre-K for Kindergarten). */
+  const COL=["#e2412e","#3b6fd9","#f2b705","#43a047","#8f5bd6","#f08a24","#1e9e8a","#e06aa6"],CN={"#e2412e":"red","#3b6fd9":"blue","#f2b705":"yellow","#43a047":"green","#8f5bd6":"purple","#f08a24":"orange","#1e9e8a":"teal","#e06aa6":"pink"};
+  const pr=TS.rngFrom(n*977+(a+3)*31),pool=["couple","passengers","board","pattern","longest","name","missing","cargo"].filter(k=>!(k==="missing"&&a<0&&n<6)&&!(k==="cargo"&&a<0&&n<4));
+  for(let k=pool.length-1;k>0;k--){const j=Math.floor(pr()*(k+1));[pool[k],pool[j]]=[pool[j],pool[k]]}
+  const kind=i===0?"couple":pool[(i-1)%pool.length]==="couple"?pool[i%pool.length]:pool[(i-1)%pool.length];
+  const eng=U.car("#2b2f36","",true),num=v=>a<0?U.numdots(v):String(v);
+  if(kind==="couple"){ // hook up the cars in order behind the engine
+    let seq;if(a<0){const k=n<=8?3:n<=20?4:5;seq=Array.from({length:k},(_,j)=>j+1)}
+    else if(a===0){const k=n<=10?4:5,s=U.ri(r,1,10-k+1);seq=Array.from({length:k},(_,j)=>s+j);if(n>15&&r()<.4)seq.reverse()}
+    else{const st=U.pick(r,n<=10?[1,2]:[2,5,10]),k=5,s=st*U.ri(r,0,st===1?15:st===2?5:st===5?6:5);seq=Array.from({length:k},(_,j)=>s+st*j);if(n>12&&r()<.4)seq.reverse()}
+    const down=seq.length>1&&seq[0]>seq[1];
+    return{type:"order",wide:true,cls:"trains",say:down?"Count down! Hook up the cars from "+seq[0]+" to "+seq[seq.length-1]+".":"Hook up the train cars in number order: "+seq.join(", ")+"!",
+      prompt:'<span class="ask">🚂 Hook up the cars: '+(down?"count down!":"in number order")+"</span>",
+      tiles:U.mix(r,seq.map((v,j)=>({key:"c"+v,val:v,html:U.car(COL[j%COL.length],v),say:String(v),aria:"car "+v}))),answer:seq}}
+  if(kind==="passengers"){ // count the passengers in the car
+    const max=a<0?(n<=10?4:6):a===0?10:20,N=U.ri(r,1,max),opts=U.near(r,N,a<0?3:4,1,Math.max(max,4),a<0?2:1);
+    const ppl=Array.from({length:N},(_,k)=>["🧑","👧","👦","👩","👴","👶"][k%6]).join("");
+    return{type:"pick",say:"How many passengers are on the train?",prompt:'<span class="ask">How many passengers?</span><span class="lr-coach">'+ppl+"</span>",
+      options:opts.map(v=>({key:v,html:num(v),say:String(v)})),answer:N}}
+  if(kind==="board"){const N=a<0?U.ri(r,1,5):a===0?U.ri(r,3,10):U.ri(r,6,10);
+    return{type:"fill",target:N,size:10,say:"Put "+N+" passengers on the train. Tap a seat for each one.",prompt:'<span class="ask">🚃 Put <b>'+N+"</b> passengers on the train</span>"}}
+  if(kind==="pattern"){ // colour pattern of cars: what comes next?
+    const core=a<0?"AB":a===0?U.pick(r,["AB","ABC","AAB"]):U.pick(r,["ABC","AABB","ABB","ABCD"]),cols=U.sample(r,COL,4),L=core.length,len=Math.max(L*2,4)+(a<0?0:U.ri(r,0,1));
+    const at=k=>cols["ABCD".indexOf(core[k%L])],ans=at(len),used=[...new Set(core)].map(c=>cols["ABCD".indexOf(c)]),opts=new Set([ans]);for(const c of U.shuffle(r,used.concat(cols)))if(opts.size<(a<0?2:3))opts.add(c);
+    return{type:"pick",cols:3,say:"What colour car comes next?",prompt:'<span class="ask">Which car comes next?</span><span class="lr-train">'+eng+Array.from({length:len},(_,k)=>U.car(at(k),"")).join("")+U.car("#9aa3ad","?")+"</span>",
+      options:[...opts].map(c=>({key:c,html:U.car(c,""),say:CN[c],aria:CN[c]})),answer:ans}}
+  if(kind==="longest"){ // which train is longest / shortest?
+    const k=a<0?2:3;let lens;do lens=Array.from({length:k},()=>U.ri(r,1,a<0?4:6));while(new Set(lens).size<k||(a<0&&Math.abs(lens[0]-lens[1])<2));
+    const long=a<0||r()<.6,ans=lens.indexOf(long?Math.max(...lens):Math.min(...lens)),w=long?"longest":"shortest";
+    return{type:"pick",cols:1,say:"Which train is the "+w+"? It has the "+(long?"most":"fewest")+" cars.",prompt:'<span class="ask">Which train is the '+w+"?</span>",
+      options:lens.map((l,j)=>({key:"t"+j,html:'<span class="lr-train">'+eng+Array.from({length:l},(_,q)=>U.car(COL[(j*2+q)%COL.length],"")).join("")+"</span>",aria:l+" cars"})),answer:"t"+ans}}
+  if(kind==="name"){ // spell your name with letter cars (or an ABC run)
+    const nm=((TS.players.current()||{}).name||"").toUpperCase().replace(/[^A-Z]/g,"").slice(0,7);
+    const run=nm.length>=2&&a<=0?nm.split(""):(()=>{const s=U.ri(r,0,26-5);return"ABCDEFGHIJKLMNOPQRSTUVWXYZ".slice(s,s+5).split("")})();
+    const own=nm.length>=2&&a<=0;
+    return{type:"order",wide:true,cls:"trains",say:own?"Spell your name with the letter cars: "+run.join(", ")+"!":"Hook up the letter cars in ABC order!",
+      prompt:'<span class="ask">'+(own?"🚂 Spell your name: <b>"+nm+"</b>":"🚂 Letter cars in ABC order")+"</span>",
+      tiles:U.mix(r,run.map((c,j)=>({key:"l"+j,val:c,html:U.car(COL[j%COL.length],c),say:c,aria:c}))),answer:run}}
+  if(kind==="missing"){ // which number car is missing?
+    const k=5,s=a<0?1:U.ri(r,1,a===0?6:15),seq=Array.from({length:k},(_,j)=>s+j),hole=a<0?2:U.ri(r,1,k-2),ans=seq[hole],opts=U.near(r,ans,3,1,Math.max(s+k+2,6),1);
+    return{type:"pick",say:"One train car is missing. Which number goes in the gap?",prompt:'<span class="ask">Which car is missing?</span><span class="lr-train">'+eng+seq.map((v,j)=>j===hole?U.car("#9aa3ad","?"):U.car(COL[j%COL.length],v)).join("")+"</span>",
+      options:opts.map(v=>({key:v,html:num(v),say:String(v)})),answer:ans}}
+  // cargo: sort shapes (or colours for pre-K) into the right freight car
+  const shapes=a<0?U.sample(r,["circle","square","triangle"],2):U.sample(r,["circle","square","triangle","star","heart"],3);
+  const items=[];for(const sh of shapes)for(let k=0;k<(a<0?2:2);k++)items.push(sh);while(items.length<(a<0?4:6))items.push(U.pick(r,shapes));
+  return{type:"sort",say:"Load the cargo! Put each shape in its train car.",prompt:'<span class="ask">🚃 Load the cargo into the right car</span>',
+    bins:shapes.map((sh,j)=>({key:sh,html:U.car(COL[j],"")+'<span style="display:block;margin-top:-6px">'+U.shape(sh,"#ffffff",0,.55)+"</span>",label:sh+"s"})),
+    items:U.shuffle(r,items).map(sh=>({key:sh,html:U.shape(sh,U.pick(r,U.SHAPE_COLS)),aria:sh}))}}});
+})();
+</script>
+</body>
+</html>

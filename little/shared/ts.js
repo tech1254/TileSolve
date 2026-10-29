@@ -15,11 +15,20 @@ const persist=()=>store.set(PKEY,data);
 const AVATARS=["🦊","🐼","🐯","🦁","🐸","🐙","🦄","🐢","🐧","🐨","🦖","🐬","🚀","🪐","👽","🌙"];
 const COLORS=["#e2412e","#3b6fd9","#2a9d8f","#f08a24","#8f5bd6","#6bb34a","#e06aa6","#4fb3d9"];
 const gradeName=g=>g<=0?"Kindergarten":g>=7?"Grade 7+":"Grade "+g;
+/* Favourite things: the Little learners games draw their pictures from a player's favourite (kids learn more when it's about what they love). */
+const FAVS={trains:{name:"Trains",icon:"🚂",em:[["🚂","trains"],["🚃","train cars"],["🚋","trams"],["🚆","trains"],["🚇","subway trains"],["🚄","fast trains"],["🚉","stations"],["🛤️","tracks"]]},
+  trucks:{name:"Trucks",icon:"🚚",em:[["🚚","trucks"],["🚒","fire trucks"],["🚜","tractors"],["🚓","police cars"],["🚑","ambulances"],["🚛","big trucks"],["🏎️","race cars"],["🚌","buses"]]},
+  dinos:{name:"Dinosaurs",icon:"🦖",em:[["🦖","T-rexes"],["🦕","dinosaurs"],["🥚","eggs"],["🦴","bones"],["🌋","volcanoes"],["🐊","crocodiles"],["🦎","lizards"],["🌿","leaves"]]},
+  space:{name:"Space",icon:"🚀",em:[["🚀","rockets"],["🪐","planets"],["⭐","stars"],["🌙","moons"],["🛸","flying saucers"],["☄️","comets"],["🌍","Earths"],["👩‍🚀","astronauts"]]},
+  animals:{name:"Animals",icon:"🐶",em:[["🐶","dogs"],["🐱","cats"],["🐰","bunnies"],["🐻","bears"],["🐸","frogs"],["🦊","foxes"],["🐷","pigs"],["🐮","cows"]]},
+  unicorns:{name:"Unicorns",icon:"🦄",em:[["🦄","unicorns"],["🌈","rainbows"],["⭐","stars"],["🧚","fairies"],["🏰","castles"],["👑","crowns"],["💖","hearts"],["🦋","butterflies"]]},
+  sports:{name:"Sports",icon:"⚽",em:[["⚽","soccer balls"],["🏀","basketballs"],["🏈","footballs"],["⚾","baseballs"],["🎾","tennis balls"],["🏒","hockey sticks"],["🥅","nets"],["🏆","trophies"]]}};
 /* Grades are 0 (Kindergarten) to 7 (7 and up). */
+const favOf=()=>{const p=players.current();return p&&FAVS[p.fav]||null};
 const gnum=v=>{v=+v;return Number.isFinite(v)&&v>=0&&v<=7?Math.round(v):3};
 function add(o){const p={id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),
     name:String(o.name||"").trim().slice(0,16)||"Player",avatar:o.avatar||AVATARS[0],grade:gnum(o.grade),
-    color:o.color||COLORS[data.list.length%COLORS.length]};
+    color:o.color||COLORS[data.list.length%COLORS.length],fav:FAVS[o.fav]?o.fav:""};
   data.list.push(p);persist();return p}
 const players={
   list:()=>data.list.slice(),
@@ -31,7 +40,7 @@ const players={
   remove(id){data.list=data.list.filter(p=>p.id!==id);if(data.current===id)data.current=null;
     try{for(let k=localStorage.length-1;k>=0;k--){const key=localStorage.key(k);if(key&&key.startsWith("tilesolve:p:"+id+":"))localStorage.removeItem(key)}}catch(e){}
     persist()},
-  AVATARS,COLORS,gradeName,gnum};
+  AVATARS,COLORS,gradeName,gnum,FAVS,fav:()=>favOf()};
 
 // Before players existed, Unblock the Car kept one save. Turn it into "Player 1" so nobody loses progress.
 (()=>{const old=store.get("tilesolve:car",null);if(!old)return;
@@ -130,7 +139,7 @@ const MUSIC_SVG='<svg class="on" viewBox="0 0 24 24" fill="none" stroke="current
    after the third miss the answer is shown and a new question appears. Closing a hint question keeps it, so it
    can't be skipped for an easier one. */
 function problem(level,easy){const ri=(a,b)=>a+Math.floor(Math.random()*(b-a+1)),pick=a=>a[Math.floor(Math.random()*a.length)];
-  if(level<0){const n=easy?ri(1,5):ri(2,8),em=pick(["🍎","⭐","🐟","🎈","🐞","🍪","🌸","🚗","🦆","🍓"]);return{slot:"n",em,n,ans:n}} // pre-K: count the pictures
+  if(level<0){const n=easy?ri(1,5):ri(2,8),em=favOf()?pick(favOf().em)[0]:pick(["🍎","⭐","🐟","🎈","🐞","🍪","🌸","🚗","🦆","🍓"]);return{slot:"n",em,n,ans:n}} // pre-K: count the pictures
   const op=(a,o,b,ans)=>({a,op:o,b,ans,slot:"c"}),add=(a,b)=>op(a,"+",b,a+b),sub=(a,b)=>op(a,"−",b,a-b),
     mul=(a,b)=>op(a,"×",b,a*b),div=(q,b)=>op(q*b,"÷",b,q),miss=(a,c)=>({a,op:"+",c,ans:c-a,slot:"b"}),pct=(p,of)=>op(p+"%","of",of,p*of/100);
   // two-digit ± one-digit with no carrying/borrowing (e.g. 43 + 5, 68 − 3)

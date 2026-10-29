@@ -5,7 +5,7 @@ from tsutil import *
 
 OUT = pathlib.Path(sys.argv[1]) if len(sys.argv) > 1 else pathlib.Path(".")
 check = Checker(); errors = []
-LEARN = ["abc", "missletter", "case", "sound", "trace", "count", "numorder", "moreless", "missnum", "tenframe", "shapesort", "shapehunt", "colours", "sizeorder"]
+LEARN = ["trains", "abc", "missletter", "case", "sound", "trace", "count", "numorder", "moreless", "missnum", "tenframe", "shapesort", "shapehunt", "colours", "sizeorder"]
 
 def player(grade, pid="kk"):
     seen = json.dumps({g: 1 for g in LEARN + GAMES})
@@ -17,8 +17,9 @@ VALIDATE = """(()=>{const bad=[],TR=TS_LEARN.TRACE;let rounds=0;
     try{R=__learn.make(n,i,r,a)}catch(e){bad.push(a+':'+n+':'+i+' threw '+e.message);continue}rounds++;const id=a+':'+n+':'+i+' '+R.type;
     if(!R.say)bad.push(id+' no say');
     if(R.type==='pick'){const ks=R.options.map(o=>o.key);if(new Set(ks).size!==ks.length)bad.push(id+' dup options '+ks);if(!ks.includes(R.answer))bad.push(id+' answer missing');if(ks.length<2)bad.push(id+' too few')}
-    else if(R.type==='order'){const ks=R.tiles.map(t=>t.key);if(new Set(ks).size!==ks.length)bad.push(id+' dup tiles');if(ks.slice().sort().join()!==R.answer.slice().sort().join())bad.push(id+' answer not tiles');
-      if(ks.length>1&&ks.join()===R.answer.join())bad.push(id+' already in order')}
+    else if(R.type==='order'){const keys=R.tiles.map(t=>t.key),ks=R.tiles.map(t=>String(t.val!==undefined?t.val:t.key));if(new Set(keys).size!==keys.length)bad.push(id+' dup tiles');
+      if(ks.slice().sort().join()!==R.answer.map(String).sort().join())bad.push(id+' answer not tiles');
+      if(ks.length>1&&ks.join()===R.answer.map(String).join())bad.push(id+' already in order')}
     else if(R.type==='sort'){const bk=R.bins.map(b=>b.key);if(R.items.some(x=>!bk.includes(x.key)))bad.push(id+' item without bin');if(R.items.length<2)bad.push(id+' few items')}
     else if(R.type==='hunt'){if(!R.cells.some(c=>c.ok))bad.push(id+' nothing to find');if(R.cells.every(c=>c.ok))bad.push(id+' all targets')}
     else if(R.type==='fill'){if(!(R.target>=1&&R.target<=(R.size||10)))bad.push(id+' bad target')}

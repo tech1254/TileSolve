@@ -15,28 +15,28 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Barlow:wght@400;600;700&display=swap">
-<link rel="stylesheet" href="../../shared/ts.css?v=0cd547ed">
-<link rel="stylesheet" href="../../shared/game.css?v=0cd547ed">
+<link rel="stylesheet" href="../../shared/ts.css?v=329e34e9">
+<link rel="stylesheet" href="../../shared/game.css?v=329e34e9">
 </head>
 <body>
-<script src="../../shared/ts.js?v=0cd547ed"></script>
-<script src="../../shared/kit.js?v=0cd547ed"></script>
+<script src="../../shared/ts.js?v=329e34e9"></script>
+<script src="../../shared/kit.js?v=329e34e9"></script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&display=swap">
-<link rel="stylesheet" href="../../shared/learn.css?v=0cd547ed">
-<script src="../../shared/learn.js?v=0cd547ed"></script>
+<link rel="stylesheet" href="../../shared/learn.css?v=329e34e9">
+<script src="../../shared/learn.js?v=329e34e9"></script>
 <script>
 (()=>{const U=TS_LEARN.util;
 
 TS_LEARN({id:"count",name:"Count It",howto:[["🍎", "Look at the pictures."], ["☝️", "Count them one at a time."], ["👆", "Tap the number that says how many."], ["🔊", "Tap the speaker to hear it again."]],
 make(n,i,r,a){const EM=[["🍎","apples"],["⭐","stars"],["🐟","fish"],["🎈","balloons"],["🐞","ladybugs"],["🍪","cookies"],["🌸","flowers"],["🚗","cars"],["🦆","ducks"],["🍓","strawberries"],["🐸","frogs"],["⚽","balls"]];
-  const[em,name]=U.pick(r,EM);let N,pic,opts;
+  const[em,name]=U.pick(r,U.fav(EM));let N,pic,opts;
   if(a<0){const max=n<=10?3:5;N=U.ri(r,1,max);pic=U.scatter(r,em,N);opts=U.near(r,N,n<=10?2:3,1,Math.max(max,3),2)}
   else if(a===0){const max=n<=10?5:n<=25?8:10;N=U.ri(r,1,max);pic=U.scatter(r,em,N);opts=U.near(r,N,3,1,Math.max(max,4),2)}
   else if(a===1&&n<=25){const max=n<=10?12:20;N=U.ri(r,n<=10?3:6,max);pic=U.cluster(em,N,N>10?10:5,true);opts=U.near(r,N,4,1,25,3)}
   else{N=a===1?U.ri(r,20,59):U.ri(r,n<=10?10:21,n<=10?49:99);pic=U.tens(N);const s=new Set([N]);for(const d of U.shuffle(r,[10,-10,1,-1,11,-9]))if(s.size<4&&N+d>0)s.add(N+d);opts=U.shuffle(r,[...s])}
   return{type:"pick",say:a<=0?"Count the "+name+". How many are there?":N<=20?"How many "+name+" are there?":"Count the tens and ones. How many blocks?",
     prompt:'<span class="ask">'+(N>20?"Tens and ones: how many?":"How many?")+"</span>"+pic,
-    options:opts.map(v=>({key:v,html:String(v),say:String(v)})),answer:N}}});
+    options:opts.map(v=>({key:v,html:a<0?U.numdots(v):String(v),say:String(v)})),answer:N}}});
 })();
 </script>
 </body>

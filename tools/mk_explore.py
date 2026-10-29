@@ -124,7 +124,7 @@ r'''make(n,i,r,a){let lo=0,hi,tick,label,unit,fmt=v=>String(v),s,j;
     options:U.shuffle(r,[...o]).map(v=>({key:v,html:fmt(v)})),answer:e}}''', [1,6])
 
 G["patterns"] = ("Pattern Next", [["🔁","Patterns repeat or grow in a special way."],["👀","Look for the rule."],["👆","Tap what comes next."],["🔊","Tap the speaker to hear it again."]],
-r'''make(n,i,r,a){const SETS=[["🔴","🔵","🟡","🟢"],["🐶","🐱","🐭","🐰"],["⭐","🌙","☀️","☁️"],["🍎","🍌","🍇","🍓"],["🔺","🟦","🟣","🔶"]];
+r'''make(n,i,r,a){const SETS=[["🔴","🔵","🟡","🟢"],["🐶","🐱","🐭","🐰"],["⭐","🌙","☀️","☁️"],["🍎","🍌","🍇","🍓"],["🔺","🟦","🟣","🔶"]].concat(U.fav([]).length?[U.fav([]).slice(0,4)]:[]);
   const seqHtml=(xs)=>'<span class="ask">What comes next?</span><span class="seq">'+xs.map(x=>"<b"+(String(x).length>2?' class="sm"':"")+">"+x+"</b>").join("")+'<b class="q">?</b></span>';
   if(a<=1){ // pre-K/K: repeating patterns (up to 3 in the core); grade 1: up to 4
     const core=U.pick(r,a<0?["AB"]:a===0?["AB","AAB","ABC","ABB"]:["ABC","AABB","ABCD","ABBC","AAB"]),set=U.shuffle(r,U.pick(r,SETS)),L=core.length;

@@ -34,6 +34,11 @@ Hints in every game cost one of these questions. There are three tries at the sa
 
 ## Little learners (Kindergarten to grade 2)
 
+**Favourite things:** each player can pick a favourite (🚂 trains, 🚚 trucks, 🦖 dinosaurs, 🚀 space, 🐶 animals, 🦄 unicorns, ⚽ sports). Count It, More or Less, Pattern Next and the pre-K maths questions then draw their pictures from it. **Train Yard** is all trains: hook up number cars in order, count passengers, fill seats (ten frame), colour-car patterns, spell your name with letter cars, longest/shortest train, the missing car and loading cargo by shape. Each level won adds a car to the player's train.
+
+The research behind the Little learners games (literacy, numeracy, shapes and measurement, animals and science) and the roadmap are in the claude.ai project docs under `research/`.
+
+
 A second section on the home screen, shown first for players in Kindergarten to grade 2. Every question is read aloud with the device's built-in voice (🔊 repeats it; "Read things out loud" in the Levels menu turns it off). Levels are 4 to 6 quick rounds with cheering, big tap targets, and the same profiles, stars, hints, checkpoints and How to play cards as the puzzles. Content follows the previous grade too: Kindergarten players get a gentle pre-K version (fewer choices, numbers to 5, letters from A), grade 1 players get Kindergarten content, and so on. Grade 1 content adds sh/ch/th sounds and counting by 5s and 10s to 100; grade 2 content adds numbers to 1,000, counting by 25s, 50s and 100s, and sorting shapes by sides.
 
 - **Letters:** ABC Order, Missing Letter, Big & Little (a ↔ A), First Sound (picture → starting letter), Trace a Letter (finger-trace A–Z and 0–9).

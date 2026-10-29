@@ -15,22 +15,22 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Barlow:wght@400;600;700&display=swap">
-<link rel="stylesheet" href="../../shared/ts.css?v=0cd547ed">
-<link rel="stylesheet" href="../../shared/game.css?v=0cd547ed">
+<link rel="stylesheet" href="../../shared/ts.css?v=329e34e9">
+<link rel="stylesheet" href="../../shared/game.css?v=329e34e9">
 </head>
 <body>
-<script src="../../shared/ts.js?v=0cd547ed"></script>
-<script src="../../shared/kit.js?v=0cd547ed"></script>
+<script src="../../shared/ts.js?v=329e34e9"></script>
+<script src="../../shared/kit.js?v=329e34e9"></script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&display=swap">
-<link rel="stylesheet" href="../../shared/learn.css?v=0cd547ed">
-<script src="../../shared/learn.js?v=0cd547ed"></script>
+<link rel="stylesheet" href="../../shared/learn.css?v=329e34e9">
+<script src="../../shared/learn.js?v=329e34e9"></script>
 <script>
 (()=>{const U=TS_LEARN.util;
 
 TS_LEARN({id:"moreless",name:"More or Less",howto:[["⚖️", "Look at both sides."], ["👂", "Listen: is it asking for the MOST, or the LEAST?"], ["👆", "Tap the right one."], ["🔊", "Tap the speaker to hear it again."]],
 make(n,i,r,a){
   if(a<=0){ // groups of pictures: 2 at first, then 3, then 4; sometimes asks for the group with the LEAST
-    const EM=["🍎","⭐","🐟","🎈","🐞","🍪","🦆","🍓"],em=U.pick(r,EM),k=a<0?(n<=4?2:3):(n<=10?3:4),gap=a<0||n<=15?2:1,hi=a<0?7:9;
+    const EM=["🍎","⭐","🐟","🎈","🐞","🍪","🦆","🍓"],em=U.pick(r,U.fav(EM)),k=a<0?(n<=4?2:3):(n<=10?3:4),gap=a<0||n<=15?2:1,hi=a<0?7:9;
     let xs;do{xs=Array.from({length:k},()=>U.ri(r,1,hi))}while(xs.some((x,j)=>xs.some((y,m)=>m!==j&&Math.abs(x-y)<gap)));
     const least=(a<0?n>3&&i%3===2:i%2===1),ans=xs.indexOf(least?Math.min(...xs):Math.max(...xs)),two=k===2;
     const w=least?(two?"less":"the least"):(two?"more":"the most");

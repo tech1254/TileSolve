@@ -118,6 +118,7 @@ h1{font-family:var(--font-sign);font-weight:400;font-size:clamp(26px,6vw,36px);m
     <div class="field"><span class="lbl">Pick a buddy</span><div class="avatars" id="fAvatars"></div></div>
     <div class="field"><span class="lbl">Colour</span><div class="colors" id="fColors"></div></div>
     <div class="field"><span class="lbl">Grade</span><div class="grades" id="fGrades"></div></div>
+    <div class="field"><span class="lbl">Favourite things <small style="opacity:.7">(used in the Little learners pictures)</small></span><div class="avatars" id="fFavs"></div></div>
     <div class="formbtns"><button type="button" id="formCancel">Cancel</button><button class="go" type="submit" id="formSave">Save</button></div>
     <button class="danger" type="button" id="btnDelete" hidden>Delete player</button>
   </form>
@@ -154,7 +155,8 @@ const GAMES=[
   {id:"ballrun",name:"Ball Run",desc:"Steer the ball along a sky track",art:"🔴",href:"games/ballrun/index.html",g:["#29b6f6","#0d5f8a"]},
   {id:"tunes",name:"Tile Tunes",desc:"Earn 🎵 in other games to open songs",art:"🎹",href:"games/tunes/index.html",g:["#8f5bd6","#4b2a85"]},
   {id:"carols",name:"Christmas Tunes",desc:"Carols to play, earned with 🎵",art:"🎄",href:"games/carols/index.html",g:["#2e7d32","#a3201b"]},
-  {id:"abc",name:"ABC Order",desc:"Put letters in order",art:"🔤",href:"games/abc/index.html",g:["#e2412e","#8a2318"],group:"little"},
+  {id:"trains",name:"Train Yard",desc:"Numbers, letters and patterns on the train",art:"🚂",href:"games/trains/index.html",g:["#3b6fd9","#1d3d85"],group:"little"},
+  {id:"abc",name:"My ABCs",desc:"Learn every letter, starting with your name",art:"🔤",href:"games/abc/index.html",g:["#e2412e","#8a2318"],group:"little"},
   {id:"missletter",name:"Missing Letter",desc:"Which letter is gone?",art:"❓",href:"games/missletter/index.html",g:["#f08a24","#99500d"],group:"little"},
   {id:"case",name:"Big & Little",desc:"Match A to a",art:"🅰️",href:"games/case/index.html",g:["#c9a400","#6b5600"],group:"little"},
   {id:"sound",name:"First Sound",desc:"Which letter does it start with?",art:"👂",href:"games/sound/index.html",g:["#6bb34a","#36651f"],group:"little"},
@@ -228,8 +230,8 @@ function drawGame(g,x){{const a=document.createElement(x.href?"a":"div");a.class
 
 /* ---------- add / edit player ---------- */
 let form=null,delArmed=0;
-function openForm(p){form=p?{id:p.id,name:p.name,avatar:p.avatar,color:p.color,grade:p.grade}
-    :{id:null,name:"",avatar:players.AVATARS[players.list().length%players.AVATARS.length],color:players.COLORS[players.list().length%players.COLORS.length],grade:APP==="little"?0:3};
+function openForm(p){form=p?{id:p.id,name:p.name,avatar:p.avatar,color:p.color,grade:p.grade,fav:p.fav||""}
+    :{id:null,name:"",avatar:players.AVATARS[players.list().length%players.AVATARS.length],color:players.COLORS[players.list().length%players.COLORS.length],grade:APP==="little"?0:3,fav:""};
   $("formTitle").textContent=p?"Edit "+p.name:"New player";$("fName").value=form.name;$("btnDelete").hidden=!p;
   $("btnDelete").textContent="Delete player";delArmed=0;drawForm();$("sheetPlayer").hidden=false;
   if(!p)setTimeout(()=>$("fName").focus(),50)}
@@ -238,12 +240,14 @@ function drawForm(){
     b.setAttribute("aria-label","Buddy "+x);if(x===form.avatar)b.className="cur";b.onclick=()=>{form.avatar=x;drawForm()};av.appendChild(b)});
   const co=$("fColors");co.innerHTML="";players.COLORS.forEach(c=>{const b=document.createElement("button");b.type="button";b.style.setProperty("--c",c);
     b.setAttribute("aria-label","Colour "+c);if(c===form.color)b.className="cur";b.onclick=()=>{form.color=c;drawForm()};co.appendChild(b)});
+  const fv=$("fFavs");fv.innerHTML="";[["","None","➖"]].concat(Object.entries(players.FAVS).map(([k,v])=>[k,v.name,v.icon])).forEach(([k,nm,ic])=>{const b=document.createElement("button");b.type="button";
+    b.textContent=ic;b.title=nm;b.dataset.fav=k;b.setAttribute("aria-label",nm);if(k===form.fav)b.className="cur";b.onclick=()=>{form.fav=k;drawForm()};fv.appendChild(b)});
   const gr=$("fGrades");gr.innerHTML="";(APP==="little"?[0,1,2,3]:[0,1,2,3,4,5,6,7]).forEach(g=>{const b=document.createElement("button");b.type="button";
     b.innerHTML=g===0?"<b>K</b><span>Kinder</span>":"<b>"+(g===7?"7+":g)+"</b><span>Grade</span>";if(g===form.grade)b.className="cur";b.onclick=()=>{form.grade=g;drawForm()};gr.appendChild(b)})}
 function closeForm(){$("sheetPlayer").hidden=true;form=null}
 $("playerForm").addEventListener("submit",e=>{e.preventDefault();if(!form)return;
   const name=$("fName").value.trim();if(!name){$("fName").focus();$("fName").placeholder="Type a name first";return}
-  const o={name,avatar:form.avatar,color:form.color,grade:form.grade};
+  const o={name,avatar:form.avatar,color:form.color,grade:form.grade,fav:form.fav||""};
   if(form.id)players.update(form.id,o);else{const p=players.add(o);if(!editing)players.use(p.id)}
   closeForm();show()});
 $("fName").addEventListener("input",e=>{if(form)form.name=e.target.value});

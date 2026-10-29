@@ -21,7 +21,7 @@ window.TS_LEARN=function(o){
     $("lrSay").onclick=()=>{TS.talk.on?TS.say(R&&R.say):K.tip("Talking is off. Turn it on in the Levels menu.")};next()}
   function next(){if(!S)return;
     if(S.i>=S.total){const st=S.miss<=1?3:S.miss<=3?2:1;
-      K.win({stars:st,text:S.total+" rounds · "+(S.miss?S.miss+" oops":"no oops")+(st===3?" · superstar!":"")});TS.say(st===3?"Great job, superstar!":"Well done!");return}
+      K.win({stars:st,text:S.total+" rounds · "+(S.miss?S.miss+" oops":"no oops")+(st===3?" · superstar!":"")+(o.winText?" "+o.winText(S,K):"")});TS.say(st===3?"Great job, superstar!":"Well done!");return}
     // content comes from the grade BEFORE the player's grade (Kindergarten -> pre-K = -1)
     R=o.make(S.n,S.i,S.rng,K.age-1);R.done=false;dots();$("lrPrompt").innerHTML=R.prompt||"";K.tip(R.text||R.say||"");
     const b=$("lrBody");b.innerHTML="";b.className="lr-body lr-"+R.type;b.removeAttribute("style");TYPES[R.type].draw(b);TS.say(R.say);stats()}
@@ -42,7 +42,7 @@ window.TS_LEARN=function(o){
       target:b=>b.querySelector('.lr-opt[data-key="'+cssq(R.answer)+'"]'),
       hint(b){flash(this.target(b))},solve(b){this.target(b).click()}},
     order:{draw(b){R.pos=0;b.innerHTML='<div class="lr-slots"></div><div class="lr-tray"></div>';const sl=b.firstChild,tr=b.lastChild;
-        if(R.size)b.style.setProperty("--ts",R.size+"px");if(R.wide)b.classList.add("wide");
+        if(R.size)b.style.setProperty("--ts",R.size+"px");if(R.wide)b.classList.add("wide");if(R.cls)b.classList.add(R.cls);
         R.answer.forEach((_,k)=>{const s=document.createElement("div");s.className="lr-slot";s.dataset.n=k+1;sl.appendChild(s)});
         R.tiles.forEach(t=>{const x=document.createElement("button");x.type="button";x.className="lr-tile";x.innerHTML=t.html;x.dataset.key=t.key;x.dataset.val=String(t.val!==undefined?t.val:t.key);x.setAttribute("aria-label",t.aria||String(t.key));
           x.onclick=()=>{if(R.done||K.busy||x.classList.contains("used"))return;
@@ -227,7 +227,20 @@ TS_LEARN.util=(()=>{
     t+='<path d="M'+xs+' 76 Q'+mid+" "+(76-Math.min(70,Math.abs(xe-xs)*.6+20))+" "+xe+' 76" fill="none" stroke="#f2c230" stroke-width="3.5" stroke-dasharray="7 5" marker-end="url(#ah)"/>'+
       '<circle cx="'+xs+'" cy="80" r="9" fill="#43a047" stroke="#fff" stroke-width="2"/><text x="'+xe+'" y="62" text-anchor="middle" font-family="Verdana,sans-serif" font-size="26" font-weight="700" fill="#f2c230">?</text>';
     return'<svg class="lr-line" viewBox="0 0 '+W+' 124" aria-hidden="true"><defs><marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#f2c230"/></marker></defs>'+t+"</svg>"}
-  return{ri,pick,shuffle,sample,mix,ramp,near,shape,SHAPES,SIDES,COLOURS,SHAPE_COLS,cluster,scatter,tens,frame,dist,pts,sampleLine,frac,pie,pizza,coin,cents,clock,numberline}})();
+  /* fav(list): the player's favourite things in the same shape as list ([emoji,name] pairs or plain emoji), or list itself */
+  function fav(list){const f=TS.players.fav&&TS.players.fav();if(!f)return list;return Array.isArray(list[0])?f.em:f.em.map(x=>x[0])}
+  /* numeral with its dot pattern underneath (dice layout to 6, five-frame rows above), for children still learning to read numbers */
+  function numdots(v){const DICE={1:[[50,50]],2:[[28,28],[72,72]],3:[[25,25],[50,50],[75,75]],4:[[28,28],[72,28],[28,72],[72,72]],5:[[25,25],[75,25],[50,50],[25,75],[75,75]],6:[[28,22],[72,22],[28,50],[72,50],[28,78],[72,78]]};
+    let d;if(DICE[v])d='<svg class="lr-dice" viewBox="0 0 100 100" aria-hidden="true">'+DICE[v].map(([x,y])=>'<circle cx="'+x+'" cy="'+y+'" r="13"/>').join("")+"</svg>";
+    else d='<svg class="lr-dice wide" viewBox="0 0 110 46" aria-hidden="true">'+Array.from({length:Math.min(v,10)},(_,k)=>'<circle cx="'+(11+(k%5)*22)+'" cy="'+(k<5?12:34)+'" r="8.5"/>').join("")+"</svg>";
+    return'<span class="lr-nd"><b>'+v+"</b>"+d+"</span>"}
+  /* a train car (or engine) drawn as SVG; label goes on the side */
+  function car(col,label,engine){const L=label==null?"":String(label);
+    const body=engine?'<path d="M8 20h34v-12h16v12h8a6 6 0 0 1 6 6v18H8z" fill="'+col+'"/><rect x="46" y="11" width="9" height="9" rx="2" fill="#cfe9ff"/><rect x="14" y="2" width="8" height="18" fill="#3a3a3a"/><path d="M72 44l8 6H72z" fill="#555"/>'
+      :'<rect x="6" y="10" width="68" height="34" rx="6" fill="'+col+'"/><rect x="12" y="15" width="16" height="11" rx="2" fill="#e8f6ff"/><rect x="52" y="15" width="16" height="11" rx="2" fill="#e8f6ff"/><rect x="2" y="36" width="5" height="4" fill="#555"/><rect x="73" y="36" width="5" height="4" fill="#555"/>';
+    return'<svg class="lr-car" viewBox="0 0 80 56" aria-hidden="true">'+body+'<circle cx="22" cy="47" r="7" fill="#2b2f36"/><circle cx="58" cy="47" r="7" fill="#2b2f36"/><circle cx="22" cy="47" r="2.5" fill="#bbb"/><circle cx="58" cy="47" r="2.5" fill="#bbb"/>'+
+      (L?'<text x="40" y="'+(engine?35:40)+'" text-anchor="middle" font-family="Andika,Verdana,sans-serif" font-weight="700" font-size="'+(L.length>2?17:26)+'" fill="#fff" stroke="rgba(0,0,0,.35)" stroke-width="1">'+L+"</text>":"")+"</svg>"}
+  return{ri,pick,shuffle,sample,mix,ramp,near,shape,SHAPES,SIDES,COLOURS,SHAPE_COLS,cluster,scatter,tens,frame,dist,pts,sampleLine,frac,pie,pizza,coin,cents,clock,numberline,fav,numdots,car}})();
 
 /* Letter and number shapes for tracing, drawn in a 100x100 box (top line y=10, middle y=50, bottom y=90).
    Each character is a list of strokes in writing order; each stroke is a list of points. */
