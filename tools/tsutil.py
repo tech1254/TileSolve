@@ -40,6 +40,9 @@ def question(pg):
     return {"+": n[0]+n[1], "−": n[0]-n[1], "×": n[0]*n[1], "÷": n[0]//n[1]}[op]
 
 def solve_math(pg):
+    if pg.is_visible(".ts-pick"):  # pre-K counting: tap the numeral-with-dots button, then the game counts along
+        n = pg.locator(".ts-count span").count()
+        pg.click(f".ts-pick button[data-v='{n}']"); pg.wait_for_timeout(n * 520 + 900); return
     for ch in str(question(pg)): pg.click(f".keys button[data-k='{ch}']")
     pg.click(".keys .ok"); pg.wait_for_timeout(1200)
 

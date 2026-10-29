@@ -75,3 +75,15 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--paint);outline-
 .chip.help{font-size:18px;font-weight:700;text-transform:none}
 @media (prefers-reduced-motion:reduce){.ts-finger{animation:none}}
 .ts-count{display:inline-flex;flex-wrap:wrap;justify-content:center;max-width:min(78vw,380px);font-size:clamp(24px,7vw,36px);gap:2px;line-height:1.15}
+
+/* pre-K counting answers: numeral + dots */
+.ts-pick{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.ts-pick button{background:var(--asphalt);border:2px solid var(--lane);border-radius:16px;padding:10px 4px 12px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:8px;color:var(--text);touch-action:manipulation}
+.ts-pick button b{font-family:"Andika","Verdana",sans-serif;font-weight:700;font-size:clamp(44px,13vw,64px);line-height:1}
+.ts-pick button:disabled{opacity:.3}
+.ts-dots{display:flex;flex-wrap:wrap;justify-content:center;gap:5px;max-width:92px;min-height:14px}
+.ts-dots i{width:13px;height:13px;border-radius:50%;background:var(--paint)}
+.ts-dots i.br{margin-left:0}
+.ts-count span{position:relative;transition:transform .2s}
+.ts-count span.lit{transform:scale(1.18)}
+.ts-count span.lit::after{content:attr(data-n);position:absolute;left:50%;top:-.7em;transform:translateX(-50%);font:700 14px "Andika","Verdana",sans-serif;color:var(--paint)}

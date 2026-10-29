@@ -153,7 +153,7 @@ const math=(()=>{
   const blank=()=>({q:null,lvl:0,tries:3,entry:"",lock:false,mark:"",done:null}),Ms={hint:blank(),check:blank()};let M=Ms.hint,kind="hint",el=null;
   function build(){el=document.createElement("div");el.className="sheet";el.hidden=true;el.innerHTML=
     '<div class="card" role="dialog" aria-labelledby="tsMathT"><div class="row"><h2 id="tsMathT">Solve it for a hint!</h2><button class="close" type="button">Not now</button></div>'+
-    '<p class="result ts-sub" hidden></p><div class="prob" aria-live="polite"></div><div class="tries" aria-label="Tries left"></div><p class="fb" aria-live="polite"></p><div class="keys"></div></div>';
+    '<p class="result ts-sub" hidden></p><div class="prob" aria-live="polite"></div><div class="tries" aria-label="Tries left"></div><p class="fb" aria-live="polite"></p><div class="keys"></div><div class="ts-pick" hidden></div></div>';
     document.body.appendChild(el);el.querySelector(".close").onclick=close;
     const keys=el.querySelector(".keys");
     ["1","2","3","4","5","6","7","8","9","del","0","ok"].forEach(k=>{const b=document.createElement("button");b.type="button";
@@ -163,13 +163,31 @@ const math=(()=>{
       b.onclick=()=>press(k);keys.appendChild(b)});
     addEventListener("keydown",e=>{if(el.hidden)return;
       if(/^[0-9]$/.test(e.key))press(e.key);else if(e.key==="Backspace")press("del");else if(e.key==="Enter")press("ok");else if(e.key==="Escape"&&kind==="hint")close()})}
-  function newQ(){M.lvl=mathLevel();M.q=problem(M.lvl,kind==="check");M.tries=3;M.entry="";M.mark=""}
+  function newQ(){M.lvl=mathLevel();M.q=problem(M.lvl,kind==="check");M.tries=3;M.entry="";M.mark="";M.opts=null}
   const left=()=>M.tries<3?(M.tries===1?"Last try!":M.tries+" tries left"):"";
   function render(){const q=M.q,txt=M.entry||(M.mark==="show"?String(q.ans):"?");
     const slot='<span class="slot'+(M.entry||M.mark==="show"?"":" empty")+(M.mark?" "+M.mark:"")+'">'+txt+"</span>",s=x=>"<span>"+x+"</span>";
-    el.querySelector(".prob").innerHTML=q.slot==="n"?'<span class="ts-count" aria-label="'+q.n+' pictures">'+q.em.repeat(q.n)+"</span>"+s("=")+slot
+    const isN=q.slot==="n";el.querySelector(".keys").hidden=isN;el.querySelector(".tries").hidden=isN;el.querySelector(".ts-pick").hidden=!isN;if(isN)drawPick();
+    el.querySelector(".prob").innerHTML=isN?'<span class="ts-count" aria-label="'+q.n+' pictures">'+Array.from({length:q.n},(_,i)=>'<span data-i="'+i+'">'+q.em+"</span>").join("")+"</span>"+s("=")+slot
       :q.slot==="b"?s(q.a)+s(q.op)+slot+s("=")+s(q.c):s(q.a)+s(q.op)+s(q.b)+s("=")+slot;
     el.querySelector(".tries").innerHTML=[0,1,2].map(k=>'<i class="'+(k<M.tries?"":"used")+'"></i>').join("")}
+  /* Pre-K counting: no keypad. Three big answer buttons each show the numeral AND that many dots, and say the number,
+     so a child who can count but can't read numbers yet can answer, and sees and hears the numeral as they do. */
+  const WORDS=["zero","one","two","three","four","five","six","seven","eight","nine","ten"];
+  function choices(n){if(M.opts&&M.opts.n===n)return M.opts.v;const o=new Set([n]),near=[n-1,n+1,n-2,n+2].filter(v=>v>=1&&v<=10);
+    for(const v of near.sort(()=>Math.random()-.5))if(o.size<3)o.add(v);const v=[...o].sort((a,b)=>a-b);M.opts={n,v,off:new Set()};return v}
+  const dots=v=>'<span class="ts-dots">'+Array.from({length:v},(_,i)=>"<i"+(i===5?' class="br"':"")+"></i>").join("")+"</span>";
+  function drawPick(){const P=el.querySelector(".ts-pick"),q=M.q;P.innerHTML="";
+    choices(q.n).forEach(v=>{const b=document.createElement("button");b.type="button";b.dataset.v=v;b.disabled=M.opts.off.has(v)||M.lock;
+      b.setAttribute("aria-label",WORDS[v]);b.innerHTML="<b>"+v+"</b>"+dots(v);b.onclick=()=>pickN(v);P.appendChild(b)})}
+  function countAlong(n,then){const sp=[...el.querySelectorAll(".ts-count span")];talk.say(Array.from({length:n},(_,i)=>i+1).join(", ")+". "+WORDS[n]+"!");
+    sp.forEach((x,i)=>setTimeout(()=>{x.classList.add("lit");x.dataset.n=i+1},i*520));setTimeout(then,n*520+600)}
+  function pickN(v){if(M.lock)return;talk.say(WORDS[v]);M.entry=String(v);
+    if(v===M.q.ans){M.lock=true;notes.addMath();M.mark="good";render();fb("Yes! Let's count them!","good");music.fx("good");const m=M;
+      countAlong(v,()=>{m.q=null;m.opts=null;m.lock=false;close();m.done&&m.done()});return}
+    // not quite: count together, then try again (that answer is greyed out); no tries are used up
+    M.lock=true;M.opts.off.add(v);M.mark="bad";render();music.fx("bad");fb("Not "+v+". Let's count together!","bad");
+    setTimeout(()=>countAlong(M.q.n,()=>{M.lock=false;M.entry="";M.mark="";render();el.querySelectorAll(".ts-count span").forEach(x=>x.classList.add("lit"));fb("Now tap the right number!")}),700)}
   function fb(t,cls){const f=el.querySelector(".fb");f.textContent=t||"";f.className="fb"+(cls?" "+cls:"")}
   /* open(onSolved) asks a hint question; open(onSolved,{checkpoint:true}) asks an easier checkpoint question that can't be closed. */
   function open(onSolved,opts){if(!el)build();kind=opts&&opts.checkpoint?"check":"hint";M=Ms[kind];
@@ -177,7 +195,7 @@ const math=(()=>{
     const sub=el.querySelector(".ts-sub");sub.hidden=kind!=="check";sub.textContent="Answer this to unlock the next level.";
     el.querySelector(".close").hidden=kind==="check";
     if(!M.q||M.lvl!==mathLevel())newQ();M.done=onSolved;M.entry="";M.mark="";M.lock=false;render();fb(left());el.hidden=false;
-    if(M.q.slot==="n")talk.say("How many are there?")}
+    if(M.q.slot==="n"){talk.say("How many are there? Count them, then tap the number.");fb("Count them, then tap the number!")}}
   function close(){if(el)el.hidden=true}
   function check(){if(M.lock||!M.entry)return;
     if(+M.entry===M.q.ans){M.lock=true;notes.addMath();M.mark="good";render();fb(kind==="check"?"Correct! On to the next level.":"Correct! Here's your hint.","good");music.fx("good");

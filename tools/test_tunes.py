@@ -80,10 +80,7 @@ with sync_playwright() as p:
     for lv in range(1, pg.evaluate("__game.LIST.length") + 1):
         pg.evaluate(f"__game.K.load({lv})"); pg.wait_for_timeout(150)
         if pg.is_visible(".prob"):
-            if pg.locator(".ts-count").count():
-                for ch in pg.locator(".ts-count").get_attribute("aria-label").split()[0]: pg.click(f".keys button[data-k='{ch}']")
-                pg.click(".keys .ok"); pg.wait_for_timeout(1300)
-            else: solve_math(pg)
+            solve_math(pg)
         pg.evaluate("(()=>{const S=__game.S;while(S.next<S.notes.length&&!S.done){S.pos=Math.max(S.pos,S.notes[S.next].b-1);__game.hitLane(S.notes[S.next].lane)}})()"); pg.wait_for_timeout(1600)
         wins.append(pg.is_visible("#kSheetWin"))
     check(all(wins), f"every song can be played to the end ({sum(wins)}/{len(wins)})")
