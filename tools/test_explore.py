@@ -91,7 +91,8 @@ with sync_playwright() as p:
         cg = b.new_context(viewport={"width": 390, "height": 844}); cg.add_init_script(player(grade, f"h{grade}"))
         hp = watch_errors(cg.new_page(), errors); hp.goto(HOME_URL); hp.wait_for_timeout(300)
         got = sorted(hp.evaluate("[...document.querySelectorAll(\".games[data-group='explore'] .game\")].map(e=>e.dataset.game)"))
-        want = sorted(g for g, (a, z) in HOME_EXPLORE.items() if a <= grade <= z and g not in LITTLE)
+        # Pattern Next, Animal Sort and Odd One Out are in the Little Learners app for K-2; the main app shows them from grade 3
+        want = sorted(g for g, (a, z) in HOME_EXPLORE.items() if (max(a, 3) if g in ("patterns", "animals", "oddone") else a) <= grade <= z and g not in LITTLE)
         check(got == want, f"grade {grade}: Learn & explore shows {want}")
         if grade in (1, 5): hp.screenshot(path=str(OUT / f"home-explore-g{grade}.png"), full_page=True)
         cg.close()

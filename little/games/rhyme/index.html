@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#161b21">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box;height:100%}body{margin:0}[hidden]{display:none!important}</style>
+<title>Rhyme Time · Little Learners</title>
+<meta name="apple-mobile-web-app-title" content="Little Learners">
+<link rel="apple-touch-icon" href="../../icon-180.png">
+<link rel="icon" type="image/png" href="../../icon-512.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Barlow:wght@400;600;700&display=swap">
+<link rel="stylesheet" href="../../shared/ts.css?v=f62baa0f">
+<link rel="stylesheet" href="../../shared/game.css?v=f62baa0f">
+</head>
+<body>
+<script src="../../shared/ts.js?v=f62baa0f"></script>
+<script src="../../shared/kit.js?v=f62baa0f"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&display=swap">
+<link rel="stylesheet" href="../../shared/learn.css?v=f62baa0f">
+<script src="../../shared/learn.js?v=f62baa0f"></script>
+<script>
+(()=>{const U=TS_LEARN.util;
+TS_LEARN({id:"rhyme",name:"Rhyme Time",howto:[["👂", "Rhyming words sound the same at the end: cat, hat, bat."], ["🔊", "Listen to the word."], ["👆", "Tap the picture or word that rhymes."], ["🔁", "Tap the speaker to hear it again."]],
+make(n,i,r,a){
+  // word families: words in a family rhyme. Families with different spellings (light/kite) come later.
+  const F=[["cat🐱","hat🎩","bat🦇","rat🐀","mat🧘"],["dog🐶","frog🐸","log🪵"],["bee🐝","tree🌳","key🔑","knee🦵"],["car🚗","star⭐","jar🫙"],["cake🎂","snake🐍","rake🧹"],
+    ["moon🌙","spoon🥄","balloon🎈"],["fish🐟","dish🍽️"],["bear🐻","pear🍐","chair🪑","hair💇"],["mouse🐭","house🏠"],["boat⛵","goat🐐","coat🧥"],["king🤴","ring💍","swing🛝"],
+    ["sock🧦","clock🕰️","rock🪨","lock🔒"],["bug🐛","mug☕","rug🧶"],["fox🦊","box📦","socks🧦"],["pig🐷","wig💇","dig⛏️"],["train🚆","rain🌧️","chain⛓️","plane✈️"],["snail🐌","whale🐋","mail📬"],
+    ["light💡","kite🪁","night🌃","bite🦷"],["nose👃","rose🌹","toes🦶"],["bed🛏️","bread🍞","red🟥"],["sun☀️","bun🍔","run🏃"],["hen🐔","pen🖊️","ten🔟"],["ship🚢","lip👄","zip🤐"],
+    ["bell🔔","shell🐚","well🪣"],["shoe👟","two2️⃣","glue🧴","zoo🦁"],["ball⚽","wall🧱","fall🍂"],["corn🌽","horn📯","unicorn🦄"]].map(f=>f.map(s=>{const m=s.match(/^([a-z]+)(.+)$/u);return{w:m[1],e:m[2]}}));
+  const fam=U.pick(r,F.filter(f=>a>=1||f.length>=3)),[q,ans]=U.sample(r,fam,2),others=U.shuffle(r,F.filter(f=>f!==fam)),k=a<0?2:a===0?3:4;
+  const tile=(x,pic)=>({key:x.w,html:pic?'<span class="lr-word"><b>'+x.e+"</b>"+x.w+"</span>":'<span class="lr-word">'+x.w+"</span>",say:x.w,aria:x.w});
+  const pic=a<2;
+  if(a>=1&&i%3===2){ // which one does NOT rhyme?
+    const three=U.sample(r,fam.length>=3?fam:fam.concat(fam),3).filter((x,j,s)=>s.findIndex(y=>y.w===x.w)===j);const odd=U.pick(r,others[0]);
+    if(three.length>=2){const opts=U.shuffle(r,three.concat([odd]));
+      return{type:"pick",cols:2,say:"Which word does not rhyme? "+opts.map(x=>x.w).join(", "),prompt:'<span class="ask">Which one does NOT rhyme?</span>',options:opts.map(x=>tile(x,pic)),answer:odd.w}}}
+  const opts=[ans].concat(others.slice(0,k-1).map(f=>U.pick(r,f)));
+  return{type:"pick",cols:2,say:"What rhymes with "+q.w+"?",prompt:'<span class="ask">What rhymes with</span><span class="lr-word big1"><b>'+q.e+"</b>"+q.w+"</span>",
+    options:U.shuffle(r,opts).map(x=>tile(x,pic)),answer:ans.w}}});
+})();
+</script>
+</body>
+</html>

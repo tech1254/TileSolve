@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#161b21">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box;height:100%}body{margin:0}[hidden]{display:none!important}</style>
+<title>Pattern Next · Little Learners</title>
+<meta name="apple-mobile-web-app-title" content="Little Learners">
+<link rel="apple-touch-icon" href="../../icon-180.png">
+<link rel="icon" type="image/png" href="../../icon-512.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Barlow:wght@400;600;700&display=swap">
+<link rel="stylesheet" href="../../shared/ts.css?v=f62baa0f">
+<link rel="stylesheet" href="../../shared/game.css?v=f62baa0f">
+</head>
+<body>
+<script src="../../shared/ts.js?v=f62baa0f"></script>
+<script src="../../shared/kit.js?v=f62baa0f"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&display=swap">
+<link rel="stylesheet" href="../../shared/learn.css?v=f62baa0f">
+<script src="../../shared/learn.js?v=f62baa0f"></script>
+<script>
+(()=>{const U=TS_LEARN.util;
+TS_LEARN({id:"patterns",name:"Pattern Next",howto:[["🔁", "Patterns repeat or grow in a special way."], ["👀", "Look for the rule."], ["👆", "Tap what comes next."], ["🔊", "Tap the speaker to hear it again."]],
+make(n,i,r,a){const SETS=[["🔴","🔵","🟡","🟢"],["🐶","🐱","🐭","🐰"],["⭐","🌙","☀️","☁️"],["🍎","🍌","🍇","🍓"],["🔺","🟦","🟣","🔶"]];
+  const seqHtml=(xs)=>'<span class="ask">What comes next?</span><span class="seq">'+xs.map(x=>"<b>"+x+"</b>").join("")+'<b class="q">?</b></span>';
+  if(a<=1){ // pre-K/K: repeating patterns (up to 3 in the core); grade 1: up to 4
+    const core=U.pick(r,a<0?["AB"]:a===0?["AB","AAB","ABC","ABB"]:["ABC","AABB","ABCD","ABBC","AAB"]),set=U.shuffle(r,U.pick(r,SETS)),L=core.length;
+    const len=Math.max(L*2,a<0?4:6)+U.ri(r,0,L-1),xs=Array.from({length:len},(_,k)=>set["ABCD".indexOf(core[k%L])]),ans=set["ABCD".indexOf(core[len%L])];
+    const used=[...new Set(core)].map(c=>set["ABCD".indexOf(c)]),o=new Set([ans]);for(const x of U.shuffle(r,used.concat(set)))if(o.size<(a<0?2:3))o.add(x);
+    return{type:"pick",say:"What comes next in the pattern?",prompt:seqHtml(xs),options:U.shuffle(r,[...o]).map(x=>({key:x,html:x})),answer:ans}}
+  let xs,ans;
+  if(a===2){const st=U.pick(r,[2,5,10,3,4]),down=n>15&&i%2===1,s=down?U.ri(r,st*5,60):U.ri(r,0,20);xs=Array.from({length:5},(_,k)=>s+(down?-1:1)*st*k);ans=s+(down?-1:1)*st*5}  // grade 2: increasing/decreasing
+  else if(a===3){const kind=i%3;if(kind===0){const s=U.ri(r,1,5);xs=[s,s*2,s*4,s*8];ans=s*16}else if(kind===1){const st=U.pick(r,[25,50,100]);const s=st*U.ri(r,0,4);xs=[0,1,2,3,4].map(k=>s+st*k);ans=s+st*5}
+    else{const s=U.pick(r,[1000,2000,5000]);xs=[s,s/2,s/4];ans=s/8}}                                                                  // grade 3: x2, /2, skip counting
+  else{const kind=U.ri(r,0,3);if(kind===0){xs=[1,4,9,16];ans=25}else if(kind===1){xs=[1,3,6,10];ans=15}else if(kind===2){const s=U.ri(r,1,3);xs=[s,s,2*s,3*s,5*s];ans=8*s}
+    else{const s=U.ri(r,1,10);xs=[s,s+1,s+3,s+6];ans=s+10}}                                                                          // grade 4+: squares, triangular, Fibonacci, growing
+  const o=new Set([ans]);for(const d of U.shuffle(r,[1,-1,2,-2,5,10,-10]))if(o.size<4&&ans+d>=0)o.add(ans+d);
+  return{type:"pick",say:"What number comes next?",prompt:seqHtml(xs),options:U.shuffle(r,[...o]).map(v=>({key:v,html:String(v)})),answer:ans}}});
+})();
+</script>
+</body>
+</html>

@@ -148,7 +148,8 @@ with sync_playwright() as p:
     pg.click("#lrTest"); pg.wait_for_timeout(100)
     check(any("read the questions" in x for x in pg.evaluate("window.__said")), "Test reads a sample sentence")
     pg.close(); c3.close()
-    for grade, shows in ((3, True), (4, False), (7, False)):
+    # Little learners moved to the Little Learners app (tools/test_little.py); the main app no longer lists them
+    for grade, shows in ((3, False), (4, False), (7, False)):
         cg = b.new_context(viewport={"width": 390, "height": 844}); cg.add_init_script(player(grade, f"h{grade}"))
         hp = watch_errors(cg.new_page(), errors); hp.goto(HOME_URL); hp.wait_for_timeout(300)
         n = hp.locator(".games[data-group='little'] .game").count()
@@ -161,7 +162,7 @@ with sync_playwright() as p:
     hp.fill("#fName", "Lily"); hp.click("#fGrades button:nth-child(1)"); hp.click("#formSave"); hp.wait_for_timeout(300)
     check(hp.evaluate("JSON.parse(localStorage.getItem('tilesolve:players')).list[0].grade") == 0, "Kindergarten can be picked for a player")
     heads = hp.locator(".gsec h2").all_text_contents()
-    check(heads[0].startswith("Little learners") and hp.locator(".games[data-group='little'] .game").count() == 15, "a Kindergarten player sees Little learners first (15 games)")
+    check(not any(h.startswith("Little learners") for h in heads) and hp.locator(".games[data-group='little'] .game").count() == 0, "the main app no longer lists Little learners (they're in the Little Learners app)")
     hp.screenshot(path=str(OUT / "home-little.png"), full_page=True)
     hp.click("#btnMe"); hp.click("#btnEdit")
     check("Kindergarten" in hp.text_content(".player"), "player card says Kindergarten")

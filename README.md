@@ -2,6 +2,13 @@
 
 A pack of puzzle games for kids. Open `index.html` in a browser. Everything is saved on the device; there are no accounts.
 
+## Two apps
+
+The repo builds two sites, each its own Cloudflare Worker deployed on every push to `main`:
+
+- **Tile Solve** (repo root, `tilesolve.<account>.workers.dev`): puzzles, Learn & explore (Pattern Next, Animal Sort and Odd One Out from grade 3), Tile Tunes and Christmas Tunes.
+- **Little Learners** (`little/`, `littlelearners.<account>.workers.dev`): the Little learners games, Pattern Next, Animal Sort, Odd One Out, Tile Tunes and Christmas Tunes, with its own name and icon (`little-src/`). `tools/build.js` writes it from the same pages (`const APP="little"` on the home page). Each app keeps its own players and progress, since browsers save per address.
+
 ## Players
 
 "Who's playing?" opens first. Each player has a name, a buddy avatar, a colour and a grade, and every game keeps each player's progress separately. Tap the player chip at the top of the home screen to switch players. "Edit players" lets a parent rename, change the grade of, or delete a player.

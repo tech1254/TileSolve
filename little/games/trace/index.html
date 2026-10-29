@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#161b21">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box;height:100%}body{margin:0}[hidden]{display:none!important}</style>
+<title>Trace a Letter · Little Learners</title>
+<meta name="apple-mobile-web-app-title" content="Little Learners">
+<link rel="apple-touch-icon" href="../../icon-180.png">
+<link rel="icon" type="image/png" href="../../icon-512.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Barlow:wght@400;600;700&display=swap">
+<link rel="stylesheet" href="../../shared/ts.css?v=f62baa0f">
+<link rel="stylesheet" href="../../shared/game.css?v=f62baa0f">
+</head>
+<body>
+<script src="../../shared/ts.js?v=f62baa0f"></script>
+<script src="../../shared/kit.js?v=f62baa0f"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&display=swap">
+<link rel="stylesheet" href="../../shared/learn.css?v=f62baa0f">
+<script src="../../shared/learn.js?v=f62baa0f"></script>
+<script>
+(()=>{const U=TS_LEARN.util;
+TS_LEARN({id:"trace",name:"Trace a Letter",howto:[["🟢", "Put your finger on the green dot."], ["✍️", "Slide along the grey line to draw it."], ["🔢", "Some letters have more than one line: follow the numbers."], ["🔊", "Tap the speaker to hear it again."]],
+rounds:()=>3,label:n=>"",
+make(n,i,r,a){const ORDER="LTIEFHVXWAKMNYZOCQGSJUDPBR",DIG="0123456789";let ch;
+  if(a<0)ch=i===2&&n>12?DIG[1+(n%5)]:ORDER[((n-1)*2+i)%12];
+  else if(a===0)ch=ORDER[((n-1)*3+i)%26];
+  else if(a===1)ch=n<=15?ORDER[((n-1)*3+i)%26]:(i===1?DIG[(n+i)%10]:U.pick(r,ORDER.split("")));
+  else ch=i%2===1?DIG[U.ri(r,0,9)]:U.pick(r,ORDER.split(""));
+  const num=/\d/.test(ch);
+  return{type:"trace",ch,say:"Trace the "+(num?"number ":"letter ")+ch+". Start at the green dot.",prompt:'<span class="ask">Trace the '+(num?"number":"letter")+" "+ch+"</span>"}}});
+})();
+</script>
+</body>
+</html>

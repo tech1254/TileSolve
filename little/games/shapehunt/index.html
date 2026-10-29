@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#161b21">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box;height:100%}body{margin:0}[hidden]{display:none!important}</style>
+<title>Shape Hunt · Little Learners</title>
+<meta name="apple-mobile-web-app-title" content="Little Learners">
+<link rel="apple-touch-icon" href="../../icon-180.png">
+<link rel="icon" type="image/png" href="../../icon-512.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Barlow:wght@400;600;700&display=swap">
+<link rel="stylesheet" href="../../shared/ts.css?v=f62baa0f">
+<link rel="stylesheet" href="../../shared/game.css?v=f62baa0f">
+</head>
+<body>
+<script src="../../shared/ts.js?v=f62baa0f"></script>
+<script src="../../shared/kit.js?v=f62baa0f"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&display=swap">
+<link rel="stylesheet" href="../../shared/learn.css?v=f62baa0f">
+<script src="../../shared/learn.js?v=f62baa0f"></script>
+<script>
+(()=>{const U=TS_LEARN.util;
+TS_LEARN({id:"shapehunt",name:"Shape Hunt",howto:[["🔍", "Lots of shapes are mixed up."], ["👂", "Listen for which shape to find."], ["👆", "Tap every one of them!"], ["🔊", "Tap the speaker to hear it again."]],
+make(n,i,r,a){const C=U.SHAPE_COLS,PL={circle:"circles",oval:"ovals",square:"squares",rectangle:"rectangles",triangle:"triangles",star:"stars",heart:"hearts",diamond:"diamonds",pentagon:"pentagons",hexagon:"hexagons"};
+  let cols,rows,kinds,bySides=false;
+  if(a<0){cols=3;rows=2;kinds=["circle","square","triangle"]}
+  else if(a===0){cols=3;rows=n<=15?3:4;kinds=n<=15?["circle","square","triangle"]:["circle","square","triangle","star","heart"]}
+  else if(a===1){cols=4;rows=4;kinds=["circle","square","triangle","rectangle","oval","star","heart"]}
+  else{cols=4;rows=5;kinds=["triangle","square","rectangle","diamond","pentagon","hexagon","circle","oval"];bySides=n>15}
+  const N=cols*rows,rot=k=>a<=0?0:k==="square"||k==="diamond"||k==="rectangle"?U.pick(r,[0,90]):U.ri(r,0,359);
+  const cell=(k,ok)=>({html:U.shape(k,U.pick(r,C),rot(k),.65+.35*r()),ok,aria:k});let cells=[],say,ask;
+  if(bySides){const s=U.pick(r,[3,4,5,6]),T=U.ri(r,3,6);const yes=kinds.filter(k=>U.SIDES[k]===s),no=kinds.filter(k=>U.SIDES[k]!==s);
+    for(let k=0;k<N;k++){const ok=k<T;cells.push(cell(U.pick(r,ok?yes:no),ok))}say="Tap all the shapes with "+s+" sides.";ask="Tap all shapes with "+s+" sides"}
+  else{const t=U.pick(r,kinds),T=a<0?2:U.ri(r,2,Math.min(5,Math.floor(N/3))),LIKE={square:"rectangle",rectangle:"square",circle:"oval",oval:"circle"};
+    const others=kinds.filter(k=>k!==t);for(let k=0;k<N;k++){const ok=k<T;cells.push(cell(ok?t:(a>=1&&LIKE[t]&&others.includes(LIKE[t])&&r()<.45?LIKE[t]:U.pick(r,others)),ok))}
+    say="Tap all the "+PL[t]+".";ask="Tap all the "+PL[t]+" "+U.shape(t,"#9aa3ad").replace('class="lr-shp"','class="lr-shp ic"')}
+  return{type:"hunt",cols,say,prompt:'<span class="ask">'+ask+"</span>",cells:U.shuffle(r,cells)}}});
+})();
+</script>
+</body>
+</html>

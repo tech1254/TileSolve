@@ -73,3 +73,21 @@ for(const[src,out]of PAGES){
     .replace('__BOXBANK__',()=>fs.existsSync(path.join(__dirname,'box-bank.json'))?fs.readFileSync(path.join(__dirname,'box-bank.json'),'utf8'):'[]');
   fs.mkdirSync(path.dirname(path.join(ROOT,out)),{recursive:true});fs.writeFileSync(path.join(ROOT,out),html);
   console.log(out,(html.length/1024).toFixed(1)+'KB','v='+V)}
+
+/* ---------- Little Learners: a second app (its own Cloudflare Worker) built into little/ ----------
+   Same pages as Tile Solve, a different home screen (APP="little"), name and icon. */
+{const LROOT=path.join(ROOT,'little'),home=fs.readFileSync(path.join(ROOT,'src/home.html'),'utf8');
+  fs.rmSync(LROOT,{recursive:true,force:true});fs.mkdirSync(path.join(LROOT,'games'),{recursive:true});
+  const ids=[...home.matchAll(/\{id:"([a-z]+)"[^}]*group:"little"/g)].map(m=>m[1]).concat(['patterns','animals','oddone','tunes','carols']);
+  const rename=h=>h.replace(/ · Tile Solve<\/title>/g,' · Little Learners</title>').replace(/content="Tile Solve"/g,'content="Little Learners"');
+  fs.cpSync(path.join(ROOT,'shared'),path.join(LROOT,'shared'),{recursive:true});
+  for(const n of [180,512])fs.copyFileSync(path.join(ROOT,'little-src','icon-'+n+'.png'),path.join(LROOT,'icon-'+n+'.png'));
+  let idx=rename(fs.readFileSync(path.join(ROOT,'index.html'),'utf8')).replace('const APP="main";','const APP="little";')
+    .replace('<title>Tile Solve</title>','<title>Little Learners</title>').replace('<p class="brand">TILE<span>SOLVE</span></p>','<p class="brand">LITTLE<span>LEARNERS</span></p>');
+  if(!idx.includes('const APP="little"'))throw new Error('little home: APP marker missing');
+  fs.writeFileSync(path.join(LROOT,'index.html'),idx);
+  for(const id of ids){const src=path.join(ROOT,'games',id,'index.html');if(!fs.existsSync(src))throw new Error('little app: no game '+id);
+    fs.mkdirSync(path.join(LROOT,'games',id),{recursive:true});fs.writeFileSync(path.join(LROOT,'games',id,'index.html'),rename(fs.readFileSync(src,'utf8')))}
+  fs.writeFileSync(path.join(LROOT,'wrangler.jsonc'),JSON.stringify({name:'littlelearners',compatibility_date:'2026-10-01',assets:{directory:'.'}},null,2)+'\n');
+  fs.writeFileSync(path.join(LROOT,'.assetsignore'),'wrangler.jsonc\n.assetsignore\n');
+  console.log('little/ ('+ids.length+' games)')}

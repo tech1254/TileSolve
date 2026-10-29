@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#161b21">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box;height:100%}body{margin:0}[hidden]{display:none!important}</style>
+<title>Big & Little · Little Learners</title>
+<meta name="apple-mobile-web-app-title" content="Little Learners">
+<link rel="apple-touch-icon" href="../../icon-180.png">
+<link rel="icon" type="image/png" href="../../icon-512.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Barlow:wght@400;600;700&display=swap">
+<link rel="stylesheet" href="../../shared/ts.css?v=f62baa0f">
+<link rel="stylesheet" href="../../shared/game.css?v=f62baa0f">
+</head>
+<body>
+<script src="../../shared/ts.js?v=f62baa0f"></script>
+<script src="../../shared/kit.js?v=f62baa0f"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&display=swap">
+<link rel="stylesheet" href="../../shared/learn.css?v=f62baa0f">
+<script src="../../shared/learn.js?v=f62baa0f"></script>
+<script>
+(()=>{const U=TS_LEARN.util;
+TS_LEARN({id:"case",name:"Big & Little",howto:[["🅰️", "Every big letter has a little letter."], ["👀", "Look at the letter at the top."], ["👆", "Tap its matching big or little letter."], ["🔊", "Tap the speaker to hear it again."]],
+make(n,i,r,a){const AB="abcdefghijklmnopqrstuvwxyz",EASY="cosuvwxzpk";
+  const CONF={b:"dpq",d:"bpq",p:"qbd",q:"pdb",m:"nwu",n:"mhu",u:"nvw",w:"mvu",i:"ljt",l:"ijt",j:"igy",f:"tl",t:"fl",h:"nk",a:"oed",e:"aoc",c:"oe",o:"ce",g:"qy",y:"gv",v:"wy",s:"z",z:"s",k:"hx",r:"nm",x:"kz"};
+  const l=U.pick(r,(a<0||(a===0&&n<=10)?EASY:AB).split("")),toLower=a<0?true:a===0?(n<=20||i%2===0):i%2===0,count=a<0?(n<=15?2:3):a===0?3:a===1?4:5,opts=new Set([l]);
+  if(a>=2||n>25)for(const c of U.shuffle(r,(CONF[l]||"").split("")))if(opts.size<count)opts.add(c);
+  while(opts.size<count)opts.add(U.pick(r,AB.split("")));
+  const show=toLower?l.toUpperCase():l,f=x=>toLower?x:x.toUpperCase();
+  return{type:"pick",say:toLower?"Find the little letter that matches big "+l.toUpperCase()+".":"Find the big letter that matches little "+l+".",
+    prompt:'<span class="ask">'+(toLower?"Find the little letter":"Find the big letter")+'</span><span class="big l">'+show+"</span>",
+    options:U.shuffle(r,[...opts]).map(x=>({key:f(x),html:f(x)})),answer:f(l)}}});
+})();
+</script>
+</body>
+</html>

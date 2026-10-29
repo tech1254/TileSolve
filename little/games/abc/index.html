@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#161b21">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box;height:100%}body{margin:0}[hidden]{display:none!important}</style>
+<title>ABC Order · Little Learners</title>
+<meta name="apple-mobile-web-app-title" content="Little Learners">
+<link rel="apple-touch-icon" href="../../icon-180.png">
+<link rel="icon" type="image/png" href="../../icon-512.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Barlow:wght@400;600;700&display=swap">
+<link rel="stylesheet" href="../../shared/ts.css?v=f62baa0f">
+<link rel="stylesheet" href="../../shared/game.css?v=f62baa0f">
+</head>
+<body>
+<script src="../../shared/ts.js?v=f62baa0f"></script>
+<script src="../../shared/kit.js?v=f62baa0f"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&display=swap">
+<link rel="stylesheet" href="../../shared/learn.css?v=f62baa0f">
+<script src="../../shared/learn.js?v=f62baa0f"></script>
+<script>
+(()=>{const U=TS_LEARN.util;
+TS_LEARN({id:"abc",name:"ABC Order",howto:[["🔤", "Letters are mixed up."], ["👆", "Tap the letters in ABC order: A, then B, then C..."], ["✅", "Fill every box to finish the round."], ["🔊", "Tap the speaker to hear it again."]],
+label:n=>"",
+make(n,i,r,a){const UP="ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  if(a>=2&&n>15){ // putting words in ABC order
+    const W=[["ant","🐜"],["apple","🍎"],["bat","🦇"],["bear","🐻"],["bed","🛏️"],["bus","🚌"],["cat","🐱"],["cake","🎂"],["cup","☕"],["dog","🐶"],["duck","🦆"],["egg","🥚"],
+      ["fish","🐟"],["fox","🦊"],["frog","🐸"],["goat","🐐"],["gift","🎁"],["hat","🎩"],["hen","🐔"],["jet","✈️"],["kite","🪁"],["key","🔑"],["lamp","💡"],["lion","🦁"],
+      ["map","🗺️"],["moon","🌙"],["nest","🪺"],["nut","🥜"],["owl","🦉"],["pig","🐷"],["pear","🍐"],["queen","👸"],["rain","🌧️"],["ring","💍"],["sun","☀️"],["sock","🧦"],
+      ["tree","🌳"],["tent","⛺"],["van","🚐"],["web","🕸️"],["yarn","🧶"],["zebra","🦓"]];
+    const k=U.ramp(n,16,40,3,5),same=n>30;let ws;
+    for(let t=0;t<50;t++){ws=U.sample(r,W,k);if(same||new Set(ws.map(w=>w[0][0])).size===k)break}
+    ws.sort((x,y)=>x[0]<y[0]?-1:1);const ans=ws.map(w=>w[0]);   // mix() shuffles away from the sorted order
+    return{type:"order",wide:true,say:"Put the words in A B C order.",prompt:'<span class="ask">Put the words in ABC order</span>',
+      tiles:U.mix(r,ws).map(w=>({key:w[0],html:w[1]+" "+w[0],say:w[0]})),answer:ans}}
+  let len,start,lower;
+  if(a<0){len=n<=20?3:n<=32?4:5;start=0;lower=false}
+  else if(a===0){len=Math.min(7,3+Math.floor((n-1)/8));start=n<=12?0:U.ri(r,0,26-len);lower=false}
+  else if(a===1){len=Math.min(10,5+Math.floor((n-1)/8));start=U.ri(r,0,26-len);lower=n>20}
+  else{len=U.ri(r,8,10);start=U.ri(r,0,26-len);lower=n>8}
+  const seq=UP.slice(start,start+len).split("").map(c=>lower?c.toLowerCase():c);
+  return{type:"order",say:"Put the letters in A B C order."+(start===0?" Start with A.":""),prompt:'<span class="ask">Put the letters in ABC order</span>',
+    tiles:U.mix(r,seq).map(c=>({key:c,html:c,say:c})),answer:seq}}});
+})();
+</script>
+</body>
+</html>

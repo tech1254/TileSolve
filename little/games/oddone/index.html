@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#161b21">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box;height:100%}body{margin:0}[hidden]{display:none!important}</style>
+<title>Odd One Out · Little Learners</title>
+<meta name="apple-mobile-web-app-title" content="Little Learners">
+<link rel="apple-touch-icon" href="../../icon-180.png">
+<link rel="icon" type="image/png" href="../../icon-512.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Barlow:wght@400;600;700&display=swap">
+<link rel="stylesheet" href="../../shared/ts.css?v=f62baa0f">
+<link rel="stylesheet" href="../../shared/game.css?v=f62baa0f">
+</head>
+<body>
+<script src="../../shared/ts.js?v=f62baa0f"></script>
+<script src="../../shared/kit.js?v=f62baa0f"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&display=swap">
+<link rel="stylesheet" href="../../shared/learn.css?v=f62baa0f">
+<script src="../../shared/learn.js?v=f62baa0f"></script>
+<script>
+(()=>{const U=TS_LEARN.util;
+TS_LEARN({id:"oddone",name:"Odd One Out",howto:[["🔍", "Look at all the pictures."], ["🤔", "Three belong together. One doesn't!"], ["👆", "Tap the one that doesn't belong."], ["🔊", "Tap the speaker to hear it again."]],
+make(n,i,r,a){
+  const C=[["fruit","🍎🍌🍇🍓🍊🍐🍉🍒"],["vegetables","🥕🥦🌽🥔🥒🍆"],["animals","🐶🐱🐭🐰🐻🦊🐮🐷"],["vehicles","🚗🚌🚲🚂🚜🚒🚓"],["clothes","👕👖🧦🧢👟🧤🧣"],
+    ["sea animals","🐟🐙🦀🐳🐬🦈"],["things that fly","✈️🚁🎈🪁🚀🛸"],["weather","☀️🌧️❄️⛈️🌈🌪️"],["sports balls","⚽🏀🏈⚾🎾🏐"],["music","🎸🥁🎺🎹🎻🪇"],
+    ["treats","🍰🍩🍪🍦🍫🧁"],["tools","🔨🪛🪚🔧🪓"]].map(([n,s])=>[n,[...new Intl.Segmenter().segment(s)].map(x=>x.segment)]);
+  const near={fruit:"vegetables",vegetables:"fruit",animals:"sea animals","sea animals":"animals","things that fly":"vehicles",treats:"fruit",clothes:"sports balls",tools:"music"};
+  const k=a<0?3:4;
+  if(a>=2&&i%2===1){ // numbers
+    let set,odd,why;const t=a>=4?U.ri(r,0,3):U.ri(r,0,2);
+    if(t===0){const ev=U.sample(r,Array.from({length:a>=3?45:15},(_,j)=>2*j+2),3);set=ev;odd=2*U.ri(r,1,a>=3?45:15)+1;why="even numbers"}
+    else if(t===1){set=U.sample(r,Array.from({length:a>=3?20:10},(_,j)=>5*j+5),3);do odd=U.ri(r,6,a>=3?99:49);while(odd%5===0);why="counting by 5s"}
+    else if(t===2){set=U.sample(r,Array.from({length:9},(_,j)=>10*j+10),3);do odd=U.ri(r,11,99);while(odd%10===0);why="tens"}
+    else{set=U.sample(r,Array.from({length:12},(_,j)=>3*j+3),3);do odd=U.ri(r,4,36);while(odd%3===0);why="the 3 times table"}
+    return{type:"pick",cols:2,say:"Which number does not belong?",prompt:'<span class="ask">Which number does not belong?</span>',
+      options:U.shuffle(r,set.concat([odd])).map(v=>({key:v,html:String(v)})),answer:odd}}
+  if(a>=3&&i%3===2){ // words
+    const W=[["big","huge","giant","tiny"],["happy","glad","cheerful","sad"],["run","jump","skip","apple"],["red","blue","green","chair"],["cold","icy","frozen","hot"],
+      ["quick","fast","speedy","slow"],["Monday","Friday","Sunday","March"],["circle","square","triangle","seven"],["cat","dog","horse","carrot"],["shout","yell","scream","whisper"]];
+    const w=U.pick(r,W);return{type:"pick",cols:2,say:"Which word does not belong? "+U.shuffle(r,w).join(", "),prompt:'<span class="ask">Which word does not belong?</span>',
+      options:U.shuffle(r,w).map(x=>({key:x,html:'<span style="font-size:24px">'+x+"</span>"})),answer:w[3]}}
+  const[g,list]=U.pick(r,C),oddFrom=a>=1&&near[g]&&r()<.6?C.find(c=>c[0]===near[g]):U.pick(r,C.filter(c=>c[0]!==g&&c[0]!==near[g]&&near[c[0]]!==g));
+  const same=U.sample(r,list,k-1),odd=U.pick(r,oddFrom[1].filter(x=>!list.includes(x)));
+  return{type:"pick",cols:2,say:"Which one does not belong?",prompt:'<span class="ask">Which one does not belong?</span>',
+    options:U.shuffle(r,same.concat([odd])).map(x=>({key:x,html:'<span style="font-size:56px;line-height:1">'+x+"</span>"})),answer:odd}}});
+})();
+</script>
+</body>
+</html>

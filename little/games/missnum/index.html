@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#161b21">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box;height:100%}body{margin:0}[hidden]{display:none!important}</style>
+<title>Missing Number · Little Learners</title>
+<meta name="apple-mobile-web-app-title" content="Little Learners">
+<link rel="apple-touch-icon" href="../../icon-180.png">
+<link rel="icon" type="image/png" href="../../icon-512.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Barlow:wght@400;600;700&display=swap">
+<link rel="stylesheet" href="../../shared/ts.css?v=f62baa0f">
+<link rel="stylesheet" href="../../shared/game.css?v=f62baa0f">
+</head>
+<body>
+<script src="../../shared/ts.js?v=f62baa0f"></script>
+<script src="../../shared/kit.js?v=f62baa0f"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&display=swap">
+<link rel="stylesheet" href="../../shared/learn.css?v=f62baa0f">
+<script src="../../shared/learn.js?v=f62baa0f"></script>
+<script>
+(()=>{const U=TS_LEARN.util;
+TS_LEARN({id:"missnum",name:"Missing Number",howto:[["🔢", "The numbers are counting along."], ["❓", "One number is missing."], ["👆", "Tap the number that goes in the box."], ["🔊", "Tap the speaker to hear it again."]],
+make(n,i,r,a){let len,step,s,hole,count;
+  if(a<0){len=3;step=1;s=U.ri(r,1,3);hole=2;count=n<=15?2:3}
+  else if(a===0){len=4;step=1;s=U.ri(r,1,7);hole=n<=10?3:U.ri(r,0,3);count=3}
+  else if(a===1){len=5;count=4;if(n<=15){step=1;s=U.ri(r,1,16)}else if(n<=25){step=-1;s=U.ri(r,6,20)}else if(n<=32){step=2;s=2*U.ri(r,0,6)}else{step=U.pick(r,[5,10]);s=step*U.ri(r,1,step===5?15:5)}hole=U.ri(r,1,4)}
+  else{len=5;count=4;step=U.pick(r,n<=12?[2,10]:n<=25?[2,10,25,50]:[10,25,50,100]);s=step*U.ri(r,1,step>=100?5:step>=25?10:step===10?40:200);if(n>25&&i%2===1){s+=step*4;step=-step}hole=U.ri(r,1,4)}
+  const seq=Array.from({length:len},(_,k)=>s+k*step),ans=seq[hole],m=Math.abs(step),opts=new Set([ans]);
+  for(const d of U.shuffle(r,[m,-m,1,-1,2*m,-2*m,2,-2]))if(opts.size<count&&ans+d>=0)opts.add(ans+d);
+  return{type:"pick",say:"What number is missing?"+(step<0?" These count backwards!":""),
+    prompt:'<span class="ask">What number is missing?</span><span class="seq">'+seq.map((v,k)=>k===hole?'<b class="q">?</b>':"<b>"+v+"</b>").join("")+"</span>",
+    options:U.shuffle(r,[...opts]).map(v=>({key:v,html:String(v),say:String(v)})),answer:ans}}});
+})();
+</script>
+</body>
+</html>

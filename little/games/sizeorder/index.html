@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#161b21">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box;height:100%}body{margin:0}[hidden]{display:none!important}</style>
+<title>Size Order · Little Learners</title>
+<meta name="apple-mobile-web-app-title" content="Little Learners">
+<link rel="apple-touch-icon" href="../../icon-180.png">
+<link rel="icon" type="image/png" href="../../icon-512.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Barlow:wght@400;600;700&display=swap">
+<link rel="stylesheet" href="../../shared/ts.css?v=f62baa0f">
+<link rel="stylesheet" href="../../shared/game.css?v=f62baa0f">
+</head>
+<body>
+<script src="../../shared/ts.js?v=f62baa0f"></script>
+<script src="../../shared/kit.js?v=f62baa0f"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&display=swap">
+<link rel="stylesheet" href="../../shared/learn.css?v=f62baa0f">
+<script src="../../shared/learn.js?v=f62baa0f"></script>
+<script>
+(()=>{const U=TS_LEARN.util;
+TS_LEARN({id:"sizeorder",name:"Size Order",howto:[["📏", "The pictures are different sizes."], ["👂", "Listen: smallest first, or biggest first?"], ["👆", "Tap them in that order."], ["🔊", "Tap the speaker to hear it again."]],
+make(n,i,r,a){const k=a<0?(n<=15?2:3):a===0?(n<=20?3:4):a===1?(n<=15?4:5):(n<=15?5:6),desc=((a<=0&&n>25)||(a>=1&&n>10))&&i%2===1;
+  const step=a<0?.32:a===0?.22:a===1?.13:.09,grid=[];for(let v=.3;v<=1.0001;v+=step)grid.push(+v.toFixed(3));
+  const vals=U.sample(r,grid,Math.min(k,grid.length)),mode=a<=0?"emoji":a===1?(i%2===0?"emoji":"bar"):(i%2===0?"bar":"vbar");
+  const em=U.pick(r,["🐘","🍎","⭐","🐻","🌳","🎈","🐟","🏠"]),col=U.pick(r,U.SHAPE_COLS);
+  const html=v=>mode==="emoji"?'<span class="sz" style="font-size:calc(var(--ts) * '+(v*.78).toFixed(2)+')">'+em+"</span>":mode==="bar"?'<span class="sz"><i class="bar" style="width:'+Math.round(v*92)+"%;--c:"+col+'"></i></span>':
+    '<span class="sz" style="display:flex;justify-content:center"><i class="vbar" style="height:'+Math.round(v*84)+"%;--c:"+col+'"></i></span>';
+  const sorted=vals.map((v,j)=>({key:"v"+j,v,html:html(v)})).sort((x,y)=>desc?y.v-x.v:x.v-y.v),ans=sorted.map(t=>t.key),tiles=sorted; // mixed below
+  const words=mode==="emoji"?["smallest","biggest"]:mode==="bar"?["shortest","longest"]:["shortest","tallest"],w=desc?words[1]+" to "+words[0]:words[0]+" to "+words[1];
+  return{type:"order",size:86,say:"Put them in order from "+w+".",prompt:'<span class="ask">'+w[0].toUpperCase()+w.slice(1)+"</span>",tiles:U.mix(r,tiles),answer:ans}}});
+})();
+</script>
+</body>
+</html>

@@ -106,6 +106,7 @@ h1{font-family:var(--font-sign);font-weight:400;font-size:clamp(26px,6vw,36px);m
     <div style="display:grid;gap:22px">
       <h1 id="hello">Pick a game</h1>
       <div class="gsec" id="gameGrid"></div>
+      <p class="foot" id="otherApp" hidden></p>
     </div>
   </section>
 </div>
@@ -128,6 +129,12 @@ h1{font-family:var(--font-sign);font-weight:400;font-size:clamp(26px,6vw,36px);m
 const{players,music}=TS,$=id=>document.getElementById(id);
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 
+/* One home page, two apps: "main" (Tile Solve) and "little" (Little Learners, built into little/ by tools/build.js).
+   The little app has the Little learners plus a few K-2 games and the music games; the main app keeps the rest,
+   with Pattern Next, Animal Sort and Odd One Out only for grade 3 and up. */
+const APP="main";
+const LITTLE_EXTRAS=["patterns","animals","oddone","tunes","carols"],BOTH=["tunes","carols"];
+const inApp=x=>APP==="little"?(x.group==="little"||LITTLE_EXTRAS.includes(x.id)):(x.group!=="little");
 /* Games in the pack. href = playable now; the rest show as "Coming soon". */
 const GAMES=[
   {id:"car",name:"Unblock the Car",desc:"Slide cars to free the red one",img:"icon-180.png",href:"games/car/index.html",g:["#e2412e","#8a2318"]},
@@ -198,15 +205,21 @@ function drawPlayers(){const g=$("playerGrid");g.innerHTML="";g.classList.toggle
   $("btnBack").hidden=!(editing||back);$("btnBack").textContent=editing?"← Back":"← Back to games";
   $("btnEdit").hidden=editing||!players.list().length;$("btnEdit").textContent="Edit players"}
 
-/* Sections: Little learners (K-3), Learn & explore (each game has a grade range), Puzzles. Younger players see Little learners first. */
+/* Sections. Main app: Learn & explore (each game has a grade range), then Puzzles.
+   Little app: Little learners, More to explore, Music. */
 function drawGames(){const g=$("gameGrid");g.innerHTML="";const cur=players.current();
-  const g0=cur?TS.players.gnum(cur.grade):3,fits=x=>!x.grades||(g0>=x.grades[0]&&g0<=x.grades[1]);
-  const L=["little","Little learners","Kindergarten to grade 3"],X=["explore","Learn & explore","Picked for "+players.gradeName(cur?cur.grade:3)],P=["puzzles","Puzzles","Every grade"];
-  let secs=g0<=2?[L,X,P]:g0===3?[X,P,L]:[X,P];
+  const g0=cur?TS.players.gnum(cur.grade):3,
+    fits=x=>{if(!inApp(x))return false;if(APP==="little"||!x.grades)return true;const lo=LITTLE_EXTRAS.includes(x.id)?Math.max(3,x.grades[0]):x.grades[0];return g0>=lo&&g0<=x.grades[1]};
+  const L=["little","Little learners","Letters, numbers and shapes"],X=APP==="little"?["explore","More to explore",""]:["explore","Learn & explore","Picked for "+players.gradeName(cur?cur.grade:3)],
+    P=APP==="little"?["puzzles","Music","Earn 🎵 by playing"]:["puzzles","Puzzles","Every grade"];
+  let secs=APP==="little"?[L,X,P]:[X,P];
   secs.forEach(([key,title,sub])=>{const list=GAMES.filter(x=>(x.group||"puzzles")===key&&fits(x));if(!list.length)return;
     const h=document.createElement("h2");h.innerHTML=title+" <small>"+sub+"</small>";g.appendChild(h);
     const grid=document.createElement("div");grid.className="games";grid.dataset.group=key;g.appendChild(grid);
-    list.forEach(x=>drawGame(grid,x))})}
+    list.forEach(x=>drawGame(grid,x))});
+  // a link across to the other app (only on the real workers.dev addresses)
+  const host=location.hostname,o=$("otherApp"),other=APP==="little"?host.replace(/^littlelearners\./,"tilesolve."):host.replace(/^tilesolve\./,"littlelearners.");
+  o.hidden=other===host;if(!o.hidden)o.innerHTML='<a class="linkbtn" href="https://'+other+'/">'+(APP==="little"?"🧩 Tile Solve for big kids →":"🔤 Little Learners (Kindergarten to grade 2) →")+"</a>"}
 function drawGame(g,x){{const a=document.createElement(x.href?"a":"div");a.className="game"+(x.href?"":" soon");
     if(x.href)a.href=x.href;a.style.setProperty("--g1",x.g[0]);a.style.setProperty("--g2",x.g[1]);a.dataset.game=x.id;
     a.innerHTML=(x.href?"":'<span class="badge">Coming soon</span>')+'<div class="art">'+(x.img?'<img src="'+x.img+'" alt="">':x.art)+"</div><b>"+x.name+"</b><span>"+x.desc+"</span>";
@@ -215,7 +228,7 @@ function drawGame(g,x){{const a=document.createElement(x.href?"a":"div");a.class
 /* ---------- add / edit player ---------- */
 let form=null,delArmed=0;
 function openForm(p){form=p?{id:p.id,name:p.name,avatar:p.avatar,color:p.color,grade:p.grade}
-    :{id:null,name:"",avatar:players.AVATARS[players.list().length%players.AVATARS.length],color:players.COLORS[players.list().length%players.COLORS.length],grade:3};
+    :{id:null,name:"",avatar:players.AVATARS[players.list().length%players.AVATARS.length],color:players.COLORS[players.list().length%players.COLORS.length],grade:APP==="little"?0:3};
   $("formTitle").textContent=p?"Edit "+p.name:"New player";$("fName").value=form.name;$("btnDelete").hidden=!p;
   $("btnDelete").textContent="Delete player";delArmed=0;drawForm();$("sheetPlayer").hidden=false;
   if(!p)setTimeout(()=>$("fName").focus(),50)}
@@ -224,7 +237,7 @@ function drawForm(){
     b.setAttribute("aria-label","Buddy "+x);if(x===form.avatar)b.className="cur";b.onclick=()=>{form.avatar=x;drawForm()};av.appendChild(b)});
   const co=$("fColors");co.innerHTML="";players.COLORS.forEach(c=>{const b=document.createElement("button");b.type="button";b.style.setProperty("--c",c);
     b.setAttribute("aria-label","Colour "+c);if(c===form.color)b.className="cur";b.onclick=()=>{form.color=c;drawForm()};co.appendChild(b)});
-  const gr=$("fGrades");gr.innerHTML="";[0,1,2,3,4,5,6,7].forEach(g=>{const b=document.createElement("button");b.type="button";
+  const gr=$("fGrades");gr.innerHTML="";(APP==="little"?[0,1,2,3]:[0,1,2,3,4,5,6,7]).forEach(g=>{const b=document.createElement("button");b.type="button";
     b.innerHTML=g===0?"<b>K</b><span>Kinder</span>":"<b>"+(g===7?"7+":g)+"</b><span>Grade</span>";if(g===form.grade)b.className="cur";b.onclick=()=>{form.grade=g;drawForm()};gr.appendChild(b)})}
 function closeForm(){$("sheetPlayer").hidden=true;form=null}
 $("playerForm").addEventListener("submit",e=>{e.preventDefault();if(!form)return;
