@@ -15,21 +15,21 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Barlow:wght@400;600;700&display=swap">
-<link rel="stylesheet" href="../../shared/ts.css?v=80d9b501">
-<link rel="stylesheet" href="../../shared/game.css?v=80d9b501">
+<link rel="stylesheet" href="../../shared/ts.css?v=b9dce2af">
+<link rel="stylesheet" href="../../shared/game.css?v=b9dce2af">
 </head>
 <body>
-<script src="../../shared/ts.js?v=80d9b501"></script>
-<script src="../../shared/kit.js?v=80d9b501"></script>
+<script src="../../shared/ts.js?v=b9dce2af"></script>
+<script src="../../shared/kit.js?v=b9dce2af"></script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&display=swap">
-<link rel="stylesheet" href="../../shared/learn.css?v=80d9b501">
-<script src="../../shared/learn.js?v=80d9b501"></script>
+<link rel="stylesheet" href="../../shared/learn.css?v=b9dce2af">
+<script src="../../shared/learn.js?v=b9dce2af"></script>
 <script>
-(()=>{const U=TS_LEARN.util;
+(()=>{const U=TS_LEARN.util;TS.horn.load();
 
 TS_LEARN({id:"trains",name:"Train Yard",howto:[["🚂", "All aboard! Every level has train jobs to do."], ["🔢", "Hook up the cars in number order, count the passengers, and load the train."], ["🎨", "Finish the colour pattern and spell your name with letter cars."], ["🚃", "Every level you finish adds a car to YOUR train!"]],
 rounds:a=>a<=0?5:6,
-winText:(S,K)=>{const pr=K.save.grades[K.age]||{stars:{}},cars=Math.max(1,Object.keys(pr.stars||{}).length);
+winText:(S,K)=>{TS.horn.play();const pr=K.save.grades[K.age]||{stars:{}},cars=Math.max(1,Object.keys(pr.stars||{}).length);
   return "🚂"+"🚃".repeat(Math.min(cars,12))+(cars>12?"+":"")+" Your train has "+cars+" car"+(cars>1?"s":"")+"!"},
 make(n,i,r,a){
   /* Train-themed practice for a child who loves trains: number order, counting, ten-frame seats, patterns, letters of his name,

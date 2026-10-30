@@ -317,6 +317,18 @@ function point(target){unpoint();if(!target)return;const r=target.getBoundingCli
 function unpoint(){if(finger){finger.remove();finger=null}}
 addEventListener("resize",unpoint);
 
+/* ---------- the train horn: a real recording (a wooden train whistle), shared/horn.mp3, for the train games ----------
+   horn.load() fetches it early; horn.play() returns false if it isn't ready (or sound is off) so a game can fall back. */
+const HORN_URL=new URL("horn.mp3",document.currentScript.src).href;
+const horn=(()=>{let ctx=null,buf=null,loading=null;
+  const wake=()=>{if(ctx&&ctx.state==="suspended")ctx.resume()};
+  function load(){if(loading)return loading;const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return loading=Promise.resolve(null);
+    try{ctx=new AC()}catch(e){return loading=Promise.resolve(null)}addEventListener("pointerdown",wake,true);addEventListener("keydown",wake,true);
+    loading=fetch(HORN_URL).then(r=>r.arrayBuffer()).then(a=>new Promise((res,rej)=>ctx.decodeAudioData(a,res,rej))).then(b=>(buf=b)).catch(()=>null);return loading}
+  function play(vol){if(music.muted)return true;load();if(!ctx||!buf)return false;wake();
+    try{const s=ctx.createBufferSource(),g=ctx.createGain();g.gain.value=vol==null?1:vol;s.buffer=buf;s.connect(g);g.connect(ctx.destination);s.start();return true}catch(e){return false}}
+  return{load,play}})();
+
 /* ---------- 🎵 music notes: earned by finishing levels and answering maths, spent... well, counted, to open Tile Tunes songs ---------- */
 const notes={
   addMath(){const p=players.current();if(!p)return;const k="tilesolve:p:"+p.id+":notes",d=store.get(k,{math:0});d.math=(d.math||0)+1;store.set(k,d)},
@@ -326,4 +338,4 @@ const notes={
       if(/^(tunes|carols|tunes-options|notes|seen)$/.test(g))continue;const d=store.get(k,null);
       if(d&&d.grades)for(const a in d.grades){const st=d.grades[a]&&d.grades[a].stars;if(st)n+=Object.keys(st).length}}}catch(e){}
     return n}};
-return{HOME,rngFrom,store,players,requirePlayer,gameSave,music,notes,report,MUSIC_SVG,math,problem,gate,howto,point,talk,say:t=>talk.say(t)}})();
+return{HOME,rngFrom,store,players,requirePlayer,gameSave,music,horn,notes,report,MUSIC_SVG,math,problem,gate,howto,point,talk,say:t=>talk.say(t)}})();

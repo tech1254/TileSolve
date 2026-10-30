@@ -7,11 +7,11 @@
 <!--KIT-->
 <!--LEARN-->
 <script>
-(()=>{const U=TS_LEARN.util;
+(()=>{const U=TS_LEARN.util;TS.horn.load();
 
 TS_LEARN({id:"trains",name:"Train Yard",howto:[["🚂", "All aboard! Every level has train jobs to do."], ["🔢", "Hook up the cars in number order, count the passengers, and load the train."], ["🎨", "Finish the colour pattern and spell your name with letter cars."], ["🚃", "Every level you finish adds a car to YOUR train!"]],
 rounds:a=>a<=0?5:6,
-winText:(S,K)=>{const pr=K.save.grades[K.age]||{stars:{}},cars=Math.max(1,Object.keys(pr.stars||{}).length);
+winText:(S,K)=>{TS.horn.play();const pr=K.save.grades[K.age]||{stars:{}},cars=Math.max(1,Object.keys(pr.stars||{}).length);
   return "🚂"+"🚃".repeat(Math.min(cars,12))+(cars>12?"+":"")+" Your train has "+cars+" car"+(cars>1?"s":"")+"!"},
 make(n,i,r,a){
   /* Train-themed practice for a child who loves trains: number order, counting, ten-frame seats, patterns, letters of his name,

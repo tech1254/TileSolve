@@ -434,7 +434,7 @@ function confetti(){for(let k=0;k<70;k++)bits.push({x:vw/2,y:vh*.45,vx:(R()-.5)*
 
 /* ---------- sound: a train horn made with Web Audio ---------- */
 let AC=null;
-function toot(){puff(true);puff(true);if(TS.music.muted)return;try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();if(AC.state==="suspended")AC.resume();
+function toot(){puff(true);puff(true);if(TS.horn.play())return;if(TS.music.muted)return;try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();if(AC.state==="suspended")AC.resume();
   const t=AC.currentTime+.02,lp=AC.createBiquadFilter();lp.type="lowpass";lp.frequency.value=1400;const g=AC.createGain();lp.connect(g);g.connect(AC.destination);
   g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.12,t+.04);g.gain.setValueAtTime(.12,t+.5);g.gain.exponentialRampToValueAtTime(.001,t+.75);
   for(const f of [311,392,466]){const o=AC.createOscillator();o.type="sawtooth";o.frequency.value=f;o.connect(lp);o.start(t);o.stop(t+.8)}}catch(e){}}
@@ -549,7 +549,7 @@ function draw(){ctx.setTransform(dpr*s,0,0,dpr*s,0,0);
 
 /* ---------- start at the station the player last reached ---------- */
 if(!CanvasRenderingContext2D.prototype.roundRect)CanvasRenderingContext2D.prototype.roundRect=function(x,y,w,h,r){this.moveTo(x+r,y);this.arcTo(x+w,y,x+w,y+h,r);this.arcTo(x+w,y+h,x,y+h,r);this.arcTo(x,y+h,x,y,r);this.arcTo(x,y,x+w,y,r);this.closePath();return this};
-resize();score();bookN();const st0=station(0,stName(save.stations));STOPS.push(st0);sp=1;newLeg(0);
+TS.horn.load();resize();score();bookN();const st0=station(0,stName(save.stations));STOPS.push(st0);sp=1;newLeg(0);
 startCard();requestAnimationFrame(frame);
 TS.howto.first("trip","Train Trip",HOWTO);
 window.__trip={STK,openBook,tunnels:()=>TUNNELS,gives,get station(){return STATIONS.find(x=>x.stop===tx)},get mode(){return mode},get fork(){const f=STOPS[sp];return f&&f.type==="fork"?f:null},tap,save,get tx(){return tx},
