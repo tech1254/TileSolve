@@ -89,6 +89,8 @@ Songs are earned: the first is free, then each song needs 5 more 🎵. Players e
 
 ## Puzzle games
 
+**Baseball** (every grade): you're at bat, seen from behind home plate in a ballpark with a crowd. The pitcher throws; tap SWING (or the field, or the space bar) when the ball reaches the strike zone. Right on time can be a home run; a little early pulls the ball to left field and a little late goes to right; way off is a foul or a miss. Pitches outside the zone are balls (4 is a walk), and weak contact can be caught or thrown out at first. Each level asks for more runs (1 up to 6) before 3 outs; stars for outs to spare. Pitches get faster with level and grade, then changeups and curveballs join in. The hint makes the next pitch slow and down the middle with a ring that turns green when it's time to swing. `tools/test_baseball.py` proves perfect timing wins every level.
+
 **Ball Run** (every grade): a ball rolls along a track in the sky; drag or hold ◀ ▶ to steer. Narrow bridges, zigzags, walls, sweeping bars, moving platforms and jump pads that always land you on the next platform. Flags are checkpoints, and gems are a bonus. Tracks get longer, faster and trickier by level and grade. `tools/test_ballrun.py` drives every grade's levels with a careful self-steering ball to prove each one can be finished without falling.
 
 - **Unblock the Car** (`games/car/`): slide cars until the red one can drive out. 1,000 levels from a bank of pre-generated, verified puzzles; the par is each puzzle's exact shortest solution. Difficulty ramps by grade: for grade 3, it's properly challenging by about level 30.
