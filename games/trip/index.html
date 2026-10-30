@@ -570,7 +570,7 @@ if(!CanvasRenderingContext2D.prototype.roundRect)CanvasRenderingContext2D.protot
 TS.horn.load();resize();score();bookN();const st0=station(0,stName(save.stations));STOPS.push(st0);sp=1;newLeg(0);
 startCard();requestAnimationFrame(frame);
 TS.howto.first("trip","Train Trip",HOWTO);
-window.__trip={STK,openBook,tunnels:()=>TUNNELS,gives,get station(){return STATIONS.find(x=>x.stop===tx)},get mode(){return mode},get fork(){const f=STOPS[sp];return f&&f.type==="fork"?f:null},tap,save,get tx(){return tx},
+window.__trip={STK,openBook,stickerNext(){sinceStk=99},tunnels:()=>TUNNELS,gives,get station(){return STATIONS.find(x=>x.stop===tx)},get mode(){return mode},get fork(){const f=STOPS[sp];return f&&f.type==="fork"?f:null},tap,save,get tx(){return tx},
   /* tests: answer the waiting Y right (or wrong), skip ahead to the next stop */
   right(){const f=STOPS[sp];if(f&&f.q)tap(f,f.q.opts.findIndex(o=>o.key===f.q.ans))},wrong(){const f=STOPS[sp];if(f&&f.q)tap(f,f.q.opts.findIndex(o=>o.key!==f.q.ans&&!f.signs[f.q.opts.indexOf(o)].el.classList.contains("no")))},
   skip(){const f=STOPS[sp];if(f&&mode==="run")tx=f.stop-1}};

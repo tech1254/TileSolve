@@ -35,9 +35,10 @@ with sync_playwright() as p:
             pg.wait_for_function("__trip.mode==='ask'||__trip.mode==='station'||__trip.mode==='run'", timeout=40000)
             m = pg.evaluate("__trip.mode")
             if m == "station": break
-            if m == "ask": pg.evaluate("__trip.right()"); pg.wait_for_timeout(1100)
+            if m == "ask": pg.evaluate("__trip.fork.miss||__trip.stickerNext();__trip.right()"); pg.wait_for_function("__trip.mode!=='go'", timeout=10000)
             pg.evaluate("__trip.skip()"); pg.wait_for_timeout(300)
             pg.wait_for_function("__trip.mode!=='run'", timeout=40000)
+        pg.wait_for_timeout(2300)
         nst = pg.evaluate("Object.keys(__trip.save.stk).length")
         check(nst >= 1 and pg.text_content("#bookN") == str(nst), f"grade {grade}: right answers sometimes give a sticker, counted on the 📒 ({nst})")
         check(pg.evaluate("__trip.mode") == "station" and 3 <= pg.evaluate("__trip.save.forks") <= 5, f"grade {grade}: a station comes after 3-5 Ys ({pg.evaluate('__trip.save.forks')})")
