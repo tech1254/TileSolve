@@ -31,16 +31,30 @@ with sync_playwright() as p:
         pg.wait_for_timeout(2500)
         check(pg.evaluate("__trip.tx") > x0 + 20 and pg.evaluate("__trip.save.forks") == 1, f"grade {grade}: tapping the right sign sends the train down that track")
         # ride on to the station
-        for _ in range(8):
-            pg.wait_for_function("__trip.mode==='ask'||__trip.mode==='station'||__trip.mode==='run'", timeout=40000)
+        stops = []
+        for _ in range(12):
+            pg.wait_for_function("__trip.mode==='ask'||__trip.mode==='station'||__trip.mode==='run'||__trip.mode==='task'", timeout=40000)
             m = pg.evaluate("__trip.mode")
             if m == "station": break
+            if m == "task":
+                kind = pg.evaluate("__trip.task.st.type"); stops.append(kind)
+                if kind == "pickup":   # one too few first: the child is told and can pick up more
+                    pg.evaluate("(()=>{const t=__trip.task;for(let j=0;j<t.ppl.length&&t.have+t.on.length<t.need-1;j++)t.board(j);t.go()})()")
+                    check(pg.evaluate("__trip.task&&__trip.task.miss===1&&__trip.mode==='task'"), f"grade {grade}: picking up too few passengers is caught, and the train waits")
+                if kind == "bridge":
+                    pg.evaluate("(()=>{const t=__trip.task;t.place(t.vals[t.vals.length-1])})()")
+                    check(pg.evaluate("__trip.task.miss===1&&__trip.task.next===0"), f"grade {grade}: a plank out of order doesn't go on the bridge")
+                if kind == "animal":
+                    n = pg.evaluate("__trip.task.st.n"); pg.click("#horn", force=True)
+                    check(pg.evaluate("__trip.task?__trip.task.st.gone===1:__trip.mode!=='task'"), f"grade {grade}: each toot moves one animal ({n} on the track)")
+                pg.evaluate("__trip.right()"); pg.wait_for_function("__trip.mode==='run'", timeout=10000)
             if m == "ask": pg.evaluate("__trip.fork.miss||__trip.stickerNext();__trip.right()"); pg.wait_for_function("__trip.mode!=='go'", timeout=10000)
             pg.evaluate("__trip.skip()"); pg.wait_for_timeout(300)
             pg.wait_for_function("__trip.mode!=='run'", timeout=40000)
         pg.wait_for_timeout(2300)
         nst = pg.evaluate("Object.keys(__trip.save.stk).length")
         check(nst >= 1 and pg.text_content("#bookN") == str(nst), f"grade {grade}: right answers sometimes give a sticker, counted on the 📒 ({nst})")
+        check(len(stops) == 1, f"grade {grade}: one stop between the Ys on the way ({stops})")
         check(pg.evaluate("__trip.mode") == "station" and 3 <= pg.evaluate("__trip.save.forks") <= 5, f"grade {grade}: a station comes after 3-5 Ys ({pg.evaluate('__trip.save.forks')})")
         want = pg.evaluate("__trip.gives(__trip.station.name)[0]")
         pg.click("#gift", force=True); pg.wait_for_timeout(300); pg.click("#hook", force=True); pg.wait_for_timeout(300)

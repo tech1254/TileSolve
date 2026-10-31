@@ -32,6 +32,20 @@ body{overflow:hidden}
 .sign .sw{display:block;width:2.1em;height:1.7em;border-radius:.3em;border:.06em solid rgba(0,0,0,.35)}
 .sign .lr-car{width:2.4em}
 .sign .ltr{font-size:1.35em}
+.sign .pw{display:flex;flex-direction:column;align-items:center;line-height:1;gap:.04em}
+.sign .pw b{font-size:1.15em;font-weight:400}
+.sign .pw small{font-size:.4em;font-family:var(--font-kid)}
+.sign .clp{display:flex;flex-wrap:wrap;justify-content:center;max-width:2.6em;font-size:.95em;line-height:1.05}
+.sign .szl{display:block;width:2.5em;height:1.6em;position:relative}
+.sign .szl i{position:absolute;left:0;top:.55em;height:.42em;background:#8b5a2b;border-radius:.21em;box-shadow:inset -.12em 0 0 #d2a36c}
+.sign .szt{display:flex;flex-direction:column-reverse;align-items:center;height:2.05em}
+.sign .szt i{width:.75em;height:.36em;margin-top:.03em;background:#e2412e;border-radius:.06em;box-shadow:inset 0 -.06em 0 rgba(0,0,0,.25)}
+.sign .sza{line-height:1}
+.sign .big{font-size:1.15em}
+.sign .lr-pos{width:2.5em;height:2.05em}
+.sign .lr-pos .pet{font-size:.78em}
+.sign .lr-pos .table::before,.sign .lr-pos .table::after{height:.72em}
+.sign .p-behind .pet{font-size:.62em}.sign .p-in-front-of .pet{font-size:.95em}.sign .p-between .tree{font-size:.85em}
 .sign.yes{background:#d9f2cc;border-color:#2e7d32}
 .sign.no{opacity:.35;filter:grayscale(1);pointer-events:none;animation:tshake .35s}
 .sign.glow{animation:tglow 1s ease-in-out infinite}
@@ -53,6 +67,43 @@ body{overflow:hidden}
 .askc .cars{display:inline-flex;align-items:flex-end}
 .askc .emo{font-size:1.6em}
 .askc .lr-tens{max-width:none}
+.askc .flash{position:relative;display:inline-grid;place-items:center;min-width:90px;min-height:76px}
+.askc .flash .lr-dots{height:76px;width:auto;max-width:190px}
+.askc .flash .lr-dots.dice{fill:#262626}
+.askc .flash .lr-dots .cell{stroke:#cfd6de}
+.askc .flash .fq{display:none;position:absolute;inset:0;place-items:center;font:400 46px var(--font-sign);color:var(--paint)}
+.askc .flash.hid .lr-dots{visibility:hidden}
+.askc .flash.hid .fq{display:grid}
+.askc .trk{display:inline-flex;gap:5px;align-items:stretch}
+.askc .trk i{font-style:normal;min-width:1.5em;padding:3px 6px;border-radius:10px;background:#fffaf0;color:#1d2230;display:grid;place-items:center}
+.askc .trk i.q{background:transparent;border:3px dashed var(--paint);color:var(--paint)}
+.askc .trk .lr-nd b{font-size:1em;color:#1d2230}
+.askc .trk .lr-dice{width:22px;height:22px;fill:#e0a800}
+.askc .trk .lr-dice.wide{width:40px;height:17px}
+.askc .tun{display:inline-flex;align-items:flex-end}
+.askc .tun .hole{width:42px;height:44px;background:#161616;border:5px solid #b3a794;border-bottom:0;border-radius:24px 24px 0 0;margin-right:-4px;position:relative;z-index:1;flex:none}
+.askc .tun .lr-car{width:34px}
+.askc .big{font-size:1.4em;letter-spacing:.08em}
+/* stops between the Ys */
+.pnd{display:flex;justify-content:center}.pnd .lr-nd b{font-size:34px;color:var(--paint)}.pnd .lr-dice{width:46px;height:46px}
+.seats{display:grid;grid-template-columns:repeat(5,44px);gap:5px;padding:9px;background:#c0392b;border-radius:14px;box-shadow:inset 0 -5px 0 rgba(0,0,0,.2)}
+.seats i{width:44px;height:44px;border-radius:9px;background:rgba(255,255,255,.22);display:grid;place-items:center;font-size:30px;font-style:normal;line-height:1}
+.seats i.f2{margin-top:10px}
+.seats i.old{background:rgba(255,255,255,.12);filter:grayscale(.5)}
+.seats i.in{background:#fff3c4;cursor:pointer}
+.seats i.tgt{box-shadow:inset 0 0 0 3px var(--paint)}
+.pc{font-size:20px!important}.pc b{color:var(--paint);font-size:26px}
+.plat{display:flex;flex-wrap:wrap;gap:4px;justify-content:center;max-width:min(380px,80vw);padding:8px 10px;background:#a9afb6;border-radius:12px;min-height:52px}
+.plat button{font-size:36px;line-height:1;background:none;border:0;padding:2px;cursor:pointer;touch-action:manipulation}
+.bslots{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;padding:8px;background:#4aa3df;border-radius:12px}
+.bslots i{min-width:58px;height:62px;border:3px dashed #e8d7b8;border-radius:8px;display:grid;place-items:center;font:700 26px var(--font-kid);font-style:normal;color:#1d2230;padding:0 4px;box-sizing:border-box}
+.bslots i.on{border:0;background:#c48a45;box-shadow:inset 0 -5px 0 rgba(0,0,0,.25)}
+.bplanks{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.bplanks button{min-width:58px;height:62px;padding:0 8px;border-radius:8px;border:0;background:#c48a45;box-shadow:inset 0 -5px 0 rgba(0,0,0,.25);font:700 26px var(--font-kid);color:#1d2230;cursor:pointer;touch-action:manipulation}
+.bplanks button.no{animation:tshake .35s}
+.bplanks button.glow,.horn.glow{animation:tglow 1s ease-in-out infinite}
+.bplanks .lr-nd,.bslots .lr-nd{gap:2px}.bplanks .lr-dice,.bslots .lr-dice{width:24px;height:24px;fill:#1d2230}.bplanks .lr-dice.wide,.bslots .lr-dice.wide{width:44px;height:19px}
+.plk{display:block;height:16px;background:#8b5a2b;border-radius:8px;box-shadow:inset -6px 0 0 #d2a36c}
 .askc .lr-tens .rod{grid-template-rows:repeat(10,5px)}
 .askc .lr-tens .rod b{width:8px}
 .askc .lr-tens .one{width:9px;height:9px}
@@ -144,13 +195,38 @@ const NAME=[...new Set((P.name||"").toUpperCase().replace(/[^A-Z]/g,""))];
 const SAFE_WORDS=[["🐟","fish"],["🐶","dog"],["☀️","sun"],["🦊","fox"],["🐝","bee"],["🌙","moon"],["🐷","pig"],["🦆","duck"],["🐭","mouse"],["🎩","hat"],["🐻","bear"],["🐐","goat"],
   ["🦁","lion"],["🚌","bus"],["🧦","sock"],["💍","ring"],["🦓","zebra"],["🐢","turtle"],["🌮","taco"],["🍋","lemon"],["🐮","cow"],["🎈","balloon"],["🍩","donut"],["🪁","kite"],["🪵","log"],["🐴","horse"]];
 
+const pw=(e,w)=>'<span class="pw"><b>'+e+"</b><small>"+w+"</small></span>";
+const pics2=s=>s.split(" ").map(x=>{const m=x.match(/^([a-z]+)(.+)$/u);return{w:m[1],e:m[2]}});
+// rhyme families with pictures that have only one name (research: avoid ambiguous pictures)
+const RHYMES=["cat🐱 hat🎩 bat🦇","dog🐶 frog🐸 log🪵","bee🐝 tree🌳 key🔑","car🚗 star⭐ jar🫙","cake🎂 snake🐍","moon🌙 spoon🥄","bear🐻 pear🍐 chair🪑","mouse🐭 house🏠",
+  "boat⛵ goat🐐 coat🧥","sock🧦 clock🕰️ rock🪨","fox🦊 box📦","train🚆 rain🌧️ plane✈️","snail🐌 whale🐋 mail📬","nose👃 rose🌹","bed🛏️ bread🍞","sun☀️ run🏃","hen🐔 pen🖊️ ten🔟",
+  "bell🔔 shell🐚","ball⚽ wall🧱","corn🌽 horn📯"].map(pics2);
+// first sounds: words that start with one clear consonant sound (no blends, no letter-name traps like circle or giraffe)
+const STARTS={m:"mouse🐭 moon🌙 monkey🐒 milk🥛",s:"sun☀️ sock🧦 seal🦭 six6️⃣",f:"fish🐟 fox🦊 feather🪶 fire🔥 foot🦶",b:"ball⚽ bee🐝 bear🐻 bus🚌 banana🍌 bed🛏️",
+  d:"dog🐶 duck🦆 door🚪 dinosaur🦕 donut🍩",p:"pig🐷 pizza🍕 penguin🐧 pear🍐 pencil✏️",t:"tiger🐯 turtle🐢 tooth🦷 tent⛺ ten🔟",l:"lion🦁 lemon🍋 leaf🍃 log🪵 lollipop🍭",
+  r:"rabbit🐰 rocket🚀 ring💍 rainbow🌈 robot🤖",h:"hat🎩 horse🐴 house🏠 heart❤️ hand✋",n:"nose👃 nest🪺 nut🥜 nine9️⃣",g:"goat🐐 gift🎁 guitar🎸 gorilla🦍",w:"web🕸️ worm🪱 watermelon🍉 window🪟"};
+for(const k in STARTS)STARTS[k]=pics2(STARTS[k]);
+// syllables: word, picture, the parts the voice claps out (spelled so the voice says them right)
+const CLAP=[["cat","🐱"],["dog","🐶"],["sun","☀️"],["bee","🐝"],["fish","🐟"],["ball","⚽"],["cake","🎂"],["train","🚆"],["duck","🦆"],["moon","🌙"],["bear","🐻"],
+  ["monkey","🐒","mon, key"],["rabbit","🐰","rab, bit"],["apple","🍎","ap, pull"],["pizza","🍕","peet, sa"],["tiger","🐯","tie, ger"],["rocket","🚀","rock, it"],["pencil","✏️","pen, sil"],
+  ["cookie","🍪","cook, ee"],["turtle","🐢","tur, tul"],["zebra","🦓","zee, bra"],["panda","🐼","pan, da"],["robot","🤖","row, bot"],["pumpkin","🎃","pump, kin"],
+  ["banana","🍌","ba, na, na"],["dinosaur","🦕","dye, no, saur"],["elephant","🐘","el, uh, fant"],["octopus","🐙","oc, toe, pus"],["butterfly","🦋","but, ter, fly"],
+  ["kangaroo","🦘","kang, ga, roo"],["tomato","🍅","toe, may, toe"],["ladybug","🐞","lay, dee, bug"],["strawberry","🍓","straw, bear, ree"],
+  ["watermelon","🍉","wa, ter, mel, on"],["caterpillar","🐛","cat, er, pill, ar"],["helicopter","🚁","hel, ih, cop, ter"],["alligator","🐊","al, ih, gay, ter"]]
+  .map(([w,e,p])=>({w,e,parts:p||w,n:p?p.split(",").length:1}));
+// groups for "which one goes with these?"; NEAR groups are only mixed later (they're easy to confuse)
+const CATS=[["animals","🐶 🐱 🐮 🐷 🐴 🐑 🐔 🐰".split(" ")],["things that go","🚗 🚌 🚒 🚜 ✈️ 🚲 🚂 🚀".split(" ")],["fruit","🍎 🍌 🍇 🍓 🍊 🍐 🍒 🍉".split(" ")],
+  ["clothes","👕 👖 🧦 🧢 👟 🧤 👗 🧣".split(" ")],["sea animals","🐟 🐙 🦀 🐬 🐳 🦈 🦞".split(" ")],["bugs","🐞 🐝 🦋 🐛 🐜 🦗".split(" ")],["treats","🍦 🍩 🍪 🧁 🍭 🍫".split(" ")],
+  ["things in the sky","☀️ 🌙 ⭐ ☁️ 🌈 ⚡".split(" ")]];
+const NEAR=[["animals","sea animals","bugs"],["fruit","treats"]];
+
 const KINDS={
   num(st){const max=A<0?[4,5,7,10][st]:[10,10,20,20][st],N=U.ri(R,1,max),vs=nums(N,NO,1,max,A<0?4:3,A<0&&st<2?2:1);
     const show=A<0?(st===0?U.numdots(N):st===1?"<b>"+N+"</b>":"<b>?</b> 👂"):(st===0?"<b>"+N+"</b>":"<b>?</b> 👂");
     return mk("num","Take track "+N+"!","🚂 Take track "+show,vs,v=>({key:v,html:nd(v),say:"track "+v}),"We need track "+N+".")},
   count(st){const [em,nm]=U.pick(R,EMS),max=A<0?[3,4,5,6][st]:[6,8,10,10][st],N=U.ri(R,1,max),vs=nums(N,NO,1,max,3,A<0&&st<2?2:1);
-    return mk("count","Which track has "+N+" "+nm+"? Count them.","Which track has <b>"+N+"</b> "+em+"?",vs,
-      v=>({key:v,html:pics(em,v),say:String(v)}),"We need "+N+". Count again!")},
+    const q=mk("count","Which track has "+N+" "+nm+"? Count them.","Which track has <b>"+N+"</b> "+em+"?",vs,
+      v=>({key:v,html:pics(em,v),say:String(v)}),"We need "+N+". Count again!");q.yes=Array.from({length:N},(_,i)=>i+1).join(", ")+". "+N+" "+nm+"!";return q},
   colour(st){const c=U.pick(R,["red","blue","green","yellow","orange","purple","pink","brown","grey","black","white","brown","grey","pink","purple"]);
     const others=Object.keys(COLS).filter(x=>x!==c&&(st>=2||!CLASH[c].includes(x))),vs=[c].concat(U.sample(R,others,NO-1));
     return mk("colour","Take the "+c+" track!","Take the "+(st===0?'<span class="sw" style="background:'+COLS[c]+'"></span>':"")+"<b>"+c+"</b> track",vs,
@@ -178,10 +254,10 @@ const KINDS={
   onemore(st){const less=st>=2&&R()<.5,N=U.ri(R,less?2:1,9),ans=less?N-1:N+1,vs=[ans,N].concat(nums(ans,4,0,11,2).filter(x=>x!==N&&x!==ans)).slice(0,NO);
     return mk("onemore","What is one "+(less?"less":"more")+" than "+N+"?","One "+(less?"less":"more")+" than <b>"+N+"</b>?",vs,v=>({key:v,html:big(v),say:String(v)}),
       (less?"Count back":"Count on")+" one from "+N+".")},
-  addpic(st){const [em,nm]=U.pick(R,EMS),max=st<2?5:10,a=U.ri(R,1,max-1),b=U.ri(R,1,Math.min(4,max-a)),ans=a+b,vs=nums(ans,NO,1,max+1,2);
+  addpic(st){const [em,nm]=U.pick(R,EMS),max=A<0?[3,4,5,5][st]:st<2?5:10,a=U.ri(R,1,max-1),b=U.ri(R,1,Math.min(4,max-a)),ans=a+b,vs=nums(ans,NO,1,max+1,2);
     return mk("addpic",a+" "+nm+", and "+b+" more. How many altogether?",U.cluster(em,a,Math.min(a,5))+" <b>+</b> "+U.cluster(em,b,b)+" <b>= ?</b>",vs,
       v=>({key:v,html:big(v),say:String(v)}),"Count them all: start at "+a+".")},
-  pattern(st){const core=st<1?"AB":U.pick(R,["AB","ABC","AAB","ABB"]),cs=U.sample(R,["red","blue","yellow","green","purple","orange"],3),L=core.length,len=Math.max(L*2,4);
+  pattern(st){const core=A<0?(st<2?"AB":st===2?U.pick(R,["AAB","ABB"]):"ABC"):st<1?"AB":U.pick(R,["AB","ABC","AAB","ABB"]),cs=U.sample(R,["red","blue","yellow","green","purple","orange"],3),L=core.length,len=A<0?L*3:Math.max(L*2,4);
     const at=k=>cs["ABC".indexOf(core[k%L])],ans=at(len),used=[...new Set(core)].map(c=>cs["ABC".indexOf(c)]),vs=[ans];
     for(const c of U.shuffle(R,used.concat(cs)))if(vs.length<NO&&!vs.includes(c))vs.push(c);
     return mk("pattern","What colour car comes next?",'<span class="cars">'+Array.from({length:len},(_,k)=>U.car(COLS[at(k)],"")).join("")+U.car("#9aa3ad","?")+"</span>",vs,
@@ -216,13 +292,94 @@ const KINDS={
   mul(st){const m=st<2?10:12,a=U.ri(R,2,m),b=U.ri(R,2,st<1?5:m),ans=a*b,vs=[ans];for(const v of U.shuffle(R,[ans+a,ans-a,ans+b,ans-b,ans+1]))if(vs.length<NO&&v>0&&!vs.includes(v))vs.push(v);
     return mk("mul","What is "+a+" times "+b+"?","<b>"+a+" × "+b+" = ?</b>",vs,v=>({key:v,html:big(v),say:String(v)}),"Think: "+b+" groups of "+a+".")},
   div(st){const b=U.ri(R,2,st<2?10:12),q=U.ri(R,2,10),vs=[q];for(const v of U.shuffle(R,[q+1,q-1,q+2,b]))if(vs.length<NO&&v>0&&!vs.includes(v))vs.push(v);
-    return mk("div","What is "+q*b+" divided by "+b+"?","<b>"+q*b+" ÷ "+b+" = ?</b>",vs,v=>({key:v,html:big(v),say:String(v)}),"What times "+b+" makes "+q*b+"?")}};
-const POOL=A<0?["num","count","colour","shape","letter","more"]:A===0?["num","count","letter","shape","more","onemore","addpic","pattern"]:
-  A===1?["add","sub","missing","skip","bigger","firstletter"]:A===2?["add","sub","skip","oddeven","tens","bigger"]:["mul","div","add","sub","bigger"];
+    return mk("div","What is "+q*b+" divided by "+b+"?","<b>"+q*b+" ÷ "+b+" = ?</b>",vs,v=>({key:v,html:big(v),say:String(v)}),"What times "+b+" makes "+q*b+"?")},
+  /* ---------- more skills, from the research notes (research/*.md in the project) ---------- */
+  // Quick look (subitizing): the dots flash for about 2 seconds, then hide. Dice layouts first, then two dice, then ten-frames.
+  quick(st){let N,kind="dice",split;
+    if(A<0){N=U.ri(R,1,[3,4,5,5][st]);if(st===3&&N>=3)kind=U.pick(R,["dice","scatter"])}
+    else if(A===0){if(st<2)N=U.ri(R,st?3:1,st?6:5);else if(st===2){N=U.ri(R,5,8);kind="pair";split=U.ri(R,Math.max(1,N-6),Math.min(6,N-1))}else{N=U.ri(R,5,10);kind="frame"}}
+    else{if(st===1){N=U.ri(R,5,10);kind="pair";split=U.ri(R,Math.max(1,N-6),Math.min(6,N-1))}else{N=st===0?U.ri(R,5,10):U.ri(R,11,20);kind="frame"}}
+    const q=mk("quick","Quick look! How many dots?",'<span class="flash">'+U.dotpic(N,kind,R,split)+'<b class="fq">?</b></span> How many?',nums(N,NO,1,Math.max(6,N+3),A<0?2:3,A<0&&st<2?2:1),
+      v=>({key:v,html:nd(v),say:String(v)}),"Look again! Don't count, just look.");q.flash=true;q.yes=N+" dots!";return q},
+  // Hidden partner (number bonds): some of the train is in the tunnel. Part + part = whole.
+  tunnel(st){let N,eq=false;
+    if(A<0)N=U.ri(R,3,[3,4,5,5][st]);else if(A===0)N=U.ri(R,[5,5,6,7][st],[5,7,9,10][st]);else if(A===1){N=U.ri(R,6,st<2?10:20);eq=st>=2}else{N=10*U.ri(R,3,10);eq=true}
+    const h=A>=2?10*U.ri(R,1,N/10-1):U.ri(R,1,N-1),vis=N-h,step=A>=2?10:1;
+    const list=[h];for(const x of [vis,N,h+step,h-step,h+2*step])if(list.length<NO&&x>0&&!list.includes(x))list.push(x);
+    const cars=Array.from({length:Math.min(vis,10)},(_,k)=>U.car(Object.values(COLS)[k%7],"")).join("");
+    const ask=eq?"<b>? + "+vis+" = "+N+"</b>":'The train has <b>'+N+'</b> cars <span class="tun"><i class="hole"></i>'+cars+"</span> How many in the tunnel?";
+    const q=mk("tunnel",eq?"What number plus "+vis+" makes "+N+"?":"The train has "+N+" cars. You can see "+vis+". How many cars are in the tunnel?",ask,list,
+      v=>({key:v,html:nd(v),say:String(v)}),eq?"Start at "+vis+" and count up to "+N+".":N+" cars in all. You can see "+vis+". Count up from "+vis+" to "+N+".");
+    q.yes=vis+" and "+h+" make "+N+"!";return q},
+  // Counting on: the car shows how many are already on; more get on (or off).
+  counton(st){let a,b,back=false;
+    if(A<=0){a=U.ri(R,2,[5,6,8,9][st]);b=U.ri(R,1,st?3:2);back=st===3&&R()<.5&&a>b+1}
+    else if(A===1){a=U.ri(R,8,19);b=U.ri(R,1,4);back=st>=2&&R()<.5}else{a=10*U.ri(R,2,7)+U.ri(R,0,9);b=10*U.ri(R,1,3);back=st>=2&&R()<.5}
+    const ans=back?a-b:a+b,ppl=b<=4?" "+"🧑".repeat(b):" <b>"+b+"</b> 🧑";
+    const steps=b<=4?Array.from({length:b},(_,k)=>back?a-k-1:a+k+1).join(", "):String(ans);
+    const q=mk("counton",a+" people are on the train. "+b+" more get "+(back?"off":"on")+". How many now?",
+      '<span class="cars">'+U.car("#e2412e",a)+"</span>"+(back?" 👋":" ➕")+ppl+(back?" get off":" get on")+" <b>= ?</b>",slips(ans,NO,0,A>=2),v=>({key:v,html:nd(v),say:String(v)}),
+      "Start at "+a+" and count "+(back?"back ":"on ")+b+".");q.yes=a+"… "+steps+"! "+ans+"!";return q},
+  // Rhyme: answer and question share the ending; wrong choices start out sharing nothing, later the same first sound.
+  rhyme(st){const fam=U.pick(R,RHYMES),[q0,ans]=U.sample(R,fam,2),others=U.shuffle(R,RHYMES.filter(f=>f!==fam).flat());
+    const ds=st>=2?others.filter(x=>x.w[0]===q0.w[0]).concat(others.filter(x=>x.w[0]!==q0.w[0])):others.filter(x=>x.w[0]!==q0.w[0]&&x.w[0]!==ans.w[0]);
+    const q=mk("rhyme","",'Which one rhymes with <span class="emo">'+q0.e+"</span> <b>"+q0.w+"</b>?",[ans].concat(ds.slice(0,NO-1)),x=>({key:x.w,html:pw(x.e,x.w),say:x.w}),
+      "Say it out loud: "+q0.w+". Which one sounds the same at the end?");
+    q.say="Which one rhymes with "+q0.w+"? "+q.opts.map(o=>o.say).join(", or ")+"?";q.yes=q0.w+", "+ans.w+". They rhyme!";return q},
+  // First sound: pre-K matches pictures by sound only (no letters), starting with sounds you can stretch (mmm, sss, fff).
+  sound(st){const L=(A<0?[["m","s","f"],["m","s","f","l","n","r"],["m","s","f","l","n","r","b","d","p","t"],Object.keys(STARTS)]:[["m","s","f","l","n","r"],Object.keys(STARTS),Object.keys(STARTS),Object.keys(STARTS)])[st];
+    const t=U.pick(R,L),[q0,ans]=U.sample(R,STARTS[t],2),near={m:"n",n:"m",b:"p",p:"b",d:"t",t:"d",f:"s",s:"f"},letters=A===0&&st>=1;
+    const other=Object.keys(STARTS).filter(x=>x!==t&&(st>=2||near[t]!==x)),ds=U.sample(R,other,NO-1);
+    if(letters){const q=mk("sound",q0.w+". What letter does "+q0.w+" start with?",'<span class="emo">'+q0.e+"</span> <b>"+q0.w+"</b> starts with…",[t].concat(ds),
+        x=>({key:x,html:'<span class="ltr">'+x+"</span>",say:x}),"Say it slowly: "+q0.w+".");q.yes=q0.w+" starts with "+t+"!";return q}
+    const q=mk("sound","",'Which one starts like <span class="emo">'+q0.e+"</span> <b>"+q0.w+"</b>?",[ans].concat(ds.map(x=>U.pick(R,STARTS[x]))),x=>({key:x.w,html:pw(x.e,x.w),say:x.w}),
+      "Listen to the start: "+q0.w+".");q.say="Which one starts like "+q0.w+"? "+q.opts.map(o=>o.say).join(", or ")+"?";q.yes=q0.w+", "+ans.w+". They start the same!";return q},
+  // Syllables: clap the parts of the word. Early on the voice claps it out with you.
+  claps(st){const mx=A>=0&&st>=3?4:3,pool=CLAP.filter(c=>c.n<=mx),w=U.pick(R,pool),vs=nums(w.n,NO,1,mx,3,A<0&&st<1?2:1);
+    const q=mk("claps",(st<2?"Clap it out! "+w.parts+". ":"Clap it out: ")+w.w+". How many claps?",'<span class="emo">'+w.e+"</span> <b>"+w.w+"</b> How many claps? 👏",vs,
+      v=>({key:v,html:'<span class="clp">'+"👏".repeat(v)+"</span>",say:v===1?"one clap":v+" claps"}),"Clap with me: "+w.parts+".");
+    q.yes=w.parts+". "+(w.n===1?"One clap":w.n+" claps")+"!";return q},
+  // Size words, one at a time: long/short logs, tall/short towers, big/small animals. Later the logs don't line up.
+  size(st){const kind=U.pick(R,A<0&&st<1?["log","tower"]:["log","tower","animal"]),most=st<1||R()<.6,gap=st<2?2:1;let vs,g=0;
+    do vs=Array.from({length:NO},()=>U.ri(R,1,5));while(g++<300&&(new Set(vs).size<NO||vs.some((x,i)=>vs.some((y,j)=>i!==j&&Math.abs(x-y)<gap))));
+    if(new Set(vs).size<NO)vs=NO===2?[1,4]:[1,3,5];
+    const W={log:["longest","shortest","longer","shorter","log"],tower:["tallest","shortest","taller","shorter","tower"],animal:["biggest","smallest","bigger","smaller",""]}[kind];
+    const ans=most?Math.max(...vs):Math.min(...vs),em=U.pick(R,["🐻","🐘","🦒","🐶","🐢"]),nm={"🐻":"bear","🐘":"elephant","🦒":"giraffe","🐶":"dog","🐢":"turtle"}[em],thing=W[4]||nm;
+    const draw=v=>kind==="log"?'<span class="szl"><i style="width:'+(14+v*17)+"%;margin-left:"+(st>=3?U.ri(R,0,86-v*17):0)+'%"></i></span>':
+      kind==="tower"?'<span class="szt">'+"<i></i>".repeat(v)+"</span>":'<span class="sza" style="font-size:'+(.55+v*.24).toFixed(2)+'em">'+em+"</span>";
+    const w=most?W[0]:W[1];
+    const q=mk("size","Which "+thing+" is the "+w+"?","Which "+thing+" is the <b>"+w+"</b>?",[ans].concat(vs.filter(x=>x!==ans)),v=>({key:v,html:draw(v),say:v===ans?"the "+w+" "+thing:(v<ans?"a "+W[3]:"a "+W[2])+" "+thing}),
+      kind==="log"?"Look at where each log ends.":"Look for the "+w+" one.");q.yes="That's the "+w+" "+thing+"!";return q},
+  // Position words, in the order children learn them: on, under, in; then next to, behind, in front of; then between.
+  where(st){const WD=A<0?(st<2?["on","under"]:["on","under","in"]):A===0?(st<1?["on","under","in"]:["on","under","in","next to","behind","in front of"]):["on","under","in","next to","behind","in front of","between"];
+    const [pet,name]=U.pick(R,[["🐱","cat"],["🐶","dog"],["🐰","bunny"],["🐻","bear"],["🐸","frog"]]),t=U.pick(R,WD),obj=t==="in"?"box":t==="between"?"trees":"table";
+    const scene=w=>'<span class="lr-pos p-'+w.replace(/ /g,"-")+'">'+(w==="in"?'<i class="pet">'+pet+'</i><i class="box"></i>':w==="between"?'<i class="tree l">🌳</i><i class="pet">'+pet+'</i><i class="tree r">🌳</i>':'<i class="table"></i><i class="pet">'+pet+"</i>")+"</span>";
+    const q=mk("where","Find the "+name+" "+t+" the "+obj+".","The "+name+" is <b>"+t.toUpperCase()+"</b> the "+obj,[t].concat(U.sample(R,WD.filter(x=>x!==t),NO-1)),w=>({key:w,html:scene(w),say:w}),
+      "Look for the "+name+" "+t+" the "+obj+".");q.yes="The "+name+" is "+t+" the "+obj+"!";q.no=o=>"That "+name+" is "+o.say+" the "+(o.key==="in"?"box":o.key==="between"?"trees":"table")+". ";return q},
+  // Which one goes with these? (sorting by kind). Later: which one does NOT belong (K and up), and closer groups.
+  belongs(st){const odd=A>=0&&st>=2&&R()<.5,cat=U.pick(R,CATS),near=c=>NEAR.some(p=>p.includes(c[0])&&p.includes(cat[0]));
+    const others=CATS.filter(c=>c!==cat&&(st>=2||!near(c))),pick3=U.sample(R,cat[1],odd?NO:4);
+    if(odd){const o=U.pick(R,U.pick(R,others)[1]),list=[o].concat(pick3.slice(0,NO-1));
+      const q=mk("belongs","Which one does not belong?","Which one does <b>NOT</b> belong?",list,x=>({key:x,html:'<span class="big">'+x+"</span>",say:"that one"}),"Three of them are "+cat[0]+".");
+      q.yes="The others are all "+cat[0]+"!";q.no=()=>"That one is one of the "+cat[0]+". ";return q}
+    const list=[pick3[3]].concat(U.sample(R,others,NO-1).map(c=>U.pick(R,c[1])));
+    const q=mk("belongs",st<1?"These are all "+cat[0]+". Which one goes with them?":"Which one goes with these?",'<span class="big">'+pick3.slice(0,3).join(" ")+"</span> Which one goes with these?",list,
+      x=>({key:x,html:'<span class="big">'+x+"</span>",say:"that one"}),"These are all "+cat[0]+".");q.yes="They're all "+cat[0]+"!";q.no=()=>"That one is not one of the "+cat[0]+". ";return q},
+  // Missing number on a number track (pre-K and K): gap in the middle, then at the end, then at the start (hardest), then counting down.
+  track(st){let s,hole,back=false;
+    if(A<0){const top=[4,5,7,10][st];s=st<2?1:U.ri(R,1,top-3);hole=st<3?U.ri(R,1,2):3}
+    else{s=U.ri(R,1,7);hole=[U.ri(R,1,2),3,0,U.ri(R,1,2)][st];if(st===3){back=true;s=U.ri(R,5,10)}}
+    const seq=Array.from({length:4},(_,k)=>back?s-k:s+k),ans=seq[hole],vs=nums(ans,NO,1,Math.max(10,ans+3),3,A<0?2:1);
+    const q=mk("track",seq.map((v,k)=>k===hole?"hmm":v).join(", ")+". What number is missing?",'<span class="trk">'+seq.map((v,k)=>k===hole?'<i class="q">?</i>':"<i>"+(A<0?U.numdots(v):v)+"</i>").join("")+"</span>",vs,
+      v=>({key:v,html:nd(v),say:String(v)}),hole===0?"What comes just before "+seq[1]+"?":"Count "+(back?"down":"along")+": "+seq.slice(0,hole).join(", ")+"…");q.yes=seq.join(", ")+"!";return q},
+};
+const POOL=A<0?["num","num","count","count","quick","quick","tunnel","track","letter","letter","colour","shape","more","addpic","pattern","rhyme","sound","claps","size","where","belongs"]:
+  A===0?["num","count","quick","quick","tunnel","tunnel","counton","track","letter","sound","sound","rhyme","claps","shape","more","onemore","addpic","pattern","size","where","belongs"]:
+  A===1?["add","sub","missing","skip","bigger","firstletter","quick","tunnel","counton","rhyme"]:A===2?["add","sub","skip","oddeven","tens","bigger","tunnel","counton"]:["mul","div","add","sub","bigger","tunnel"];
 let lastKind="";const retry=[];
 function newQ(){const r=retry.findIndex(x=>x.due<=save.forks);
   if(r>=0){const q=retry.splice(r,1)[0].q;q.opts=U.shuffle(R,q.opts);q.again=true;return q}
-  let k;do k=U.pick(R,POOL);while(k===lastKind&&POOL.length>1);lastKind=k;
+  let k;do k=U.pick(R,POOL);while(k===lastKind&&POOL.length>1);if(window.__tripNext&&window.__tripNext.length)k=window.__tripNext.shift();lastKind=k;
   return KINDS[k](Math.max(0,Math.min(3,save.step[k]||0)))}
 // adaptive: about 4 of 5 right steps up, 2 misses in a row steps down
 function learnt(kind,ok){const h=(save.hist[kind]=save.hist[kind]||[]);h.push(ok?1:0);while(h.length>5)h.shift();
@@ -259,8 +416,8 @@ const hex=h=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16)),mixC=(a,b,t)=>{const x=
 let tx=0,v=0,camX=0,mode="start",T=0,wheelA=0;const CRUISE=165,ACC=110,DEC=150;
 const LEGS=[],STOPS=[],FORKS=[],RIVERS=[],TUNNELS=[],STATIONS=[];let sp=0,lastBiome="";
 function station(x,name){const st={type:"station",stop:x,name,x0:x-480,x1:x+90};STATIONS.push(st);return st}
-function newLeg(x0){let b;do b=U.pick(R,Object.keys(BIO));while(b===lastBiome);lastBiome=b;let x=x0+360;const n=U.ri(R,3,5);
-  for(let k=0;k<n;k++){
+function newLeg(x0){let b;do b=U.pick(R,Object.keys(BIO));while(b===lastBiome);lastBiome=b;let x=x0+360;const n=U.ri(R,3,5),spK=U.ri(R,1,n-1),wx=nextWeather();
+  for(let k=0;k<n;k++){if(k===spK)x=addSpecial(x,b);
     if((b==="mountains"&&R()<.75)||(b==="forest"&&R()<.4)){const t0=x+140,t1=t0+U.ri(R,300,460);TUNNELS.push({x0:t0,x1:t1,off:0,H:U.ri(R,20,80),trees:U.ri(R,0,3)});x=t1+260}
     else if((b==="lake"&&R()<.7)||(b==="prairie"&&R()<.35)||(b==="town"&&R()<.3)){const r0=x+170,w=U.ri(R,100,150);RIVERS.push({x0:r0,x1:r0+w,offs:[0]});x=r0+w+260}
     else x+=U.ri(R,380,600);
@@ -268,7 +425,7 @@ function newLeg(x0){let b;do b=U.pick(R,Object.keys(BIO));while(b===lastBiome);l
     if(R()<.4){const r0=f.xm+190+U.ri(R,0,110);RIVERS.push({x0:r0,x1:r0+U.ri(R,100,135),offs:f.offs})}
     else{const k2=U.ri(R,0,NO-1);TUNNELS.push({x0:f.xm+110,x1:f.xe-30,off:f.offs[k2],H:NO===3?0:U.ri(R,10,40),trees:NO===3?0:U.ri(R,0,2),fork:f})}
     FORKS.push(f);STOPS.push(f);x=f.xf}
-  const st=station(x+560,stName(save.stations+1+LEGS.length-legsDone));st.leg=true;STOPS.push(st);LEGS.push({x0,x1:st.stop+200,biome:b});return st}
+  const st=station(x+560,stName(save.stations+1+LEGS.length-legsDone));st.leg=true;STOPS.push(st);LEGS.push({x0,x1:st.stop+200,biome:b,wx});return st}
 let legsDone=0;
 const biomeAt=x=>{for(const L of LEGS)if(x>=L.x0&&x<L.x1)return L.biome;return LEGS.length?LEGS[LEGS.length-1].biome:"prairie"};
 const sm=t=>t<=0?0:t>=1?1:t*t*(3-2*t);
@@ -276,7 +433,7 @@ const shape=(f,x)=>x<=f.xs||x>=f.xf?0:x<f.xm?sm((x-f.xs)/(f.xm-f.xs)):x<=f.xe?1:
 function trackY(x){for(const f of FORKS)if(f.choice!=null&&x>f.xs&&x<f.xf)return BASE+f.offs[f.choice]*shape(f,x);return BASE}
 
 /* scenery layers: each spawns items ahead of the camera in its own (parallax) coordinates */
-const blocked=x=>STATIONS.some(st=>x>st.x0-30&&x<st.x1+30)||RIVERS.some(r=>x>r.x0-50&&x<r.x1+50);
+const blocked=x=>STATIONS.some(st=>x>st.x0-30&&x<st.x1+30)||SPECIALS.some(st=>x>st.x0-30&&x<st.x1+30)||RIVERS.some(r=>x>r.x0-50&&x<r.x1+50);
 const LAY=[
   {sp:.05,drift:5,items:[],next:-200,gen:genCloud},
   {sp:.13,items:[],next:-300,gen:genFar},
@@ -306,6 +463,10 @@ function leafy(x,y,h,col){ctx.fillStyle="#6b4a2b";ctx.fillRect(x-h*.06,y-h*.45,h
 function house(x,y,w,h,col,roof){ctx.fillStyle=col;ctx.fillRect(x,y-h,w,h);ctx.fillStyle=roof;ctx.beginPath();ctx.moveTo(x-w*.1,y-h);ctx.lineTo(x+w/2,y-h-w*.45);ctx.lineTo(x+w*1.1,y-h);ctx.fill();
   ctx.fillStyle="#fff6c9";ctx.fillRect(x+w*.15,y-h*.72,w*.22,h*.28);ctx.fillRect(x+w*.62,y-h*.72,w*.22,h*.28);ctx.fillStyle="#6b4a2b";ctx.fillRect(x+w*.4,y-h*.45,w*.2,h*.45)}
 function genMid(x,b){const y=()=>HOR+4;
+  // now and then another train goes by in the distance, the other way
+  if(b!=="lake"&&R()<.05){const n=U.ri(R,4,8),cs=Array.from({length:n},()=>U.pick(R,["#8b2f22","#2f5f8a","#3f6b3a","#6b4a2b","#5a5f66","#b8860b"])),t0=T;
+    return{w:n*16+40,gap:U.ri(R,500,800),d:x=>{const Y=y()-2,xx=x-(T-t0)*20;ctx.fillStyle="#2b2f36";ctx.fillRect(xx,Y-11,22,9);ctx.fillRect(xx+3,Y-17,4,6);ctx.fillRect(xx+14,Y-16,8,6);
+      cs.forEach((c,k)=>{ctx.fillStyle=c;ctx.fillRect(xx+25+k*16,Y-10,14,8)});ctx.fillStyle="rgba(240,240,240,.7)";for(let k=0;k<3;k++){ctx.beginPath();ctx.arc(xx+5+k*9,Y-21-k*4,3+k*1.5,0,7);ctx.fill()}}}}
   if(b==="prairie"){const r=R();if(r<.3)return{w:50,gap:U.ri(R,200,420),d:x=>{const Y=y();ctx.fillStyle="#b5402f";ctx.fillRect(x,Y-62,24,62);ctx.fillStyle="#8a2f22";ctx.beginPath();ctx.moveTo(x-3,Y-62);ctx.lineTo(x+12,Y-76);ctx.lineTo(x+27,Y-62);ctx.fill();ctx.fillStyle="#9aa3ad";ctx.fillRect(x+24,Y-30,18,30)}};
     if(r<.6)return{w:70,gap:U.ri(R,140,300),d:x=>{const Y=y();ctx.fillStyle="#d9a93c";for(let k=0;k<3;k++){ctx.beginPath();ctx.arc(x+k*22,Y-7,7,0,7);ctx.fill()}}};
     return{w:60,gap:U.ri(R,160,340),d:x=>{const Y=y();house(x,Y,34,20,"#c0392b","#7b241c")}}}
@@ -438,24 +599,27 @@ function toot(){puff(true);puff(true);if(TS.horn.play())return;if(TS.music.muted
   const t=AC.currentTime+.02,lp=AC.createBiquadFilter();lp.type="lowpass";lp.frequency.value=1400;const g=AC.createGain();lp.connect(g);g.connect(AC.destination);
   g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.12,t+.04);g.gain.setValueAtTime(.12,t+.5);g.gain.exponentialRampToValueAtTime(.001,t+.75);
   for(const f of [311,392,466]){const o=AC.createOscillator();o.type="sawtooth";o.frequency.value=f;o.connect(lp);o.start(t);o.stop(t+.8)}}catch(e){}}
-$("horn").onclick=()=>toot();
+$("horn").onclick=()=>hornTap();
 
 /* ---------- the Y: signs, asking, answering ---------- */
 let legMiss=0,legT0=Date.now();
 function setupFork(f){f.q=newQ();f.signs=f.q.opts.map((o,k)=>{const el=document.createElement("button");el.type="button";el.className="sign wait";el.innerHTML=o.html;
   el.setAttribute("aria-label",o.say);el.onclick=()=>tap(f,k);$("signs").appendChild(el);return{el,k}})}
 function askNow(f){const q=f.q;$("askT").innerHTML=q.ask;$("ask").hidden=false;f.signs.forEach(x=>x.el.classList.remove("wait"));
-  TS.say((save.forks===0&&!f.miss?"Tap a sign to choose a track. ":"")+q.say)}
-$("spk").onclick=()=>{const f=STOPS[sp];if(f&&f.q)TS.say(f.q.say)};
+  TS.say((save.forks===0&&!f.miss?"Tap a sign to choose a track. ":"")+q.say);if(q.flash)flash()}
+/* quick look: the dots show for about 2 seconds (a bit longer for pre-K), then hide; the speaker or a miss shows them again */
+let flashT=0;function flash(){const el=$("askT").querySelector(".flash");if(!el)return;el.classList.remove("hid");clearTimeout(flashT);flashT=setTimeout(()=>{if(el.isConnected)el.classList.add("hid")},A<0?2600:2000)}
+$("spk").onclick=()=>{const f=STOPS[sp];if(mode==="task"&&task&&task.say){TS.say(task.say);return}if(f&&f.q){TS.say(f.q.say);if(f.q.flash)flash()}};
 function tap(f,k){if(mode!=="ask"||STOPS[sp]!==f||f.choice!=null)return;const q=f.q,o=q.opts[k],sg=f.signs[k];
   if(o.key===q.ans){f.choice=k;TS.music.fx("good");sg.el.classList.remove("glow");sg.el.classList.add("yes");f.signs.forEach((x,j)=>{if(j!==k)x.el.classList.add("gone")});
-    TS.say(U.pick(R,["Yes!","Great!","You got it!","Right track!","All aboard!"])+" "+o.say[0].toUpperCase()+o.say.slice(1)+"!");
+    TS.say(U.pick(R,["Yes!","Great!","You got it!","Right track!","All aboard!"])+" "+(q.yes||o.say[0].toUpperCase()+o.say.slice(1)+"!"));
+    if(q.flash){clearTimeout(flashT);const el=$("askT").querySelector(".flash");if(el)el.classList.remove("hid")}
     learnt(q.kind,!f.miss);save.forks++;const got=maybeSticker(f,!f.miss);save.sinceStk=sinceStk;SV.save();sp++;mode="go";
     if(got)setTimeout(()=>TS.say("A sticker! A "+got[1]+" for your sticker book!"),1000);
     setTimeout(()=>{$("ask").hidden=true;toot();mode="run"},got?2300:900);return}
   f.miss++;legMiss++;TS.music.fx("bad");sg.el.classList.add("no");
   const right=f.signs[q.opts.findIndex(x=>x.key===q.ans)].el,left=f.signs.filter(x=>!x.el.classList.contains("no")).length;
-  TS.say("That's "+o.say+". "+(f.miss>=2||left===1?"This sign is the one. Tap it!":q.hint));
+  TS.say((q.no?q.no(o):"That's "+o.say+". ")+(f.miss>=2||left===1?"This sign is the one. Tap it!":q.hint));if(q.flash)flash();
   if(f.miss>=2||left===1)right.classList.add("glow");
   if(f.miss===1&&!q.again)retry.push({q,due:save.forks+2})}
 function placeSigns(){for(const f of FORKS){if(!f.signs.length)continue;const sx=(f.xm+46-camX)*s;
@@ -474,8 +638,8 @@ function bookN(){$("bookN").textContent=Object.keys(save.stk).length}
 function maybeSticker(f,firstTry){if(!firstTry){sinceStk=0;return null}sinceStk++;
   if(!(R()<.33||sinceStk>=3))return null;sinceStk=0;save.sinceStk=0;
   const fresh=STK.filter(x=>!save.stk[x[0]]),st=U.pick(R,fresh.length?fresh:STK);save.stk[st[0]]=(save.stk[st[0]]||0)+1;SV.save();
-  const k=f.choice,el=document.createElement("div");el.className="stk";el.textContent=st[0];
-  const sx=(f.xm+46-camX)*s,sy=(BASE+f.offs[k])*s-60*s;el.style.transform="translate("+sx+"px,"+sy+"px)";$("view").appendChild(el);TS.music.fx("win");
+  const el=document.createElement("div");el.className="stk";el.textContent=st[0];
+  const sx=f?(f.xm+46-camX)*s:W/2,sy=f?(BASE+f.offs[f.choice])*s-60*s:H*.3;el.style.transform="translate("+sx+"px,"+sy+"px)";$("view").appendChild(el);TS.music.fx("win");
   setTimeout(()=>{const b=$("book").getBoundingClientRect(),v=$("view").getBoundingClientRect();el.style.animation="none";
     el.style.transform="translate("+(b.left+b.width/2-v.left)+"px,"+(b.top+b.height/2-v.top)+"px) scale(.25)";el.style.opacity=".2"},1300);
   setTimeout(()=>{el.remove();bookN();$("book").classList.remove("bump");void $("book").offsetWidth;$("book").classList.add("bump")},2150);
@@ -486,6 +650,100 @@ function openBook(){paused=true;const have=STK.filter(x=>save.stk[x[0]]).length;
   $("bookov").hidden=false;TS.say(have?"You have "+have+" stickers!":"No stickers yet. Pick the right tracks to find some!")}
 $("book").onclick=openBook;$("bookX").onclick=()=>{$("bookov").hidden=true;paused=false};
 $("sbook").addEventListener("click",e=>{const i=e.target.closest("i");if(!i||i.classList.contains("no"))return;const x=STK.find(y=>i.textContent.startsWith(y[0]));if(x)TS.say(x[1])});
+
+/* ---------- stops between the Ys (one per leg, taking turns): a passenger stop, a broken bridge, animals on the track ----------
+   Passenger stop: "pick up 4" (counting out a set, research: the Producer step), seats laid out as a five- or ten-frame;
+   from K on, some are already aboard ("make it 10"). Broken bridge: put number planks in order (pre-K 1-3, 1-5, then by length).
+   Animals: toot the horn once for each animal (one-to-one counting), using the family's own whistle recording. */
+const SPECIALS=[];let task=null;
+function nextSpecial(){if(!save.spBag||!save.spBag.length)save.spBag=U.shuffle(R,["pickup","bridge","animal","pickup","bridge"]);return save.spBag.shift()}
+const WHO=["🧍","🧍‍♀️","🧑","👩","👨","👧","👦","👵","👴","🧒"];
+function addSpecial(x,biome){const kind=nextSpecial();
+  if(kind==="bridge"){const r0=x+320,w=130,r={x0:r0,x1:r0+w,offs:[0],broken:true},st={type:"bridge",stop:r0-40,river:r,x0:r0-60,x1:r0+w+60};RIVERS.push(r);STOPS.push(st);SPECIALS.push(st);return r0+w+320}
+  if(kind==="pickup"){const sx=x+420,st={type:"pickup",stop:sx,x0:sx-400,x1:sx+80,ppl:Array.from({length:20},()=>U.pick(R,WHO)),left:U.ri(R,5,8)};STOPS.push(st);SPECIALS.push(st);return sx+320}
+  const AN={prairie:[["🐄","cow"],["🦬","bison"],["🐎","horse"]],forest:[["🫎","moose"],["🦌","deer"]],mountains:[["🐐","goat"],["🦌","deer"],["🐑","sheep"]],lake:[["🦆","duck"],["🦢","swan"]],town:[["🐕","dog"],["🐓","rooster"]]};
+  const [em,nm]=U.pick(R,AN[biome]||AN.prairie),sx=x+320,st={type:"animal",stop:sx,em,nm,n:U.ri(R,1,A<0?3:A===0?5:6),x0:sx,x1:sx+420,gone:0,leaving:[]};STOPS.push(st);SPECIALS.push(st);return sx+480}
+const PL={moose:"moose",deer:"deer",sheep:"sheep",bison:"bison"},plural=(n,w)=>n===1?w:(PL[w]||w+"s");
+function startTask(st){mode="task";task={st,miss:0};$("ask").hidden=true;if(st.type==="animal")animalTask(st);else if(st.type==="pickup")pickupTask(st);else bridgeTask(st)}
+function endTask(firstTry,kind){if(kind)learnt(kind,firstTry);const got=kind?maybeSticker(null,firstTry):null;save.sinceStk=sinceStk;SV.save();task=null;sp++;mode="go";
+  if(got)setTimeout(()=>TS.say("A sticker! A "+got[1]+" for your sticker book!"),900);
+  setTimeout(()=>{card("");$("ask").hidden=true;$("horn").classList.remove("glow");toot();mode="run"},got?2300:1300)}
+function animalTask(st){const n=st.n;task.say=n===1?"Oh no! A "+st.nm+" is on the track! Toot the horn to move it!":"Oh no! "+n+" "+plural(n,st.nm)+" are on the track! Toot the horn "+n+" times. One toot for each "+st.nm+"!";
+  $("askT").innerHTML=(n>1?"<b>"+n+"</b> ":"")+'<span class="emo">'+st.em+"</span> on the track! Toot the horn"+(n>1?" <b>"+n+"</b> times":"")+" 📯";$("ask").hidden=false;$("horn").classList.add("glow");TS.say(task.say)}
+function hornTap(){toot();if(mode!=="task"||!task||task.st.type!=="animal")return;const st=task.st;if(st.gone>=st.n)return;
+  st.leaving.push({k:st.gone,t:T});st.gone++;TS.say(st.gone===st.n?(st.n>1?st.gone+"! ":"")+"Bye bye, "+plural(st.n,st.nm)+"!":String(st.gone)+"!");
+  if(st.gone===st.n){$("horn").classList.remove("glow");$("askT").innerHTML="All clear! 🎉";setTimeout(()=>endTask(true,null),1200)}}
+function pickupTask(st){const stp=save.step.pickup||0;let need,have=0;
+  if(A<0)need=U.ri(R,[1,2,3,4][stp],[3,5,6,8][stp]);
+  else if(A===0){if(stp<2)need=U.ri(R,stp?5:3,stp?10:7);else{have=U.ri(R,stp===2?5:2,8);need=10}}
+  else{need=stp<2?10:20;have=U.ri(R,stp<2?3:11,need-2)}
+  const size=need>10?20:A<0&&need<=5?5:10,wait=Math.min(size-have,need-have+U.ri(R,2,4));
+  Object.assign(task,{need,have,size,on:[],ppl:st.ppl.slice(0,wait),show:A<0&&stp===0});st.left=wait;
+  task.say=have?"There are "+have+" people on the train. Pick up more to make "+need+"!":"Pick up "+need+" passenger"+(need>1?"s":"")+"! Tap each one to get on the train.";
+  card("<h2>"+(have?"Make it <b>"+need+"</b>! 🚃":"Pick up <b>"+need+"</b>!")+"</h2>"+(A<0?'<div class="pnd">'+U.numdots(need)+"</div>":"")+
+    '<div class="seats" id="seats"></div><p class="pc">On the train: <b id="pcN">'+have+'</b></p><div class="plat" id="plat"></div><button class="gobtn" id="pgo" type="button">All aboard! 🚂</button>');
+  const n=()=>task.have+task.on.length;
+  task.render=()=>{const s=$("seats");if(!s)return;s.innerHTML="";for(let i=0;i<task.size;i++){const c=document.createElement("i");if(i>=10&&i<15)c.className="f2";
+      if(i<task.have){c.textContent="🧑";c.classList.add("old")}else if(i<n()){const j=task.on[i-task.have];c.textContent=task.ppl[j];c.classList.add("in");c.onclick=()=>task.off(j)}
+      if(task.show&&i<task.need)c.classList.add("tgt");s.appendChild(c)}
+    $("pcN").textContent=n();[...$("plat").children].forEach((b,j)=>{b.hidden=task.on.includes(j)})};
+  task.board=j=>{if(task.on.includes(j)||n()>=task.size)return;task.on.push(j);TS.music.fx("tap");TS.say(String(n()));task.render()};
+  task.off=j=>{task.on=task.on.filter(x=>x!==j);TS.music.fx("tap");TS.say("Off! "+n()+".");task.render()};
+  task.go=()=>{const k=n();if(k===task.need){TS.music.fx("good");TS.say("Yes! "+k+" on the train! All aboard!");st.left=wait-task.on.length;$("pgo").disabled=true;endTask(task.miss===0,"pickup");return}
+    task.miss++;legMiss++;TS.music.fx("bad");if(task.miss>=2)task.show=true;
+    TS.say(k<task.need?"That's "+k+". We need "+task.need+". Pick up "+(task.need-k===1?"one more":"some more")+"!":"That's "+k+". That's too many! We need "+task.need+". Tap one to get off.");task.render()};
+  $("plat").innerHTML=task.ppl.map((e,j)=>'<button type="button" aria-label="passenger">'+e+"</button>").join("");[...$("plat").children].forEach((b,j)=>b.onclick=()=>task.board(j));
+  $("pgo").onclick=()=>task.go();task.render();TS.say(task.say)}
+function bridgeTask(st){const stp=save.step.bridge||0,run=(a,n,by)=>Array.from({length:n},(_,k)=>a+k*by);let vals,desc=false,size=false,seq=true;
+  if(A<0){if(stp<3)vals=run(1,[3,4,5][stp],1);else{size=true;vals=[1,2,3,4]}}
+  else if(A===0){if(stp===0)vals=run(1,5,1);else if(stp===1)vals=run(U.ri(R,2,6),5,1);else if(stp===2){vals=U.sample(R,run(1,10,1),4).sort((a,b)=>a-b);seq=false}else{desc=true;vals=run(U.ri(R,5,10),5,-1)}}
+  else if(A===1){if(stp===0)vals=run(10*U.ri(R,1,8)+U.ri(R,7,8),5,1);else if(stp===1){const by=U.pick(R,[2,5,10]);vals=run(by*U.ri(R,0,3),5,by)}else{vals=U.sample(R,run(10,90,1),4).sort((a,b)=>a-b);seq=false;if(stp===3){desc=true;vals.reverse()}}}
+  else{if(stp===0)vals=run(100*U.ri(R,1,5)+U.ri(R,1,99),4,100);else{const[d1,d2]=U.sample(R,run(1,9,1),2);vals=[...new Set([d1*100+d2*10,d1*100+d2,d2*100+d1*10,d2*100+d1])].sort((a,b)=>a-b);seq=false;if(stp===3){desc=true;vals.reverse()}}}
+  const how=size?"Shortest plank first!":desc?"Biggest number first!":"Smallest number first!";Object.assign(task,{vals,next:0,size,desc,seq});
+  task.say="Oh no! The bridge is broken! Put the planks in order. "+how;
+  card('<h2>Fix the bridge! 🌉</h2><p>'+how+'</p><div class="bslots" id="bslots">'+vals.map(()=>"<i></i>").join("")+'</div><div class="bplanks" id="bpl"></div>');
+  const ph=v=>size?'<span class="plk" style="width:'+(26+v*24)+'px"></span>':A<0?U.numdots(v):String(v);
+  $("bpl").innerHTML=U.mix(R,vals).map(v=>'<button type="button" data-v="'+v+'">'+ph(v)+"</button>").join("");
+  task.place=v=>{const want=task.vals[task.next],b=$("bpl").querySelector('[data-v="'+v+'"]');if(!b)return;
+    if(v===want){const slot=$("bslots").children[task.next];slot.innerHTML=ph(v);slot.classList.add("on");b.remove();task.next++;TS.music.fx("tap");
+      if(task.next<task.vals.length){TS.say(size?(task.next===1?"The shortest!":"Next!"):String(v));return}
+      st.river.broken=false;TS.music.fx("win");confetti();TS.say((size?"":task.vals.join(", ")+"! ")+"You fixed the bridge! Let's go!");endTask(task.miss===0,"bridge");return}
+    task.miss++;legMiss++;TS.music.fx("bad");b.classList.remove("no");void b.offsetWidth;b.classList.add("no");
+    const prev=task.vals[task.next-1];
+    TS.say(size?"That one is too long. Find the shortest plank that's left.":"That's "+v+". "+(task.next&&task.seq?(task.desc?"Count down. What comes after "+prev+"?":"What comes after "+prev+"?"):(task.desc?"Find the biggest number that's left.":"Find the smallest number that's left.")));
+    if(task.miss>=2){const g=$("bpl").querySelector('[data-v="'+want+'"]');if(g)g.classList.add("glow")}};
+  [...$("bpl").children].forEach(b=>b.onclick=()=>task.place(+b.dataset.v));TS.say(task.say)}
+function drawSpecial(st,front){const x=st.stop-camX;if(x<-600||x>vw+700)return;
+  if(st.type==="pickup"){if(!front){ctx.fillStyle="#5d6670";ctx.fillRect(x+36,BASE-96,5,88);emo("🚏",x+38,BASE-84,40);return}
+    ctx.fillStyle="#a9afb6";ctx.fillRect(x-380,BASE+16,440,24);ctx.fillStyle="#d4d8dc";ctx.fillRect(x-380,BASE+14,440,6);ctx.fillStyle="#f2c230";ctx.fillRect(x-380,BASE+19,440,2);
+    for(let i=0;i<st.left;i++)emo(st.ppl[i],x-350+i*34+(i%2)*6,BASE+44,30)}
+  else if(st.type==="animal"&&front){for(let k=0;k<st.n;k++){const lv=st.leaving.find(l=>l.k===k),u=lv?Math.min(1,(T-lv.t)/1.2):0;if(u>=1)continue;
+      ctx.globalAlpha=1-u;emo(st.em,x+150+k*46+u*60,BASE+12+u*150-(k%2)*10,52);ctx.globalAlpha=1}}}
+function drawGaps(){for(const r of RIVERS){if(!r.broken||r.x1<camX-200||r.x0>camX+vw+200)continue;const w=r.x1-r.x0,a=r.x0+w*.28-camX,b=r.x1-w*.28-camX;
+  ctx.fillStyle="#4aa3df";ctx.fillRect(a,BASE-36,b-a,70);ctx.fillStyle="#7a5232";ctx.save();ctx.translate(a,BASE+8);ctx.rotate(.5);ctx.fillRect(-4,0,26,8);ctx.restore();
+  ctx.save();ctx.translate(b,BASE+8);ctx.rotate(-.5);ctx.fillRect(-22,0,26,8);ctx.restore();emo("⚠️",a-8,BASE-40,26)}}
+
+/* ---------- weather and time of day: each leg gets one (day, sunset, night, snow, rain; a rainbow after rain) ---------- */
+const WX={night:0,sunset:0,snow:0,rain:0,rainbow:0},STARS=Array.from({length:70},()=>[R(),R()*.9,R()*1.4+.6]),FLAKES=Array.from({length:110},()=>({x:R(),y:R(),r:R()*2.2+1,s:.5+R()*.8,p:R()*6}));
+let lastWx="day";function nextWeather(){if(!LEGS.length)return"day";if(lastWx==="rain")return lastWx="rainbow";
+  if(!save.wxBag||!save.wxBag.length)save.wxBag=U.shuffle(R,["day","sunset","night","snow","rain","day"]);return lastWx=save.wxBag.shift()}
+const weatherAt=x=>{for(const L of LEGS)if(x>=L.x0&&x<L.x1)return L.wx;return"day"};
+function stepWeather(dt){const w=weatherAt(camX+vw*.5);for(const k in WX)WX[k]+=((w===k?1:0)-WX[k])*Math.min(1,dt*.7);
+  for(const f of FLAKES){f.y+=f.s*dt*.12;f.x-=(v*.8+12)*dt/vw;if(f.y>1)f.y-=1;if(f.x<0)f.x+=1}}
+function skyTint(){const tint=(a,c1,c2)=>{if(a<.01)return;const g=ctx.createLinearGradient(0,0,0,HOR);g.addColorStop(0,c1);g.addColorStop(1,c2);ctx.globalAlpha=a;ctx.fillStyle=g;ctx.fillRect(0,0,vw,HOR+6);ctx.globalAlpha=1};
+  tint(WX.sunset*.9,"#ff8a50","#ffd27a");tint(WX.rain*.75,"#7d8a99","#b6c0cb");tint(WX.snow*.6,"#aebccb","#e6edf4");tint(WX.night,"#081430","#1f3866");
+  if(WX.night>.05){ctx.fillStyle="rgba(255,255,255,"+WX.night+")";for(const[sx,sy,r]of STARS){ctx.beginPath();ctx.arc(sx*vw,sy*HOR,r,0,7);ctx.fill()}}
+  const sx=vw-90,sy=Math.min(70,HOR*.45),day=Math.max(0,1-WX.night-WX.rain*.8-WX.snow*.6);
+  ctx.globalAlpha=day;ctx.fillStyle=WX.sunset>.3?"#ffb347":"#ffe680";ctx.beginPath();ctx.arc(sx,sy+WX.sunset*30,26,0,7);ctx.fill();ctx.globalAlpha=1;
+  if(WX.night>.05){ctx.globalAlpha=WX.night;ctx.fillStyle="#f4f1de";ctx.beginPath();ctx.arc(sx,sy,22,0,7);ctx.fill();ctx.fillStyle="#081430";ctx.beginPath();ctx.arc(sx+9,sy-5,19,0,7);ctx.fill();ctx.globalAlpha=1}
+  if(WX.rainbow>.05){ctx.globalAlpha=WX.rainbow*.75;["#e2412e","#f08a24","#f5c518","#43a047","#3b6fd9","#8f5bd6"].forEach((c,i)=>{ctx.strokeStyle=c;ctx.lineWidth=7;ctx.beginPath();ctx.arc(vw*.3,HOR+40,HOR*.85-i*7,Math.PI*1.05,Math.PI*1.95);ctx.stroke()});ctx.globalAlpha=1}}
+function groundTint(){if(WX.snow>.01){ctx.fillStyle="rgba(248,251,255,"+(.72*WX.snow)+")";ctx.fillRect(0,HOR+4,vw,vh-HOR)}}
+function sceneTint(){const o=(a,c)=>{if(a>.01){ctx.fillStyle=c.replace("A",a);ctx.fillRect(0,0,vw,vh)}};
+  o(.5*WX.night,"rgba(10,18,48,A)");o(.12*WX.sunset,"rgba(255,110,40,A)");o(.16*WX.rain,"rgba(40,50,70,A)");
+  if(WX.night>.05){const ex=tx-camX+4,ey=trackY(tx)-36;const g=ctx.createLinearGradient(ex,0,ex+300,0);g.addColorStop(0,"rgba(255,240,170,"+(.55*WX.night)+")");g.addColorStop(1,"rgba(255,240,170,0)");
+    ctx.fillStyle=g;ctx.beginPath();ctx.moveTo(ex,ey-4);ctx.lineTo(ex+300,ey-60);ctx.lineTo(ex+300,ey+60);ctx.lineTo(ex,ey+4);ctx.fill()}
+  if(WX.snow>.02){ctx.fillStyle="rgba(255,255,255,"+(.9*WX.snow)+")";for(const f of FLAKES){ctx.beginPath();ctx.arc(f.x*vw+Math.sin(T+f.p)*6,f.y*vh,f.r,0,7);ctx.fill()}}
+  if(WX.rain>.02){ctx.strokeStyle="rgba(200,215,235,"+(.55*WX.rain)+")";ctx.lineWidth=1.3;ctx.beginPath();for(const f of FLAKES){const x=f.x*vw,y=((f.y*3+T*1.6*f.s)%1)*vh;ctx.moveTo(x,y);ctx.lineTo(x-5,y+16)}ctx.stroke()}}
 
 /* ---------- stations and presents ---------- */
 function card(html){$("mid").innerHTML=html?'<div class="stcard">'+html+"</div>":""}
@@ -519,32 +777,32 @@ let last=0;
 function frame(t){const dt=Math.min(.05,(t-(last||t))/1000);last=t;T+=dt;
   const tgt=STOPS[sp];
   if(mode==="run"&&tgt&&!paused){const d=tgt.stop-tx,want=Math.min(CRUISE,Math.sqrt(Math.max(0,2*DEC*d))+4);v=v>want?want:Math.min(want,v+ACC*dt);
-    tx=Math.min(tgt.stop,tx+v*dt);wheelA+=v*dt/13;if(tgt.stop-tx<.5){tx=tgt.stop;v=0;if(tgt.type==="fork"){mode="ask";askNow(tgt)}else{sp++;atStation(tgt)}}}
+    tx=Math.min(tgt.stop,tx+v*dt);wheelA+=v*dt/13;if(tgt.stop-tx<.5){tx=tgt.stop;v=0;if(tgt.type==="fork"){mode="ask";askNow(tgt)}else if(tgt.type==="station"){sp++;atStation(tgt)}else startTask(tgt)}}
   camX=tx-vw*FRONT;
   if(tgt&&tgt.type==="fork"&&!tgt.q&&tgt.xs-camX<vw+500)setupFork(tgt);
   const nextSt=STOPS.slice(sp).find(x=>x.type==="station");if(nextSt&&!nextSt.made&&nextSt.stop-camX<vw+900){nextSt.made=true;newLeg(nextSt.stop)}
   // tidy up things far behind the end of the train
-  const back=camX-(save.cars.length+2)*(CAR+GAP)-1500;for(const L of [FORKS,RIVERS,TUNNELS,STATIONS])while(L.length>2&&(L[0].xf||L[0].x1)<back&&!L[0].signs?.length)L.shift();
+  const back=camX-(save.cars.length+2)*(CAR+GAP)-1500;for(const L of [FORKS,RIVERS,TUNNELS,STATIONS,SPECIALS])while(L.length>2&&(L[0].xf||L[0].x1)<back&&!L[0].signs?.length)L.shift();
   if(v>5&&R()<dt*(2+v/30))puff(false);else if(R()<dt*.8)puff(false);
   for(const p of puffs){p.x+=p.vx*dt;p.y+=p.vy*dt;p.r+=dt*14;p.a-=dt*.45}while(puffs.length&&puffs[0].a<=0)puffs.shift();
   for(const b of bits){b.x+=b.vx*dt;b.y+=b.vy*dt;b.vy+=600*dt;b.t+=dt}while(bits.length&&bits[0].t>2.5)bits.shift();
-  spawn();draw();placeSigns();requestAnimationFrame(frame)}
+  stepWeather(dt);spawn();draw();placeSigns();requestAnimationFrame(frame)}
 let curB="prairie",prevB="prairie",bt=1;
 function draw(){ctx.setTransform(dpr*s,0,0,dpr*s,0,0);
   const b=biomeAt(camX+vw*.5);if(b!==curB){prevB=curB;curB=b;bt=0}bt=Math.min(1,bt+.012);const p=BIO[prevB],q=BIO[curB],c=k=>mixC(p[k],q[k],bt);
   let g=ctx.createLinearGradient(0,0,0,HOR);g.addColorStop(0,c("sky"));g.addColorStop(1,c("sky2"));ctx.fillStyle=g;ctx.fillRect(0,0,vw,HOR+6);
-  ctx.fillStyle="#ffe680";ctx.beginPath();ctx.arc(vw-90,Math.min(70,HOR*.45),26,0,7);ctx.fill();ctx.fillStyle="rgba(255,230,128,.25)";ctx.beginPath();ctx.arc(vw-90,Math.min(70,HOR*.45),40,0,7);ctx.fill();
+  skyTint();
   const layer=L=>{const o=lcam(L);for(const it of L.items)if(it.d)it.d(it.x-o)};
   layer(LAY[0]);layer(LAY[1]);
-  g=ctx.createLinearGradient(0,HOR,0,vh);g.addColorStop(0,c("g1"));g.addColorStop(1,c("g2"));ctx.fillStyle=g;ctx.fillRect(0,HOR+4,vw,vh-HOR);
+  g=ctx.createLinearGradient(0,HOR,0,vh);g.addColorStop(0,c("g1"));g.addColorStop(1,c("g2"));ctx.fillStyle=g;ctx.fillRect(0,HOR+4,vw,vh-HOR);groundTint();
   layer(LAY[2]);for(const r of RIVERS)drawRiver(r);layer(LAY[3]);
   const P2=LAY[4],o=lcam(P2),ps=P2.items.filter(i=>i.pole);ctx.strokeStyle="rgba(40,40,40,.55)";ctx.lineWidth=1.2;
   for(let k=1;k<ps.length;k++){if(ps[k].x-ps[k-1].x>250)continue;for(const dy of [-60,-50]){const y=BASE-140+dy+4;ctx.beginPath();ctx.moveTo(ps[k-1].x-o,y);ctx.quadraticCurveTo((ps[k-1].x+ps[k].x)/2-o,y+12,ps[k].x-o,y);ctx.stroke()}}
   layer(P2);
-  for(const st of STATIONS)drawStationBack(st);for(const f of FORKS)drawSignal(f);for(const r of RIVERS)drawBridges(r);
-  drawTracks();for(const t of TUNNELS)tunnel(t);drawTrain();
+  for(const st of STATIONS)drawStationBack(st);for(const f of FORKS)drawSignal(f);for(const r of RIVERS)drawBridges(r);for(const st of SPECIALS)drawSpecial(st,false);
+  drawTracks();drawGaps();for(const t of TUNNELS)tunnel(t);drawTrain();
   for(const p of puffs){ctx.fillStyle="rgba(240,240,240,"+Math.max(0,p.a)+")";ctx.beginPath();ctx.arc(p.x-camX,p.y,p.r,0,7);ctx.fill()}
-  for(const st of STATIONS)drawStationFront(st);layer(LAY[5]);layer(LAY[6]);
+  for(const st of STATIONS)drawStationFront(st);for(const st of SPECIALS)drawSpecial(st,true);layer(LAY[5]);layer(LAY[6]);sceneTint();
   for(const b of bits){ctx.fillStyle=b.c;ctx.fillRect(b.x-b.r/2,b.y-b.r/2,b.r+3,b.r+6)}}
 
 /* ---------- start at the station the player last reached ---------- */
@@ -554,7 +812,10 @@ startCard();requestAnimationFrame(frame);
 TS.howto.first("trip","Train Trip",HOWTO);
 window.__trip={STK,openBook,stickerNext(){sinceStk=99},tunnels:()=>TUNNELS,gives,get station(){return STATIONS.find(x=>x.stop===tx)},get mode(){return mode},get fork(){const f=STOPS[sp];return f&&f.type==="fork"?f:null},tap,save,get tx(){return tx},
   /* tests: answer the waiting Y right (or wrong), skip ahead to the next stop */
-  right(){const f=STOPS[sp];if(f&&f.q)tap(f,f.q.opts.findIndex(o=>o.key===f.q.ans))},wrong(){const f=STOPS[sp];if(f&&f.q)tap(f,f.q.opts.findIndex(o=>o.key!==f.q.ans&&!f.signs[f.q.opts.indexOf(o)].el.classList.contains("no")))},
+  right(){const f=STOPS[sp];if(mode==="task"&&task){const t=task,st=t.st;if(st.type==="animal")for(let k=st.gone;k<st.n;k++)hornTap();
+      else if(st.type==="pickup"){for(let j=0;j<t.ppl.length&&t.have+t.on.length<t.need;j++)t.board(j);t.go()}else for(const v of t.vals.slice(t.next))t.place(v);return}
+    if(f&&f.q)tap(f,f.q.opts.findIndex(o=>o.key===f.q.ans))},get task(){return task},KINDS,POOL,get WX(){return WX},
+  newQ:k=>KINDS[k](Math.max(0,Math.min(3,save.step[k]||0))),wrong(){const f=STOPS[sp];if(f&&f.q)tap(f,f.q.opts.findIndex(o=>o.key!==f.q.ans&&!f.signs[f.q.opts.indexOf(o)].el.classList.contains("no")))},
   skip(){const f=STOPS[sp];if(f&&mode==="run")tx=f.stop-1}};
 })();
 </script>
