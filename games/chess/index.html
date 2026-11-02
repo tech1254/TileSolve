@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#161b21">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box;height:100%}body{margin:0}[hidden]{display:none!important}</style>
+<title>Smash Chess · Tile Solve</title>
+<meta name="apple-mobile-web-app-title" content="Tile Solve">
+<link rel="apple-touch-icon" href="../../icon-180.png">
+<link rel="icon" type="image/png" href="../../icon-512.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Barlow:wght@400;600;700&display=swap">
+<link rel="stylesheet" href="../../shared/ts.css?v=b9dce2af">
+<link rel="stylesheet" href="../../shared/game.css?v=b9dce2af">
+<style>
+.ch{position:relative;width:100%;flex:1;min-height:0;display:flex;flex-direction:column;align-items:center;gap:8px}
+.ch-board{flex:1;min-height:0;width:100%;display:flex;justify-content:center;align-items:center}
+.ch-cv{display:block;touch-action:none;user-select:none;-webkit-user-select:none}
+.ch-coach{width:100%;max-width:640px;display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--lane);border-radius:16px;padding:8px 10px;box-sizing:border-box;min-height:64px}
+.ch-coach .wz{font-size:34px;line-height:1;flex:none}
+.ch-coach p{margin:0;flex:1;font-size:16px;line-height:1.3}
+.ch-coach p b{color:var(--paint)}
+.ch-coach .btns2{display:flex;flex-direction:column;gap:6px;flex:none}
+.ch-coach button{background:var(--asphalt);border:1px solid var(--lane);color:var(--text);border-radius:10px;padding:7px 10px;font-weight:700;font-size:13px;cursor:pointer;white-space:nowrap}
+.ch-coach button:disabled{opacity:.35}
+.ch-ask{display:flex;gap:8px;margin-top:6px}
+.ch-ask button{flex:1;padding:9px 6px;font-size:14px}
+.ch-ask .go{background:var(--paint);color:var(--night);border-color:var(--paint)}
+.ch-promo{position:absolute;inset:0;display:grid;place-items:center;background:rgba(0,0,0,.45);z-index:5}
+.ch-promo .card2{background:var(--panel);border-radius:18px;padding:14px;display:grid;gap:10px;justify-items:center;border-top:3px solid var(--paint)}
+.ch-promo .row{display:flex;gap:8px}
+.ch-promo button{background:#e9d7b0;border:0;border-radius:12px;padding:4px;cursor:pointer}
+.ch-promo canvas{width:64px;height:64px;display:block}
+</style>
+</head>
+<body>
+<script src="../../shared/ts.js?v=b9dce2af"></script>
+<script src="../../shared/kit.js?v=b9dce2af"></script>
+<script>
+(()=>{
+/* Smash Chess: real chess where a captured piece is smashed to bits. A coach (🧙) teaches as you go:
+   levels 1-6 meet the pieces (smash the stars), then lessons on safe captures, check, checkmate and castling come between
+   matches against a bot that starts out very gentle (random moves, no queen) and grows into a careful 3-move thinker.
+   In matches the coach shows where a piece can go, warns before a move that loses a piece or allows checkmate,
+   points out threats and free pieces, and says what the bot did. Losing twice at a level makes the bot a bit gentler.
+   The pieces and artwork are original. */
+let K,G=null;const later=(fn,ms)=>{const me=G;return setTimeout(()=>{if(G===me)fn()},ms)};const R=Math.random,pick=a=>a[Math.floor(R()*a.length)];
+
+/* ======================= rules ======================= */
+// 64 squares, index r*8+f, r=0 is the top row (rank 8). White pieces are uppercase, black lowercase; "x" is a lesson star.
+const VAL={p:100,n:320,b:330,r:500,q:900,k:0,x:0},VALA={p:100,n:320,b:330,r:500,q:900,k:10000};
+const NAME={p:"pawn",n:"knight",b:"bishop",r:"rook",q:"queen",k:"king",x:"star"};
+const isW=p=>!!p&&p===p.toUpperCase(),side=p=>p?(isW(p)?"w":"b"):null,low=p=>p.toLowerCase(),other=c=>c==="w"?"b":"w";
+const sqName=i=>"abcdefgh"[i&7]+(8-(i>>3));
+const KN=[[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]],KG=[[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]],DI=[[-1,-1],[-1,1],[1,-1],[1,1]],OR=[[-1,0],[1,0],[0,-1],[0,1]];
+function fromFEN(fen){const [pl,turn,cs,ep]=fen.split(" "),b=Array(64).fill(null);let i=0;for(const ch of pl){if(ch==="/")continue;if(/\d/.test(ch))i+=+ch;else b[i++]=ch}
+  return{b,turn:turn||"w",castle:cs&&cs!=="-"?cs:"",ep:ep&&ep!=="-"?"abcdefgh".indexOf(ep[0])+(8-+ep[1])*8:-1,half:0}}
+const START="rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -";
+// every square of side `by` that attacks sq (pieces on sq itself don't matter, so this also finds defenders)
+function attackers(b,sq,by,first){const r=sq>>3,f=sq&7,out=[],hit=i=>{out.push(i);return first};
+  const P=by==="w"?"P":"p",pr=by==="w"?r+1:r-1;if(pr>=0&&pr<8){if(f>0&&b[pr*8+f-1]===P&&hit(pr*8+f-1))return out;if(f<7&&b[pr*8+f+1]===P&&hit(pr*8+f+1))return out}
+  const N=by==="w"?"N":"n",Kk=by==="w"?"K":"k";
+  for(const[dr,df]of KN){const rr=r+dr,ff=f+df;if(rr>=0&&rr<8&&ff>=0&&ff<8&&b[rr*8+ff]===N&&hit(rr*8+ff))return out}
+  for(const[dr,df]of KG){const rr=r+dr,ff=f+df;if(rr>=0&&rr<8&&ff>=0&&ff<8&&b[rr*8+ff]===Kk&&hit(rr*8+ff))return out}
+  for(const[dirs,a]of[[DI,"b"],[OR,"r"]])for(const[dr,df]of dirs){let rr=r+dr,ff=f+df;while(rr>=0&&rr<8&&ff>=0&&ff<8){const p=b[rr*8+ff];
+      if(p){if(side(p)===by&&(low(p)===a||low(p)==="q")&&hit(rr*8+ff))return out;break}rr+=dr;ff+=df}}
+  return out}
+const attacked=(b,sq,by)=>attackers(b,sq,by,true).length>0;
+const kingSq=(b,c)=>b.indexOf(c==="w"?"K":"k");
+function inCheck(s,c){c=c||s.turn;const k=kingSq(s.b,c);return k>=0&&attacked(s.b,k,other(c))}
+function pseudo(s,only){const b=s.b,me=s.turn,out=[];
+  for(let i=0;i<64;i++){const p=b[i];if(!p||side(p)!==me||(only!=null&&i!==only))continue;const t=low(p),r=i>>3,f=i&7;
+    const add=(to,o)=>out.push(Object.assign({from:i,to,p,cap:b[to]},o||{}));
+    if(t==="p"){const d=me==="w"?-1:1,start=me==="w"?6:1,last=me==="w"?0:7,r1=r+d;
+      const push=(to,o)=>{if((to>>3)===last)for(const pr of"qrbn")add(to,Object.assign({promo:me==="w"?pr.toUpperCase():pr},o));else add(to,o)};
+      if(r1>=0&&r1<8&&!b[r1*8+f]){push(r1*8+f);if(r===start&&!b[(r+2*d)*8+f])add((r+2*d)*8+f,{dbl:true})}
+      for(const df of[-1,1]){const ff=f+df;if(ff<0||ff>7||r1<0||r1>7)continue;const to=r1*8+ff;if(b[to]&&side(b[to])!==me)push(to);else if(to===s.ep)add(to,{ep:true,cap:me==="w"?"p":"P"})}}
+    else if(t==="n"||t==="k"){for(const[dr,df]of t==="n"?KN:KG){const rr=r+dr,ff=f+df;if(rr<0||rr>7||ff<0||ff>7)continue;const to=rr*8+ff;if(!b[to]||side(b[to])!==me)add(to)}
+      if(t==="k"&&s.castle){const opp=other(me),home=me==="w"?60:4,Rk=me==="w"?"R":"r";
+        if(i===home&&!attacked(b,i,opp)){
+          if(s.castle.includes(me==="w"?"K":"k")&&!b[i+1]&&!b[i+2]&&b[i+3]===Rk&&!attacked(b,i+1,opp)&&!attacked(b,i+2,opp))add(i+2,{castle:"k"});
+          if(s.castle.includes(me==="w"?"Q":"q")&&!b[i-1]&&!b[i-2]&&!b[i-3]&&b[i-4]===Rk&&!attacked(b,i-1,opp)&&!attacked(b,i-2,opp))add(i-2,{castle:"q"})}}}
+    else for(const[dr,df]of t==="b"?DI:t==="r"?OR:DI.concat(OR)){let rr=r+dr,ff=f+df;
+      while(rr>=0&&rr<8&&ff>=0&&ff<8){const to=rr*8+ff;if(b[to]){if(side(b[to])!==me)add(to);break}add(to);rr+=dr;ff+=df}}}
+  return out}
+function make(s,m){const b=s.b.slice(),me=s.turn;b[m.to]=m.promo||m.p;b[m.from]=null;
+  if(m.ep)b[m.to+(me==="w"?8:-8)]=null;
+  if(m.castle==="k"){b[m.to-1]=b[m.to+1];b[m.to+1]=null}else if(m.castle==="q"){b[m.to+1]=b[m.to-2];b[m.to-2]=null}
+  let c=s.castle;if(low(m.p)==="k")c=c.replace(me==="w"?/[KQ]/g:/[kq]/g,"");
+  const RK={63:"K",56:"Q",7:"k",0:"q"};for(const q of[m.from,m.to])if(RK[q])c=c.replace(RK[q],"");
+  return{b,turn:other(me),castle:c,ep:m.dbl?(m.from+m.to)/2:-1,half:low(m.p)==="p"||m.cap?0:s.half+1}}
+// legal moves: a side with no king (lessons) has no check rule
+function legal(s,only){const me=s.turn,ps=pseudo(s,only);if(kingSq(s.b,me)<0)return ps;
+  return ps.filter(m=>{const n=make(s,m);return!attacked(n.b,kingSq(n.b,me),other(me))})}
+function insufficient(b){const ps=b.filter(p=>p&&low(p)!=="k");return ps.length===0||(ps.length===1&&"nb".includes(low(ps[0])))}
+const key=s=>s.b.map(p=>p||".").join("")+s.turn+s.castle+s.ep;
+function status(s){const ms=legal(s);if(!ms.length)return inCheck(s)?"mate":"stalemate";if(s.half>=100)return"fifty";if(insufficient(s.b))return"material";return null}
+const isMate=s=>inCheck(s)&&!legal(s).length;
+
+/* ======================= the bot ======================= */
+// piece-square tables (white's view, top row = rank 8): pieces like the centre, pawns like to advance, the king likes to hide
+const PST={p:[0,0,0,0,0,0,0,0,50,50,50,50,50,50,50,50,10,10,20,30,30,20,10,10,5,5,10,25,25,10,5,5,0,0,0,20,20,0,0,0,5,-5,-10,0,0,-10,-5,5,5,10,10,-20,-20,10,10,5,0,0,0,0,0,0,0,0],
+  n:[-50,-40,-30,-30,-30,-30,-40,-50,-40,-20,0,0,0,0,-20,-40,-30,0,10,15,15,10,0,-30,-30,5,15,20,20,15,5,-30,-30,0,15,20,20,15,0,-30,-30,5,10,15,15,10,5,-30,-40,-20,0,5,5,0,-20,-40,-50,-40,-30,-30,-30,-30,-40,-50],
+  b:[-20,-10,-10,-10,-10,-10,-10,-20,-10,0,0,0,0,0,0,-10,-10,0,5,10,10,5,0,-10,-10,5,5,10,10,5,5,-10,-10,0,10,10,10,10,0,-10,-10,10,10,10,10,10,10,-10,-10,5,0,0,0,0,5,-10,-20,-10,-10,-10,-10,-10,-10,-20],
+  r:[0,0,0,0,0,0,0,0,5,10,10,10,10,10,10,5,-5,0,0,0,0,0,0,-5,-5,0,0,0,0,0,0,-5,-5,0,0,0,0,0,0,-5,-5,0,0,0,0,0,0,-5,-5,0,0,0,0,0,0,-5,0,0,0,5,5,0,0,0],
+  q:[-20,-10,-10,-5,-5,-10,-10,-20,-10,0,0,0,0,0,0,-10,-10,0,5,5,5,5,0,-10,-5,0,5,5,5,5,0,-5,0,0,5,5,5,5,0,-5,-10,5,5,5,5,5,0,-10,-10,0,5,0,0,0,0,-10,-20,-10,-10,-5,-5,-10,-10,-20],
+  k:[-30,-40,-40,-50,-50,-40,-40,-30,-30,-40,-40,-50,-50,-40,-40,-30,-30,-40,-40,-50,-50,-40,-40,-30,-30,-40,-40,-50,-50,-40,-40,-30,-20,-30,-30,-40,-40,-30,-30,-20,-10,-20,-20,-20,-20,-20,-20,-10,20,20,0,0,0,0,20,20,20,30,10,0,0,10,30,20]};
+function evalS(s,matOnly){let v=0;for(let i=0;i<64;i++){const p=s.b[i];if(!p||p==="x")continue;const t=low(p),w=isW(p),idx=w?i:(7-(i>>3))*8+(i&7);
+  v+=(w?1:-1)*(VAL[t]+(matOnly?0:PST[t][idx]))}return s.turn==="w"?v:-v}
+const mvv=m=>(m.cap?VAL[low(m.cap)]*10-VAL[low(m.p)]+10:0)+(m.promo?800:0);
+const order=ms=>ms.sort((a,b)=>mvv(b)-mvv(a));
+function qs(s,a,bt,d,mo){const st=evalS(s,mo);if(st>=bt)return bt;if(a<st)a=st;if(d<=0)return a;
+  for(const m of order(legal(s).filter(m=>m.cap||m.promo))){const v=-qs(make(s,m),-bt,-a,d-1,mo);if(v>=bt)return bt;if(v>a)a=v}return a}
+function nega(s,d,a,bt,ply,q){const ms=legal(s);if(!ms.length)return inCheck(s)?-100000+ply:0;if(d<=0)return q?qs(s,a,bt,4):evalS(s);
+  for(const m of order(ms)){const v=-nega(make(s,m),d-1,-bt,-a,ply+1,q);if(v>=bt)return bt;if(v>a)a=v}return a}
+// bot strength steps, gentlest first: random (but likes to grab pieces), then looking 1, 2 and 3 moves ahead with less and less wobble
+const SKILL=[{d:0},{d:1,noise:150,rnd:.3},{d:2,noise:80,rnd:.15},{d:2,noise:40,rnd:.08,q:1},{d:3,noise:25,rnd:.04,q:1},{d:3,noise:10,rnd:.02,q:1}];
+const BOTS=[["Wobble Bot","🤖"],["Bumble Bot","🐝"],["Tinker Bot","🔧"],["Clever Bot","🦊"],["Crafty Bot","🐙"],["Master Bot","🐉"]];
+function mateIn1(s){for(const m of legal(s))if(isMate(make(s,m)))return m;return null}
+function botMove(s,k){const ms=legal(s),S=SKILL[k];if(!ms.length)return null;
+  if(k===0){const caps=ms.filter(m=>m.cap);return caps.length&&R()<.5?pick(caps):pick(ms)}
+  if(k>=2){const m=mateIn1(s);if(m)return m}
+  if(R()<S.rnd)return pick(ms);
+  // a moves can only win if it's within 2×noise of the best so far, so search the rest with a narrower window
+  let best=null,bv=-1e9;for(const m of order(ms)){const v=-nega(make(s,m),S.d-1,-1e9,-(bv-2*S.noise),1,S.q)+(R()*2-1)*S.noise;if(v>bv){bv=v;best=m}}return best}
+function bestMove(s,d){const mm=mateIn1(s);if(mm)return mm;let best=null,bv=-1e9;for(const m of order(legal(s))){const v=-nega(make(s,m),(d||3)-1,-1e9,-bv,1,1);if(v>bv){bv=v;best=m}}return best}
+// pieces of side c the other side can win: attacked and not defended, or attacked by something cheaper
+function hanging(s,c){const b=s.b,opp=other(c),out=[];
+  for(let i=0;i<64;i++){const p=b[i];if(!p||side(p)!==c||"kx".includes(low(p)))continue;const atk=attackers(b,i,opp);if(!atk.length)continue;
+    atk.sort((x,y)=>VALA[low(b[x])]-VALA[low(b[y])]);const by=atk[0],def=attackers(b,i,c).length;
+    if((!def&&low(b[by])!=="k")||(!def&&low(b[by])==="k")||VALA[low(b[by])]<VAL[low(p)])out.push({sq:i,by,v:VAL[low(p)]})}return out}
+
+/* ======================= the plan: lessons between matches ======================= */
+const PLAN=["rook","bishop","queen","knight","king","pawn","M","capture","M","check","M","mateQ","M","castle","M","mateR","M","capture","M","mateMix"];
+for(let n=21;n<=40;n++)PLAN.push(n%4===0?["capture","mateMix","check","mateR","mateMix"][(n/4-6)%5]:"M");
+const matchNo=n=>PLAN.slice(0,n).filter(x=>x==="M").length;
+const skillFor=m=>m<=2?0:m<=5?1:m<=8?2:m<=12?3:m<=16?4:5;
+const LABEL={rook:"♜ Rook",bishop:"♝ Bishop",queen:"♛ Queen",knight:"♞ Knight",king:"♚ King",pawn:"♟ Pawn",capture:"Smash",check:"Check",mateQ:"Mate",mateR:"Mate",mateMix:"Mate",castle:"Castle"};
+const MOVE_TXT={r:"A rook moves in straight lines: up, down, left or right, as far as it likes.",b:"A bishop moves diagonally, as far as it likes. It always stays on its own colour.",
+  q:"The queen is the strongest piece: she moves like a rook AND a bishop, any distance.",n:"A knight jumps in an L: two squares one way, then one square to the side. It can jump over pieces!",
+  k:"The king moves one square in any direction.",p:"A pawn moves straight forward one square (two on its first move), but it captures one square diagonally forward."};
+
+/* ======================= drawing ======================= */
+let cv,ctx,S0=60,TR=30,dpr=1,raf=0;
+function layout(){const box=cv.parentElement.getBoundingClientRect();if(!box.width)return;const s=Math.floor(Math.min(box.width/8,(box.height-4)/(8+1.1)));S0=Math.max(30,s);TR=Math.round(S0*.55);
+  dpr=Math.min(2,devicePixelRatio||1);const w=S0*8,h=S0*8+TR*2;cv.style.width=w+"px";cv.style.height=h+"px";cv.width=Math.round(w*dpr);cv.height=Math.round(h*dpr)}
+const sqXY=i=>[(i&7)*S0,TR+(i>>3)*S0];
+// pieces: original stone statues drawn in a 1x1 box
+function shapePath(c,t){c.beginPath();
+  const base=()=>{c.moveTo(.2,.9);c.lineTo(.8,.9);c.quadraticCurveTo(.82,.8,.72,.78);c.lineTo(.28,.78);c.quadraticCurveTo(.18,.8,.2,.9)};
+  base();
+  if(t==="p"){c.moveTo(.33,.78);c.quadraticCurveTo(.4,.6,.42,.5);c.lineTo(.58,.5);c.quadraticCurveTo(.6,.6,.67,.78);c.moveTo(.63,.36);c.arc(.5,.36,.14,0,7)}
+  else if(t==="r"){c.moveTo(.32,.78);c.lineTo(.35,.42);c.lineTo(.3,.4);c.lineTo(.3,.2);c.lineTo(.39,.2);c.lineTo(.39,.28);c.lineTo(.46,.28);c.lineTo(.46,.2);c.lineTo(.54,.2);c.lineTo(.54,.28);c.lineTo(.61,.28);c.lineTo(.61,.2);c.lineTo(.7,.2);c.lineTo(.7,.4);c.lineTo(.65,.42);c.lineTo(.68,.78)}
+  else if(t==="b"){c.moveTo(.34,.78);c.quadraticCurveTo(.42,.62,.44,.52);c.lineTo(.56,.52);c.quadraticCurveTo(.58,.62,.66,.78);c.moveTo(.5,.15);c.quadraticCurveTo(.72,.34,.6,.52);c.lineTo(.4,.52);c.quadraticCurveTo(.28,.34,.5,.15);c.moveTo(.55,.12);c.arc(.5,.12,.05,0,7)}
+  else if(t==="q"){c.moveTo(.32,.78);c.quadraticCurveTo(.42,.6,.4,.48);c.lineTo(.6,.48);c.quadraticCurveTo(.58,.6,.68,.78);c.moveTo(.3,.48);c.lineTo(.26,.24);c.lineTo(.38,.38);c.lineTo(.42,.18);c.lineTo(.5,.36);c.lineTo(.58,.18);c.lineTo(.62,.38);c.lineTo(.74,.24);c.lineTo(.7,.48);c.closePath();
+    for(const[x,y]of[[.26,.22],[.42,.16],[.58,.16],[.74,.22]]){c.moveTo(x+.04,y);c.arc(x,y,.04,0,7)}}
+  else if(t==="k"){c.moveTo(.32,.78);c.quadraticCurveTo(.42,.6,.4,.46);c.lineTo(.6,.46);c.quadraticCurveTo(.58,.6,.68,.78);c.moveTo(.31,.46);c.quadraticCurveTo(.28,.24,.5,.26);c.quadraticCurveTo(.72,.24,.69,.46);c.closePath();
+    c.rect(.465,.06,.07,.22);c.rect(.41,.12,.18,.06)}
+  else if(t==="n"){c.moveTo(.3,.78);c.lineTo(.7,.78);c.lineTo(.68,.58);c.quadraticCurveTo(.7,.4,.64,.28);c.lineTo(.58,.17);c.lineTo(.54,.08);c.lineTo(.49,.17);c.quadraticCurveTo(.38,.2,.3,.32);c.lineTo(.22,.44);c.quadraticCurveTo(.22,.5,.3,.52);c.lineTo(.42,.47);c.quadraticCurveTo(.46,.56,.36,.66);c.closePath()}
+  else if(t==="x"){for(let k=0;k<10;k++){const a=(-90+k*36)*Math.PI/180,rr=k%2?.17:.38;k?c.lineTo(.5+rr*Math.cos(a),.52+rr*Math.sin(a)):c.moveTo(.5+rr*Math.cos(a),.52+rr*Math.sin(a))}c.closePath()}}
+const COL={w:["#fffaf0","#d6c7a2","#6b5a3a"],b:["#68707f","#1c1f26","#050608"],x:["#fff3a0","#f2b705","#a86d00"]};
+function drawPiece(c,p,x,y,s,o){o=o||{};const t=low(p),cs=p==="x"?COL.x:COL[side(p)];c.save();c.translate(x,y);c.scale(s,s);if(o.alpha!=null)c.globalAlpha=o.alpha;
+  if(!o.flat){c.fillStyle="rgba(0,0,0,.22)";c.beginPath();c.ellipse(.5,.9,.3,.05,0,0,7);c.fill()}
+  if(t==="x")c.translate(0,Math.sin(T*3+x)*.03);
+  const g=c.createLinearGradient(.2,0,.8,0);g.addColorStop(0,cs[0]);g.addColorStop(1,cs[1]);c.fillStyle=g;c.strokeStyle=cs[2];c.lineWidth=.03;c.lineJoin="round";
+  shapePath(c,t);c.fill("nonzero");c.stroke();
+  if(t==="n"){c.fillStyle=cs[2];c.beginPath();c.arc(.46,.27,.025,0,7);c.fill();c.strokeStyle=side(p)==="w"?"#a8977a":"#3a3f4a";c.lineWidth=.025;c.beginPath();c.moveTo(.6,.22);c.quadraticCurveTo(.66,.42,.64,.6);c.stroke()}
+  if(t==="b"){c.strokeStyle=cs[2];c.lineWidth=.03;c.beginPath();c.moveTo(.56,.27);c.lineTo(.47,.37);c.stroke()}
+  c.restore()}
+let T=0;const shards=[],dust=[];let shake=0,flash=null;
+function smash(i,p,dir){const[x,y]=sqXY(i),cs=p==="x"?COL.x:COL[side(p)];snd(p==="x"?"ding":"crunch");shake=p==="x"?.12:.35;flash={i,t:T};
+  for(let k=0;k<(p==="x"?12:30);k++){const a=R()*Math.PI*2,sp=(.6+R()*1.4)*S0*3;shards.push({x:x+S0*(.3+R()*.4),y:y+S0*(.25+R()*.6),vx:Math.cos(a)*sp+dir*S0*1.2,vy:Math.sin(a)*sp-S0*3*R()-S0,
+    r:R()*6,vr:(R()-.5)*14,s:S0*(p==="x"?.08+R()*.1:.12+R()*.22),c:pick(cs.slice(0,2)),line:cs[2],t:T,life:1+R()*.5,tri:[[R(),0],[1,R()],[R()*.6,1]]})}
+  if(p!=="x")for(let k=0;k<12;k++)dust.push({x:x+S0*.5+(R()-.5)*S0*.6,y:y+S0*(.5+R()*.4),r:S0*(.12+R()*.1),vx:(R()-.5)*S0*2,t:T})}
+function draw(){if(!G||!cv)return;const c=ctx,W=S0*8,H=S0*8+TR*2;c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0,W,H);
+  let sx=0,sy=0;if(shake>0){sx=(R()-.5)*shake*S0*.25;sy=(R()-.5)*shake*S0*.25}c.save();c.translate(sx,sy);
+  // trays: what each side has smashed
+  trays(c);
+  for(let i=0;i<64;i++){const[x,y]=sqXY(i),light=((i>>3)+(i&7))%2===0;c.fillStyle=light?"#ecdcb6":"#a87a52";c.fillRect(x,y,S0,S0)}
+  const hl=(i,col)=>{const[x,y]=sqXY(i);c.fillStyle=col;c.fillRect(x,y,S0,S0)};
+  if(G.last){hl(G.last.from,"rgba(242,194,48,.38)");hl(G.last.to,"rgba(242,194,48,.5)")}
+  if(G.sel!=null)hl(G.sel,"rgba(67,224,79,.45)");
+  for(const h of G.hl||[]){const[x,y]=sqXY(h.sq);c.strokeStyle=h.col||"#e2412e";c.lineWidth=Math.max(3,S0*.07);c.globalAlpha=.6+.4*Math.sin(T*6);c.strokeRect(x+3,y+3,S0-6,S0-6);c.globalAlpha=1}
+  const disp=G.anim?G.anim.before:G.s.b;
+  for(const c2 of["w","b"]){if(G.s.b.indexOf(c2==="w"?"K":"k")<0)continue;if(!G.anim&&inCheck(G.s,c2)){const[x,y]=sqXY(kingSq(G.s.b,c2)),gr=c.createRadialGradient(x+S0/2,y+S0/2,S0*.1,x+S0/2,y+S0/2,S0*.6);
+      gr.addColorStop(0,"rgba(255,40,30,.85)");gr.addColorStop(1,"rgba(255,40,30,0)");c.fillStyle=gr;c.fillRect(x,y,S0,S0)}}
+  // coordinates, small, for learning square names
+  c.font="700 "+Math.round(S0*.17)+"px Barlow,sans-serif";c.textBaseline="top";
+  for(let f=0;f<8;f++){c.fillStyle=f%2?"#a87a52":"#ecdcb6";c.textAlign="right";c.fillText("abcdefgh"[f],f*S0+S0-3,TR+8*S0-S0*.22)}
+  for(let r=0;r<8;r++){c.fillStyle=r%2?"#ecdcb6":"#a87a52";c.textAlign="left";c.fillText(String(8-r),3,TR+r*S0+2)}
+  // pieces
+  const A=G.anim,u=A?Math.min(1,(T-A.t0)/A.dur):1,hide=new Set(A?[A.m.from].concat(A.rook?[A.rook[0]]:[]):[]);
+  for(let i=0;i<64;i++){const p=disp[i];if(!p||hide.has(i))continue;if(A&&A.capSq===i&&A.hit)continue;const[x,y]=sqXY(i);drawPiece(c,p,x,y,S0)}
+  if(A){const e=u<.5?2*u*u:1-Math.pow(-2*u+2,2)/2,[x0,y0]=sqXY(A.m.from),[x1,y1]=sqXY(A.m.to),lift=low(A.m.p)==="n"?Math.sin(u*Math.PI)*S0*.6:A.m.cap?Math.sin(u*Math.PI)*S0*.25:0;
+    if(A.rook){const[a0,b0]=sqXY(A.rook[0]),[a1,b1]=sqXY(A.rook[1]);drawPiece(c,A.rook[2],a0+(a1-a0)*e,b0+(b1-b0)*e,S0)}
+    drawPiece(c,A.m.p,x0+(x1-x0)*e,y0+(y1-y0)*e-lift,S0*(1+(A.m.cap?Math.sin(u*Math.PI)*.12:0)))}
+  // legal move dots
+  for(const m of G.moves||[]){const[x,y]=sqXY(m.to);if(m.cap&&m.cap!=="x"||m.ep){c.strokeStyle="rgba(226,65,46,.85)";c.lineWidth=S0*.07;c.beginPath();c.arc(x+S0/2,y+S0/2,S0*.43,0,7);c.stroke()}
+    else{c.fillStyle="rgba(30,40,20,.35)";c.beginPath();c.arc(x+S0/2,y+S0/2,S0*.15,0,7);c.fill()}}
+  if(G.arrow)arrow(c,G.arrow[0],G.arrow[1],G.arrow[2]);
+  // smash: shards, dust, flash
+  if(flash&&T-flash.t<.25){const[x,y]=sqXY(flash.i);c.fillStyle="rgba(255,255,255,"+(1-(T-flash.t)/.25)*.8+")";c.beginPath();c.arc(x+S0/2,y+S0/2,S0*(.3+(T-flash.t)*3),0,7);c.fill()}
+  for(const d of dust){const a=(T-d.t)/.9;if(a>=1)continue;c.fillStyle="rgba(190,175,150,"+(.55*(1-a))+")";c.beginPath();c.arc(d.x+d.vx*a,d.y-a*S0*.3,d.r*(1+a*2.5),0,7);c.fill()}
+  for(const s of shards){const a=(T-s.t)/s.life;if(a>=1)continue;c.save();c.translate(s.x,s.y);c.rotate(s.r);c.globalAlpha=a>.7?(1-a)/.3:1;c.fillStyle=s.c;c.strokeStyle=s.line;c.lineWidth=1;
+    c.beginPath();s.tri.forEach(([px,py],k)=>{const X=(px-.5)*s.s,Y=(py-.5)*s.s;k?c.lineTo(X,Y):c.moveTo(X,Y)});c.closePath();c.fill();c.stroke();c.restore()}
+  c.restore()}
+function arrow(c,from,to,col){const[x0,y0]=sqXY(from),[x1,y1]=sqXY(to),ax=x0+S0/2,ay=y0+S0/2,bx=x1+S0/2,by=y1+S0/2,a=Math.atan2(by-ay,bx-ax),L=Math.hypot(bx-ax,by-ay)-S0*.25;
+  c.save();c.translate(ax,ay);c.rotate(a);c.globalAlpha=.8;c.fillStyle=col||"#43a047";c.fillRect(0,-S0*.08,L-S0*.25,S0*.16);c.beginPath();c.moveTo(L,0);c.lineTo(L-S0*.35,-S0*.25);c.lineTo(L-S0*.35,S0*.25);c.fill();c.restore()}
+function trays(c){if(G.mode!=="match"&&G.mode!=="puzzle")return;const W=S0*8;c.fillStyle="#2b3239";c.fillRect(0,0,W,TR);c.fillRect(0,TR+8*S0,W,TR);
+  const row=(list,y)=>{const s=TR*.95;list.forEach((p,k)=>drawPiece(c,p,6+k*s*.62,y,s,{flat:1}))};
+  const sum=l=>l.reduce((a,p)=>a+VAL[low(p)],0),d=(sum(G.caps.w)-sum(G.caps.b))/100|0;
+  row(G.caps.b,0);row(G.caps.w,TR+8*S0);c.font="700 "+Math.round(TR*.5)+"px Barlow,sans-serif";c.textAlign="right";c.textBaseline="middle";c.fillStyle="#f2c230";
+  if(d>0)c.fillText("+"+d,W-8,TR+8*S0+TR/2);if(d<0)c.fillText("+"+(-d),W-8,TR/2);
+  if(G.bot){c.textAlign="right";c.fillStyle="#cfd6de";if(!(d<0))c.fillText(G.bot[1]+" "+G.bot[0],W-8,TR/2)}}
+
+/* ======================= sounds ======================= */
+let AC=null;
+function snd(k){if(TS.music.muted)return;try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();if(AC.state==="suspended")AC.resume();const t=AC.currentTime+.01;
+  const noise=(dur,fq,q,vol)=>{const n=Math.floor(AC.sampleRate*dur),b=AC.createBuffer(1,n,AC.sampleRate),d=b.getChannelData(0);for(let i=0;i<n;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/n,2);
+    const s=AC.createBufferSource();s.buffer=b;const bp=AC.createBiquadFilter();bp.type="bandpass";bp.frequency.value=fq;bp.Q.value=q;const g=AC.createGain();g.gain.value=vol;s.connect(bp);bp.connect(g);g.connect(AC.destination);s.start(t)};
+  const tone=(f0,f1,dur,vol,type)=>{const o=AC.createOscillator(),g=AC.createGain();o.type=type||"sine";o.frequency.setValueAtTime(f0,t);o.frequency.exponentialRampToValueAtTime(f1,t+dur);
+    g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(.001,t+dur);o.connect(g);g.connect(AC.destination);o.start(t);o.stop(t+dur+.02)};
+  if(k==="tok"){noise(.06,1800,3,.5);tone(520,300,.06,.15,"triangle")}
+  else if(k==="crunch"){noise(.5,500,.7,.9);noise(.25,2400,1.2,.5);tone(140,38,.45,.5)}
+  else if(k==="ding")[1320,1760].forEach((f,i)=>later(()=>tone(f,f,.3,.12,"triangle"),i*70));
+  else if(k==="check")tone(880,880,.18,.12,"square")}catch(e){}}
+
+/* ======================= the coach ======================= */
+let sayEl,askEl;
+function coach(html,speak,ask){sayEl.innerHTML=html;askEl.innerHTML="";if(speak!==false)TS.say(html.replace(/<[^>]+>/g,""));
+  if(ask){askEl.innerHTML=ask.map((b,k)=>'<button type="button" class="'+(k===ask.length-1?"go":"")+'">'+b[0]+"</button>").join("");[...askEl.children].forEach((el,k)=>el.onclick=()=>{askEl.innerHTML="";ask[k][1]()})}}
+const cap1=s=>s[0].toUpperCase()+s.slice(1);
+const nm=p=>NAME[low(p)];
+
+/* ======================= a level ======================= */
+function start(n){cancelAnimationFrame(raf);
+  K.stage.innerHTML='<div class="ch"><div class="ch-board"><canvas class="ch-cv" id="chCv"></canvas></div><div class="ch-coach"><span class="wz">🧙</span><div style="flex:1"><p id="chSay"></p><div class="ch-ask" id="chAsk"></div></div>'+
+    '<div class="btns2"><button type="button" id="chUndo">↶ Take back</button><button type="button" id="chCo">Coach: on</button></div></div></div>';
+  cv=document.getElementById("chCv");ctx=cv.getContext("2d");sayEl=document.getElementById("chSay");askEl=document.getElementById("chAsk");
+  const kind=PLAN[n-1];G={n,kind,mode:kind==="M"?"match":["rook","bishop","queen","knight","king","pawn"].includes(kind)?"stars":"puzzle",sel:null,moves:[],last:null,anim:null,hl:[],arrow:null,
+    caps:{w:[],b:[]},hist:[],reps:{},busy:false,miss:0,helps:0,takebacks:0,coachOn:K.save.coachOff?false:true};
+  document.getElementById("chUndo").onclick=takeBack;document.getElementById("chCo").onclick=()=>{G.coachOn=!G.coachOn;K.save.coachOff=!G.coachOn;K.persist();document.getElementById("chCo").textContent="Coach: "+(G.coachOn?"on":"off");
+    coach(G.coachOn?"I'm back! I'll help you spot danger.":"OK! You're on your own. Turn me back on any time.")};
+  document.getElementById("chCo").textContent="Coach: "+(G.coachOn?"on":"off");
+  document.getElementById("chUndo").hidden=G.mode!=="match";document.getElementById("chCo").hidden=G.mode!=="match";
+  cv.addEventListener("pointerdown",e=>{e.preventDefault();const r=cv.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top-TR;if(y<0||y>=S0*8)return;tapSq(Math.floor(y/S0)*8+Math.floor(x/S0))});
+  layout();K.sub(G.mode==="match"?"Match "+matchNo(n):LABEL[kind]||"");
+  if(G.mode==="stars")startStars(kind);else if(G.mode==="puzzle")startPuzzle(kind);else startMatch(n);
+  let last=performance.now();const loop=t=>{if(!G||cv!==document.getElementById("chCv"))return;const dt=Math.min(.05,(t-last)/1000);last=t;T+=dt;stepFx(dt);draw();raf=requestAnimationFrame(loop)};raf=requestAnimationFrame(loop)}
+addEventListener("resize",()=>{if(cv)layout()});
+function stepFx(dt){shake=Math.max(0,shake-dt);for(const s of shards){s.vy+=S0*9*dt;s.x+=s.vx*dt;s.y+=s.vy*dt;s.r+=s.vr*dt}
+  while(shards.length&&T-shards[0].t>shards[0].life)shards.shift();while(dust.length&&T-dust[0].t>.9)dust.shift();
+  const A=G.anim;if(A){const u=(T-A.t0)/A.dur;if(!A.hit&&A.capSq!=null&&u>=.8){A.hit=true;smash(A.capSq,A.capP,Math.sign((A.m.to&7)-(A.m.from&7)))}if(u>=1){G.anim=null;A.done()}}}
+// animate a move, then call done (the board shows the new position after)
+function animate(m,s,done){const before=s.b.slice(),capSq=m.ep?m.to+(s.turn==="w"?8:-8):m.cap?m.to:null;let rook=null;
+  if(m.castle==="k")rook=[m.to+1,m.to-1,before[m.to+1]];if(m.castle==="q")rook=[m.to-2,m.to+1,before[m.to-2]];
+  G.anim={m,before,capSq,capP:capSq!=null?before[capSq]:null,rook,t0:T,dur:window.__chessFast?.001:low(m.p)==="n"?.42:.34,hit:false,done};if(capSq==null)snd("tok")}
+
+/* ---------- lessons 1-6: smash the stars ---------- */
+function startStars(kind){const t={rook:"r",bishop:"b",queen:"q",knight:"n",king:"k",pawn:"p"}[kind],r=K.rng(G.n*31+(G.again||0));
+  let st,par,tries=0;
+  do{const b=Array(64).fill(null);let pos=t==="p"?48+Math.floor(r()*8):Math.floor(r()*64);b[pos]=t.toUpperCase();const s={b,turn:"w",castle:"",ep:-1,half:0};
+    if(t==="p"){let cur=pos;while((cur>>3)>0){const opts=[];const f=cur&7,up=cur-8;if(!b[up])opts.push([up,0]);if(f>0)opts.push([up-1,1]);if(f<7)opts.push([up+1,1]);
+        const[to,isCap]=opts[Math.floor(r()*opts.length)];if(isCap){b[to]="x"}cur=to}}
+    else{const n2=t==="k"?5:t==="n"?4:5;let cur=pos;for(let k=0;k<n2;k++){const tb=b.slice();tb[pos]=null;tb[cur]=t.toUpperCase();
+        const ms=pseudo({b:tb,turn:"w",castle:"",ep:-1},cur).filter(m=>!tb[m.to]&&m.to!==pos);if(!ms.length)break;const m=ms[Math.floor(r()*ms.length)];b[m.to]="x";cur=m.to}}
+    st=s;par=solveStars(st,t);tries++}while((par<0||st.b.filter(p=>p==="x").length<(t==="p"?2:3)||(t!=="p"&&par<3))&&tries<300);
+  G.s=st;G.par=par;G.moved=0;G.piece=t;
+  coach("<b>Meet the "+NAME[t]+"!</b> "+MOVE_TXT[t]+" "+(t==="p"?"Smash the stars and reach the far side!":"Smash all the stars!"));
+}
+// fewest moves to smash every star (and, for a pawn, reach the far row): breadth-first over (square, stars left)
+function solveStars(s,t){const stars=[];s.b.forEach((p,i)=>{if(p==="x")stars.push(i)});const start=s.b.findIndex(p=>p===t.toUpperCase()),full=(1<<stars.length)-1;
+  if(start<0)return t==="p"&&!stars.length&&s.b.includes("Q")?0:-1; // the pawn already reached the far side and became a queen
+  const seen=new Map(),q=[[start,full,0]];seen.set(start+","+full,1);
+  while(q.length){const[pos,mask,d]=q.shift();if(!mask&&(t!=="p"||(pos>>3)===0))return d;
+    const b=Array(64).fill(null);b[pos]=t.toUpperCase();stars.forEach((sq,k)=>{if(mask&1<<k)b[sq]="x"});
+    for(const m of pseudo({b,turn:"w",castle:"",ep:-1},pos)){if(m.promo&&m.promo!=="Q")continue;const k=stars.indexOf(m.to),nm2=k>=0?mask&~(1<<k):mask,id=m.to+","+nm2;if(!seen.has(id)){seen.set(id,1);q.push([m.to,nm2,d+1])}}}
+  return-1}
+
+/* ---------- lessons and puzzles: safe captures, check, checkmate, castling ---------- */
+const PUZ={capture:3,check:3,mateQ:3,mateR:3,mateMix:3,castle:2};
+function startPuzzle(kind){G.round=0;G.rounds=PUZ[kind];G.pmiss=0;nextPuzzle()}
+function rngP(){return K.rng(G.n*97+G.round*13+(G.again||0)*7)}
+function placeRandom(r,pieces,ok){for(let tries=0;tries<4000;tries++){const b=Array(64).fill(null);let bad=false;
+    for(const p of pieces){let sq,g=0;do sq=Math.floor(r()*64);while((b[sq]||(low(p)==="p"&&((sq>>3)===0||(sq>>3)===7)))&&g++<50);b[sq]=p}
+    const s={b,turn:"w",castle:"",ep:-1,half:0},wk=kingSq(b,"w"),bk=kingSq(b,"b");if(Math.abs((wk>>3)-(bk>>3))<=1&&Math.abs((wk&7)-(bk&7))<=1)bad=true;
+    if(!bad&&!inCheck(s,"b")&&ok(s))return s}return null}
+function nextPuzzle(){const kind=G.kind,r=rngP();G.hl=[];G.arrow=null;G.last=null;G.caps={w:[],b:[]};let s=null;
+  if(kind==="capture"){const hard=G.n>18;G.goal="capture";
+    s=placeRandom(r,["K","k",pick(["Q","R","B","N"]),pick(["R","B","N","P"]),"p",pick(["n","b","r","p"]),...(hard?[pick(["p","n","b"]),"P"]:[])],s=>{if(inCheck(s,"w"))return false;
+      const caps=legal(s).filter(m=>m.cap);if(caps.length<2)return false;const v=caps.map(m=>({m,v:-qs(make(s,m),-1e9,1e9,6,true)}));const base=evalS(s,true),best=Math.max(...v.map(x=>x.v));
+      if(best-base<250||v.filter(x=>x.v>=best-60).length>1||!v.some(x=>x.v<base-50))return false;s.capv=v;s.base=base;s.best=best;return true});
+    coach("<b>Smash a piece for free!</b> Only one of your captures is safe. The others are traps: a guarded piece takes back. Which one is safe?")}
+  else if(kind==="check"){const escape=G.round===2;G.goal=escape?"escape":"check";
+    if(escape){s=placeRandom(r,["K","k",pick(["q","r"]),pick(["b","n"]),pick(["R","B","N"]),"P"],s=>inCheck(s,"w")&&legal(s).length>=2)}
+    else s=placeRandom(r,["K","k",pick(["Q","R"]),pick(["B","N"]),"p","p"],s=>!inCheck(s,"w")&&legal(s).some(m=>inCheck(make(s,m),"b"))&&legal(s).some(m=>!inCheck(make(s,m),"b")));
+    coach(escape?"<b>Check!</b> Your king is attacked. Get out of check: move the king, block the attack, or smash the attacker.":"<b>Check</b> means attacking the king. Make a move that puts the black king in check!")}
+  else if(kind==="castle"){const F=["r1bqk2r/pppp1ppp/2n2n2/2b1p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq -","r2qk2r/ppp2ppp/2n1bn2/3pp3/1b1P4/2N1BN2/PPPQPPPP/R3KB1R w KQkq -"];
+    s=fromFEN(F[G.round]);G.goal="castle";
+    coach(G.round===0?"<b>Castling</b> tucks your king safely in the corner and brings out a rook, in one move! Tap your king, then the square two steps toward the rook.":
+      "This time the king can only castle to the <b>other side</b> (the long way). Tap your king, then two squares toward the far rook.")}
+  else{const q=kind==="mateQ"||(kind==="mateMix"&&r()<.5),hard=kind==="mateMix";G.goal="mate";
+    s=placeRandom(r,["K","k",q?"Q":"R",...(hard?[pick(["R","B","N","P"]),"p"]:[]),...(kind==="mateR"?["p","p"]:[])],s=>{if(inCheck(s,"w"))return false;const bk=kingSq(s.b,"b");
+      if(!hard&&kind!=="mateR"&&!((bk>>3)===0||(bk>>3)===7||(bk&7)===0||(bk&7)===7))return false;const mates=legal(s).filter(m=>isMate(make(s,m)));return mates.length>=1&&mates.length<=2});
+    coach("<b>Checkmate in one!</b> Checkmate means the king is attacked and has no way out. Find the move that wins!")}
+  if(!s){G.round++;if(G.round>=G.rounds)return finishPuzzles();return nextPuzzle()}
+  G.s=s;G.start=s}
+function finishPuzzles(){const st=G.pmiss===0?3:G.pmiss<=2?2:1;G.busy=true;K.win({stars:st,text:G.pmiss?"Solved with "+G.pmiss+" oops":"No mistakes!"})}
+function puzzleMove(m){const s=G.s;
+  if(G.goal==="castle"&&!m.castle){G.pmiss++;coach("Not yet! Castle first: tap your <b>king</b>, then the square <b>two steps</b> toward a rook.");G.hl=[{sq:kingSq(s.b,"w"),col:"#43e04f"}];return}
+  play(m,()=>{const n=G.s;
+    if(G.goal==="castle")return good("You castled! The king is safe in the corner and the rook is ready to fight.");
+    if(G.goal==="check"){if(inCheck(n,"b"))return good("Check! The black king is under attack.");G.pmiss++;return bad("That's not check. Find a piece that can attack the black king.")}
+    if(G.goal==="escape")return good("Safe! "+(low(m.p)==="k"?"You moved the king out of danger.":m.cap?"You smashed the attacker!":"You blocked the attack."));
+    if(G.goal==="mate"){if(isMate(n))return good("Checkmate! The king is trapped. You win!");G.pmiss++;
+      if(inCheck(n,"b")){const esc=legal(n)[0];return bad("Check, but not check<b>mate</b>: the king can still escape"+(esc?" to <b>"+sqName(esc.to)+"</b>":"")+". Try another move.")}
+      return bad("That isn't check. For checkmate you must attack the king so it can't escape.")}
+    if(G.goal==="capture"){const v=G.start.capv.find(x=>x.m.from===m.from&&x.m.to===m.to);
+      if(m.cap&&v&&v.v>=G.start.best-60)return good("Smash! That "+nm(m.cap)+" was free. Nobody could take back.");
+      G.pmiss++;if(!m.cap)return bad("Look for a piece you can <b>smash</b>. Tap one of your pieces to see its moves.");
+      // show the trap: the bot takes back
+      const rec=order(legal(n).filter(x=>x.to===m.to))[0];if(rec){G.busy=true;later(()=>play(rec,()=>bad("Oh no! That "+nm(m.cap)+" was guarded by the "+nm(rec.p)+". It smashed your "+nm(m.promo||m.p)+". Try a safer capture.")),500);return}
+      return bad("That wasn't the best one. Look for a piece nobody guards.")}})}
+function good(t){G.busy=true;TS.music.fx("good");coach("✅ "+t);later(()=>{G.round++;if(G.round>=G.rounds)finishPuzzles();else{G.busy=false;nextPuzzle()}},1900)}
+function bad(t){G.busy=true;TS.music.fx("bad");coach("❌ "+t);later(()=>{G.s=G.start;G.caps={w:[],b:[]};G.last=null;G.busy=false},2200)}
+
+/* ---------- matches ---------- */
+function startMatch(n){const m=matchNo(n),lost=(K.save.lost||{})[n]||0;G.skill=Math.max(0,skillFor(m)-Math.floor(lost/2));G.bot=BOTS[G.skill];
+  let s=fromFEN(START);const noQueen=m<=2||lost>=3;if(noQueen){s.b[3]=null}G.s=s;G.reps={};G.reps[key(s)]=1;G.m=m;
+  G.coachLvl=m<=6?2:m<=14?1:0;
+  coach("<b>Match "+m+"</b> against "+G.bot[1]+" "+G.bot[0]+(noQueen?" (it's playing without its queen)":"")+". You're white, so you go first. "+
+    (m<=3?"Tip: move a centre pawn two squares, then bring out your knights and bishops. Tap a piece to see where it can go.":G.skill>=4?"This bot thinks ahead. Protect your pieces!":"Remember: get your pieces out, castle, and look for free pieces to smash!"))}
+function takeBack(){if(G.mode!=="match"||G.busy||G.anim||!G.hist.length)return;let h;do h=G.hist.pop();while(G.hist.length&&h.s.turn!=="w");
+  G.s=h.s;G.caps=h.caps;G.last=h.last;G.reps=h.reps;G.sel=null;G.moves=[];G.hl=[];G.arrow=null;G.takebacks++;coach("Taken back. Have another think!")}
+function matchPlayed(m){const n=G.s,st=status(n),k2=key(n);G.reps[k2]=(G.reps[k2]||0)+1;if(endCheck(st,G.reps[k2]))return;
+  G.busy=true;coach(G.bot[1]+" is thinking…",false);later(()=>{const bm=botMove(G.s,G.skill);if(!bm){G.busy=false;return}
+    play(bm,()=>{const n2=G.s,st2=status(n2),k3=key(n2);G.reps[k3]=(G.reps[k3]||0)+1;if(endCheck(st2,G.reps[k3]))return;G.busy=false;afterBot(bm)})},window.__chessFast?0:500+R()*400)}
+function endCheck(st,rep){if(!st&&rep<3)return false;G.busy=true;const won=st==="mate"&&G.s.turn==="b";
+  if(won){TS.music.fx("win");const st3=G.takebacks+G.helps===0?3:G.takebacks+G.helps<=2?2:1;coach("<b>Checkmate! You win!</b> 🎉",true);later(()=>K.win({stars:st3,text:"You beat "+G.bot[0]+"!"+(G.takebacks?" ("+G.takebacks+" take-back"+(G.takebacks>1?"s":"")+")":"")}),1600);return true}
+  const L=K.save.lost||(K.save.lost={});L[G.n]=(L[G.n]||0)+1;K.persist();
+  const why=st==="mate"?"Checkmate: the bot trapped your king.":st==="stalemate"?(G.s.turn==="b"?"Stalemate! The bot's king had no safe move but wasn't in check, so it's a draw. When you're winning, always leave the king a square, or give check.":"Stalemate: a draw."):
+    st==="fifty"?"50 moves with no capture or pawn move: a draw.":st==="material"?"Nobody has enough pieces left to checkmate: a draw.":"The same position three times: a draw.";
+  coach(why);later(()=>K.fail({title:st==="mate"?"The bot won this time":"It's a draw",text:why+(L[G.n]>=2?" The bot will go a bit easier next time.":" Try again!")}),2200);return true}
+function afterBot(bm){G.hl=[{sq:bm.from,col:"#f2c230"}];const s=G.s,say=G.bot[0]+": "+(bm.castle?"I castled.":bm.cap?"My "+nm(bm.p)+" smashed your "+nm(bm.cap)+"!":"My "+nm(bm.p)+" to "+sqName(bm.to)+".");
+  if(inCheck(s,"w")){snd("check");const by=attackers(s.b,kingSq(s.b,"w"),"b");G.hl=by.map(q=>({sq:q}));return coach(say+" <b>Check!</b> Your king is attacked by the "+nm(s.b[by[0]])+". Move the king, block, or smash the attacker.")}
+  if(!G.coachOn||!G.coachLvl)return coach(say,false);
+  const th=hanging(s,"w").filter(h=>h.v>=(G.coachLvl===2?300:500)).sort((a,b)=>b.v-a.v)[0];
+  if(th){G.hl=[{sq:th.sq},{sq:th.by,col:"#f2c230"}];return coach(say+" ⚠️ Watch out! Your <b>"+nm(s.b[th.sq])+"</b> on "+sqName(th.sq)+" can be smashed by the "+nm(s.b[th.by])+" on "+sqName(th.by)+".")}
+  if(G.coachLvl===2&&mateIn1(s))return coach(say+" 👀 You can <b>checkmate</b> in one move! Look closely.");
+  const fr=hanging(s,"b").filter(h=>h.v>=300).sort((a,b)=>b.v-a.v)[0];
+  if(fr&&G.coachLvl===2){G.hl=[{sq:fr.sq,col:"#43e04f"}];return coach(say+" 💡 The bot's <b>"+nm(s.b[fr.sq])+"</b> on "+sqName(fr.sq)+" isn't safe. Can you smash it?")}
+  coach(say,false)}
+// before the player's move: would it lose a piece, or let the bot checkmate?
+function warnFor(m){if(G.mode!=="match"||!G.coachOn||!G.coachLvl)return null;const n=make(G.s,m);
+  const mt=mateIn1(n);if(mt)return"If you do that, the bot can <b>checkmate</b> you with its "+nm(mt.p)+"!";
+  const before=new Set(hanging(G.s,"w").map(h=>h.sq)),min=G.coachLvl===2?300:500;
+  const nw=hanging(n,"w").filter(h=>h.v>=min&&(h.sq===m.to||!before.has(h.sq))).sort((a,b)=>b.v-a.v)[0];
+  if(nw){if(m.cap&&VAL[low(m.cap)]>=nw.v)return null;return"Careful! Then the "+nm(n.b[nw.by])+" on "+sqName(nw.by)+" can smash your <b>"+nm(n.b[nw.sq])+"</b>."}
+  return null}
+
+/* ---------- moving ---------- */
+function play(m,then){const before=G.s;G.hist.push({s:before,caps:{w:G.caps.w.slice(),b:G.caps.b.slice()},last:G.last,reps:Object.assign({},G.reps)});
+  G.sel=null;G.moves=[];G.hl=[];G.arrow=null;G.busy=true;
+  animate(m,before,()=>{let n=make(before,m);if(G.mode==="stars")n.turn="w";G.s=n;G.last={from:m.from,to:m.to};
+    if(m.cap&&m.cap!=="x")G.caps[side(m.p)].push(m.cap);
+    if(m.promo){coach(G.mode==="stars"?"Your pawn reached the far side and became a <b>queen</b>!":"Promotion! Your pawn became a "+nm(m.promo)+".")}
+    if(m.ep)coach("<b>En passant!</b> A special pawn capture: a pawn that jumps two squares past yours can be taken as if it moved one.");
+    G.busy=false;then&&then()})}
+function tapSq(i){if(!G||G.busy||G.anim||TS.math.isOpen)return;const s=G.s,p=s.b[i];
+  if(G.mode==="match"&&s.turn!=="w")return;
+  if(G.sel!=null){const ms=G.moves.filter(m=>m.to===i);
+    if(ms.length){if(ms.length>1&&ms[0].promo)return promo(ms);return tryMove(ms[0])}
+    if(p&&isW(p)&&p!=="x"){select(i);return}
+    const ps=pseudo(s,G.sel).filter(m=>m.to===i);
+    coach(ps.length?"You can't: that would leave your king in check!":MOVE_TXT[low(s.b[G.sel])]);G.sel=null;G.moves=[];return}
+  if(p&&isW(p))select(i);else if(p&&p!=="x")coach("That's a black piece. Tap one of your <b>white</b> pieces.")}
+function select(i){const ms=G.mode==="stars"?pseudo(G.s,i).filter(m=>!m.promo||m.promo==="Q"):legal(G.s,i);G.sel=i;G.moves=ms;snd("tok");
+  if(!ms.length)coach("Your "+nm(G.s.b[i])+" can't move right now."+(inCheck(G.s)?" Your king is in check: deal with that first!":""),true);
+  else if(G.mode!=="match"||G.m<=3)coach(MOVE_TXT[low(G.s.b[i])],false)}
+function tryMove(m){if(G.mode==="stars"){G.moved++;return play(m,()=>{const left=G.s.b.filter(p=>p==="x").length;
+    if(m.cap==="x"){TS.music.fx("tap");if(left)coach("Smash! "+left+" star"+(left>1?"s":"")+" to go.",false)}
+    if(!left&&(G.piece!=="p"||!G.s.b.includes("P"))){G.busy=true;const st=G.moved<=G.par?3:G.moved<=G.par+2?2:1;coach("All the stars! "+(st===3?"In the fewest moves possible!":"Can you do it in "+G.par+" moves?"));later(()=>K.win({stars:st,text:G.moved+" moves (best is "+G.par+")"}),900)}
+    else if(G.piece==="p"&&!pseudo(G.s).length){G.busy=true;coach("Your pawn is stuck! Pawns can't move onto a square that's taken. Let's try again.");later(()=>K.load(G.n),2200)}})}
+  if(G.mode==="puzzle")return puzzleMove(m);
+  const w=warnFor(m);if(w){G.sel=null;G.moves=[];coach("🤔 "+w+" Are you sure?",true,[["Move anyway",()=>play(m,()=>matchPlayed(m))],["Think again",()=>coach("Good thinking! Try another move.",false)]]);G.pending=m;return}
+  play(m,()=>matchPlayed(m))}
+function promo(ms){const el=document.createElement("div");el.className="ch-promo";el.innerHTML='<div class="card2"><b>Your pawn made it! Pick a piece:</b><div class="row"></div><small>Most players pick the queen.</small></div>';
+  const row=el.querySelector(".row");for(const m of ms){const b=document.createElement("button");b.type="button";const c=document.createElement("canvas");c.width=128;c.height=128;b.appendChild(c);row.appendChild(b);
+    const x=c.getContext("2d");drawPiece(x,m.promo,0,0,128,{flat:1});b.onclick=()=>{el.remove();tryMove(m)}}
+  K.stage.querySelector(".ch").appendChild(el)}
+
+/* ---------- hint (after the maths question): the coach shows a good move ---------- */
+function hint(){if(!G||G.busy)return;G.helps++;let m=null;
+  if(G.mode==="stars"){const t=G.piece;let best=null,bd=1e9;for(const x of pseudo(G.s).filter(x=>!x.promo||x.promo==="Q")){const n=make(G.s,x);n.turn="w";const d=solveStars(n,t);if(d>=0&&d<bd){bd=d;best=x}}m=best}
+  else if(G.goal==="capture"){const b=G.start.capv.reduce((a,x)=>x.v>a.v?x:a);m=b.m}
+  else if(G.goal==="castle")m=legal(G.s).find(x=>x.castle);
+  else if(G.goal==="check")m=legal(G.s).find(x=>inCheck(make(G.s,x),"b"));
+  else if(G.goal==="mate")m=mateIn1(G.s);
+  else m=bestMove(G.s,G.mode==="match"?3:2);
+  if(!m)return;G.arrow=[m.from,m.to];G.hl=[{sq:m.from,col:"#43e04f"}];coach("💡 Try your <b>"+nm(m.p)+"</b> to <b>"+sqName(m.to)+"</b>."+(m.cap&&m.cap!=="x"?" It smashes the "+nm(m.cap)+"!":""))}
+
+K=TS_KIT({id:"chess",name:"Smash Chess",levels:40,start,hint,
+  howto:[["♟️","Real chess, but when a piece is captured it gets SMASHED!"],["🧙","The coach teaches you each piece first. Smash the stars!"],
+    ["👆","Tap a piece to see where it can go, then tap a square."],["🤖","Then play matches against bots that start gentle and get smarter. The coach warns you before a mistake."]],
+  point:()=>document.getElementById("chCv"),label:n=>PLAN[n-1]==="M"?"Match "+matchNo(n):LABEL[PLAN[n-1]]});
+window.__chess={get G(){return G},K,fromFEN,legal,pseudo,make,status,botMove,bestMove,hanging,solveStars,PLAN,START,isMate,inCheck,tryMove,tapSq,warnFor,mateIn1};
+K.start();
+})();
+</script>
+</body>
+</html>

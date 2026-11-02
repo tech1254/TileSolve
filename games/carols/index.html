@@ -24,6 +24,7 @@
 .tt-bar button{border:0;border-radius:999px;padding:6px 14px;font:700 14px var(--font-body);background:var(--panel,#262b36);color:var(--text);cursor:pointer;touch-action:manipulation}
 .tt-bar button[aria-pressed="true"]{background:var(--paint);color:var(--night)}
 .tt-song{font:700 18px var(--font-body);text-align:center;margin:0}
+.tt-tiers button:disabled{opacity:.45;cursor:default}
 .tt-ov{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:flex-end;justify-content:center;z-index:50}
 .tt-ov[hidden]{display:none}
 .tt-card{background:var(--night,#161a22);color:var(--text);width:100%;max-width:620px;max-height:92vh;overflow:auto;border-radius:22px 22px 0 0;padding:16px 14px 22px;display:flex;flex-direction:column;gap:12px}
@@ -95,7 +96,22 @@ const SONGS=[
  ["The Alphabet Song","Traditional",100,"C4:1 C4 G4 G4 A4 A4 G4:2 F4:1 F4 E4 E4 D4:.5 D4 D4 D4 C4:2 G4:1 G4 F4:2 E4:1 E4 D4:2 G4:1 G4 F4:2 E4:1 E4 D4:2 C4:1 C4 G4 G4 A4 A4 G4:2 F4:1 F4 E4 E4 D4 D4 C4:2"],
  ["Bingo","Traditional",120,"G3:1 C4 C4 G3 G3 A3 A3 G3:2 G3:1 C4 C4 D4 D4 E4:2 C4:2 E4:1 E4 F4:2 D4:1 D4 E4:2 C4:1 C4 D4:.5 D4 D4:1 E4 C4 B3 G3 A3 B3 C4:2 C4:2"],
  ["Here Comes the Bride","Richard Wagner, 1850",80,"G4:1 C5:.75 C5:.25 C5:2 G4:1 D5:.75 B4:.25 C5:2 G4:1 C5:.75 F5:.25 F5:1.5 E5:.5 D5:.75 C5:.25 B4:.75 C5:.25 D5:2"],
- ["Beethoven's Fifth","Ludwig van Beethoven, 1808",100,"R:.5 G4:.5 G4 G4 Eb4:2 R:.5 F4:.5 F4 F4 D4:3 R:.5 G4:.5 G4 G4 Eb4 Ab4 Ab4 Ab4 G4 Eb5 Eb5 Eb5 C5:2"]];
+ ["Beethoven's Fifth","Ludwig van Beethoven, 1808",100,"R:.5 G4:.5 G4 G4 Eb4:2 R:.5 F4:.5 F4 F4 D4:3 R:.5 G4:.5 G4 G4 Eb4 Ab4 Ab4 Ab4 G4 Eb5 Eb5 Eb5 C5:2"],
+ // added later: more songs, getting harder toward the end (all public domain: traditional, or published before 1929)
+ ["Pop Goes the Weasel","Traditional",110,"C4:1 C4:.5 D4:1 D4:.5 E4:.5 G4 E4 C4:1.5 C4:1 C4:.5 D4:1 D4:.5 E4:1.5 C4:1.5 C4:1 C4:.5 D4:1 D4:.5 E4:.5 G4 E4 C4:1.5 A4:1.5 D4:1 F4:.5 E4:1.5 C4:1.5"],
+ ["Skip to My Lou","Traditional",120,"E4:1 E4 C4 C4 E4 E4 G4:2 D4:1 D4 B3 B3 D4 D4 F4:2 E4:1 E4 C4 C4 E4 E4 G4:2 D4:1 E4 F4 E4 D4 C4:3"],
+ ["Camptown Races","Stephen Foster, 1850",130,"G4:.5 G4 E4 G4 A4 G4 E4:1 E4:.5 D4:1.5 E4:.5 D4:1.5 G4:.5 G4 E4 G4 A4 G4 E4:1 D4:.5 E4 D4 C4:2 G4:.5 G4 E4 G4 A4 G4 E4:1 E4:.5 D4:1.5 E4:.5 D4:1.5 G4:.5 G4 E4 G4 A4 G4 E4:1 D4:.5 E4 D4 C4:2"],
+ ["Three Blind Mice","Traditional, 1609",120,"E4:1.5 D4 C4:3 E4:1.5 D4 C4:3 G4:1.5 F4:1 F4:.5 E4:3 G4:1.5 F4:1 F4:.5 E4:2.5 G4:.5 C5:1 C5:.5 B4 A4 B4 C5:1 G4:.5 G4:1 G4:.5 C5:1 C5:.5 B4 A4 B4 C5:1 G4:.5 G4:1 F4:.5 E4:1.5 D4 C4:3"],
+ ["Take Me Out to the Ball Game","Albert Von Tilzer, 1908",150,"C5:2 A4:1 G4 E4 G4:3 D4:3 C5:2 A4:1 G4 E4 G4:6 A4:1 G#4 A4 E4 F4 G4 A4:2 F4:1 D4:3 A4:2 A4:1 A4 B4 C5 D5 B4 A4 G4 E4 D4 C4:2 A4:1 G4 E4 G4:2 D4:1 D4:2 E4:1 F4 G4 A4:3 A4:1 B4 C5 D5:3 C5:1 C5 B4 A4 G4 F#4 G4 A4:3 B4 C5:6"],
+ ["Amazing Grace","Traditional, 1835",90,"D4:1 G4:2 B4:.5 G4 B4:2 A4:1 G4:2 E4:1 D4:2 D4:1 G4:2 B4:.5 G4 B4:2 A4:1 D5:5 B4:1 D5:1.5 B4:.5 D5 B4 G4:2 D4:1 E4:1.5 G4:.5 G4 E4 D4:2 D4:1 G4:2 B4:.5 G4 B4:2 A4:1 G4:5"],
+ ["Scarborough Fair","Traditional English",100,"D4:2 D4:1 A4:2 A4:1 E4:1.5 F4:.5 E4:1 D4:3 A4:1 C5:2 D5:1 C5:2 A4:1 B4 G4 A4:3 D5:2 D5:1 D5:2 C5:1 A4:2 A4:1 G4 F4 E4 C4:2 D4:1 A4:2 G4:1 F4:2 E4:1 D4 C4 D4:3"],
+ ["The Blue Danube","Johann Strauss II, 1866",150,"D4:1 D4 F#4 A4 A4:2 A5:1 A5:2 F#5:1 F#5:2 D4:1 D4 F#4 A4 A4:2 A5:1 A5:2 G5:1 G5:2 C#4:1 C#4 E4 B4 B4:2 B5:1 B5:2 G5:1 G5:2 C#4:1 C#4 E4 B4 B4:2 B5:1 B5:2 F#5:1 F#5:2 D4:1 D4 F#4 A4 D5:2 D6:1 D6:2 A5:1 A5:2"],
+ ["Spring (The Four Seasons)","Antonio Vivaldi, 1725",100,"E5:1 G#5 G#5 G#5 F#5:.5 E5 B5:2.5 B5:.5 A5 G#5:1 G#5 G#5 F#5:.5 E5 B5:2.5 B5:.5 A5 G#5:1 A5:.5 B5 A5:1 G#5 F#5 D#5 B4:2"],
+ ["Can-Can","Jacques Offenbach, 1858",140,"G4:1 G4 A4:.5 C5 B4 A4 D5:1 D5 D5:.5 E5 B4 C5 A4:1 A4 A4:.5 C5 B4 A4 G4 G5 F#5 E5 D5 C5 B4 A4 G4:1 G4 A4:.5 C5 B4 A4 D5:1 D5 D5:.5 E5 B4 C5 A4:1 A4 A4:.5 C5 B4 A4 G4 D5 B4 A4 G4:2"],
+ ["William Tell Overture","Gioachino Rossini, 1829",110,"E4:.25 E4 E4:.5 E4:.25 E4 E4:.5 E4:.25 E4 A4:.5 B4 C#5:1 E4:.25 E4 E4:.5 E4:.25 E4 E4:.5 E4:.25 A4 C#5:.5 B4 G#4:1 E4:.25 E4 E4:.5 E4:.25 E4 E4:.5 E4:.25 E4 A4:.5 B4 C#5:1 A4:.5 C#5 E5:1.5 D5:.5 C#5 B4 A4:1"],
+ ["Toccata and Fugue in D Minor","Johann Sebastian Bach, about 1704",70,"A5:.25 G5 A5:2.5 G5:.25 F5 E5 D5 C#5:1 D5:2 A4:.25 G4 A4:2.5 E4:.5 F4 C#4 D4:2 A3:.25 G3 A3:2.5 G3:.25 F3 E3 D3 C#3:1 D3:3"],
+ ["Prelude in C","Johann Sebastian Bach, 1722",70,"C4:.25 E4 G4 C5 E5 G4 C5 E5 C4 E4 G4 C5 E5 G4 C5 E5 C4 D4 A4 D5 F5 A4 D5 F5 C4 D4 A4 D5 F5 A4 D5 F5 B3 D4 G4 D5 F5 G4 D5 F5 B3 D4 G4 D5 F5 G4 D5 F5 C4 E4 G4 C5 E5 G4 C5 E5 C4 E4 G4 C5 E5 G4 C5 E5 C4 E4 A4 E5 A5 A4 E5 A5 C4 E4 A4 E5 A5 A4 E5 A5 C4:2"],
+ ["Flight of the Bumblebee","Nikolai Rimsky-Korsakov, 1900",80,"E5:.25 D#5 D5 C#5 D5 C#5 C5 B4 C5 B4 A#4 A4 G#4 G4 F#4 F4 E4 D#4 D4 C#4 D4 C#4 C4 B3 C4 B3 A#3 A3 G#3 G3 F#3 F3 E3:.25 F3 E3 D#3 E3 F3 E3 D#3 E3:.25 F3 F#3 G3 G#3 A3 A#3 B3 C4 C#4 D4 D#4 E4:1"]];
 const CAROLS=[
  ["Jingle Bells","James Lord Pierpont, 1857",120,"E4:1 E4 E4:2 E4:1 E4 E4:2 E4:1 G4 C4:1.5 D4:.5 E4:4 F4:1 F4 F4:1.5 F4:.5 F4:1 E4 E4 E4:.5 E4 E4:1 D4 D4 E4 D4:2 G4 E4:1 E4 E4:2 E4:1 E4 E4:2 E4:1 G4 C4:1.5 D4:.5 E4:4 F4:1 F4 F4 F4 F4 E4 E4 E4:.5 E4 G4:1 G4 F4 D4 C4:4"],
  ["We Wish You a Merry Christmas","Traditional English",120,"D4:1 G4 G4:.5 A4 G4 F#4 E4:1 E4 E4 A4 A4:.5 B4 A4 G4 F#4:1 D4 D4 B4 B4:.5 C5 B4 A4 G4:1 E4 D4:.5 D4 E4:1 A4 F#4 G4:2 D4:1 G4 G4 G4 F#4:2 F#4:1 G4 F#4 E4 D4:2 A4:1 B4 A4:.5 A4 G4 G4 D5:1 D4 D4:.5 D4 E4:1 A4 F#4 G4:2"],
@@ -132,6 +148,18 @@ const PER=BOOK==="carols"?3:5,cost=n=>(n-1)*PER,locked=n=>TS.notes.count()<cost(
 function earnLine(n){const have=TS.notes.count(),nx=n+1;if(nx>LIST.length)return"🎵 "+have+" · every song is open!";
   return have>=cost(nx)?"🎵 "+have+" · next song is open":"🎵 "+have+" · "+(cost(nx)-have)+" more for the next song"}
 const SPEED=[.55,.62,.72,.82,.92,1,1.05,1.1];
+/* Three ways to play each song, earned in order: 🎵 Normal (as before), 🐇 Fast (quicker, tiles never wait, timing is scored),
+   🚀 Pro (faster still, two-finger double tiles on strong beats, hold tiles for long notes, and a too-early tap counts as a slip).
+   Fast opens when Normal is won, Pro when Fast is won. Fast and Pro score each tap: Perfect, Good or OK, with a combo. */
+const TIERS=[{name:"Normal",icon:"🎵",sp:1},{name:"Fast",icon:"🐇",sp:1.3},{name:"Pro",icon:"🚀",sp:1.55}];
+const TSV=TS.gameSave(BOOK+"-tiers",{best:{},score:{},pick:{}});
+const normalDone=n=>(TSV.data.best[n]!=null)||Object.values((K&&K.save.grades)||{}).some(g=>g&&g.stars&&g.stars[n]);
+const tierOpen=(n,t)=>t===0||(t===1&&normalDone(n))||(t===2&&(TSV.data.best[n]||0)>=1);
+const tierFor=n=>{const p=TSV.data.pick[n];if(p!=null&&tierOpen(n,p))return p;return tierOpen(n,1)&&K.age>=2?1:0};
+// Pro: a lower note under the tune on strong beats (tap both together), and long notes are held
+function proNotes(notes){const out=[];for(const n of notes){const x={...n};if(n.d>=2)x.hold=true;out.push(x);
+    if(!x.hold&&n.d>=1&&Math.abs(n.b%2)<1e-6)out.push({m:n.m-12,b:n.b,d:Math.min(n.d,2),lane:n.lane<=1?n.lane+2:n.lane-2,harm:true})}
+  return out.sort((a,b)=>a.b-b.b||a.lane-b.lane)}
 
 /* ---------- the piano ---------- */
 let AC=null,OUTG=null;
@@ -153,32 +181,45 @@ function playSong(song,n){TS.music.hold(true);
   if(n===null){K.stage.innerHTML="";K.tip("");K.sub("🎼 My song")}
   K.stage.insertAdjacentHTML("beforeend",'<p class="tt-song">'+esc(song.title)+"<small>"+esc(song.by)+" · "+(n===null?"made with Make a Song":earnLine(n))+"</small></p>"+
     '<div class="tt-wrap"><canvas class="tt-cv" id="ttCv" aria-label="Tile lanes. Tap the coloured tiles."></canvas></div>'+
+    (n===null?"":'<div class="tt-bar tt-tiers" id="ttTiers"></div>')+
     '<div class="tt-bar"><button type="button" id="ttRelax" aria-pressed="'+relaxed()+'">🐢 Wait for me</button><button type="button" id="ttNames" aria-pressed="true">🔤 Note names</button><button type="button" id="ttMine">🎼 My songs</button></div>');
-  const cv=document.getElementById("ttCv");
-  S={song,n,cv,ctx:cv.getContext("2d"),notes:song.notes.map(x=>({...x,hit:0,miss:0})),next:0,pos:song.notes[0].b,running:false,waiting:true,
-    hearts:K.age<=2?5:3,oops:0,slow:1,names:true,flash:[],last:performance.now(),done:false};
-  S.bps=song.bpm/60*SPEED[Math.min(7,K.age)];
-  document.getElementById("ttRelax").onclick=e=>{OPT.data.relaxed=!relaxed();OPT.save();e.currentTarget.setAttribute("aria-pressed",relaxed());K.tip(relaxed()?"🐢 Tiles will wait at the line for you.":"🐇 Tiles keep moving. Tap them in time!")};
+  const cv=document.getElementById("ttCv"),tier=n===null?0:tierFor(n);
+  S={song,n,cv,ctx:cv.getContext("2d"),notes:(tier===2?proNotes(song.notes):song.notes).map(x=>({...x,hit:0,miss:0})),next:0,pos:song.notes[0].b,running:false,waiting:true,
+    hearts:K.age<=2?5:3,oops:0,slow:1,names:tier===0,flash:[],last:performance.now(),done:false,tier,relaxed:tier?false:relaxed(),score:0,combo:0,maxCombo:0,judge:null,acc:0,hold:null};
+  S.bps=song.bpm/60*(tier?Math.max(SPEED[Math.min(7,K.age)],.9):SPEED[Math.min(7,K.age)])*TIERS[tier].sp;
+  document.getElementById("ttNames").setAttribute("aria-pressed",S.names);
+  if(tier)document.getElementById("ttRelax").hidden=true;
+  if(n!==null){const tb=document.getElementById("ttTiers"),best=TSV.data.best[n];
+    tb.innerHTML=TIERS.map((T,i)=>{const open=tierOpen(n,i),won=best!=null&&best>=i;return'<button type="button" data-t="'+i+'" aria-pressed="'+(i===tier)+'"'+(open?"":" disabled")+'>'+(open?T.icon:"🔒")+" "+T.name+(won?" ✓":"")+"</button>"}).join("");
+    tb.querySelectorAll("button").forEach(b=>b.onclick=()=>{const t=+b.dataset.t;if(!tierOpen(n,t)||t===S.tier)return;TSV.data.pick[n]=t;TSV.save();K.load(n)})}
+  document.getElementById("ttRelax").onclick=e=>{OPT.data.relaxed=!relaxed();OPT.save();S.relaxed=relaxed();e.currentTarget.setAttribute("aria-pressed",relaxed());K.tip(relaxed()?"🐢 Tiles will wait at the line for you.":"🐇 Tiles keep moving. Tap them in time!")};
   document.getElementById("ttNames").onclick=e=>{S.names=!S.names;e.currentTarget.setAttribute("aria-pressed",S.names)};
   document.getElementById("ttMine").onclick=()=>MINE.open();
-  cv.addEventListener("pointerdown",tap);
-  K.stat(S.hearts,"Hearts");if(n!==null)K.sub();K.tip("Tap the first tile to start. Then tap each tile as it reaches the line!");
+  cv.addEventListener("pointerdown",tap);const up=e=>{if(S&&S.hold&&(S.hold.pid==null||e.pointerId===S.hold.pid))letGo()};cv.addEventListener("pointerup",up);cv.addEventListener("pointercancel",up);
+  K.stat(S.hearts,"Hearts");if(n!==null)K.sub(tier?TIERS[tier].icon+" "+TIERS[tier].name:"");
+  K.tip(tier===2?"🚀 Pro: tap both tiles of a double together, and keep your finger down on long tiles until they end!":tier===1?"🐇 Fast: tiles keep moving. Tap right on the line for Perfect!":"Tap the first tile to start. Then tap each tile as it reaches the line!");
   const loop=t=>{if(S.cv!==cv)return;frame(Math.min(.05,(t-S.last)/1000));S.last=t;S.raf=requestAnimationFrame(loop)};S.raf=requestAnimationFrame(loop)}
 function geom(){const cv=S.cv,r=cv.getBoundingClientRect(),dpr=window.devicePixelRatio||1;
   if(cv.width!==Math.round(r.width*dpr)||cv.height!==Math.round(r.height*dpr)){cv.width=Math.round(r.width*dpr);cv.height=Math.round(r.height*dpr)}
   const W=r.width,H=r.height;return{W,H,dpr,lw:W/4,line:H*.8,ppb:Math.max(90,H*.24)}}
+// the tiles that start on the same beat as the next one (a double in Pro)
+function group(){const out=[],b0=S.notes[S.next]&&S.notes[S.next].b;for(let i=S.next;i<S.notes.length&&S.notes[i].b===b0;i++)out.push(S.notes[i]);return out}
 function frame(dt){const g=geom(),c=S.ctx,nx=S.notes[S.next];
   if(S.running&&!S.waiting&&nx&&!S.done){S.pos+=dt*S.bps*S.slow;
-    if(relaxed()){if(S.pos>=nx.b){S.pos=nx.b;S.waiting=true}}
+    if(S.relaxed){if(S.pos>=nx.b){S.pos=nx.b;S.waiting=true}}
     else if((S.pos-nx.b)*g.ppb>g.H-g.line-8){ // it slid past the bottom
-      nx.miss=1;S.pos=nx.b;S.waiting=true;lose(nx.lane,"Missed one! Tap it to keep going.")}}
+      nx.miss=1;S.pos=nx.b;S.waiting=true;S.combo=0;lose((group().find(x=>!x.hit)||nx).lane,"Missed one! Tap it to keep going.")}}
+  if(S.hold&&S.pos>=S.hold.end){const h=S.hold;S.hold=null;h.n.holding=false;h.n.hit=.01;S.score+=50;S.judge={txt:"Hold! ✨",t:.7,c:"#ffe27a"}}
   c.setTransform(g.dpr,0,0,g.dpr,0,0);c.clearRect(0,0,g.W,g.H);
   for(let l=0;l<4;l++){c.fillStyle=l%2?"#151a24":"#11151d";c.fillRect(l*g.lw,0,g.lw,g.H)}
   S.flash=S.flash.filter(f=>f.t>0);S.flash.forEach(f=>{f.t-=dt;c.fillStyle="rgba(229,57,53,"+Math.max(0,f.t*1.4)+")";c.fillRect(f.l*g.lw,0,g.lw,g.H)});
   c.fillStyle="rgba(255,255,255,.18)";c.fillRect(0,g.line,g.W,3);
   // tiles
-  for(let i=Math.max(0,S.next-6);i<S.notes.length;i++){const n=S.notes[i],bot=g.line-(n.b-S.pos)*g.ppb,top=bot-n.d*g.ppb+4;
+  for(let i=Math.max(0,S.next-8);i<S.notes.length;i++){const n=S.notes[i];let bot=g.line-(n.b-S.pos)*g.ppb;const top=bot-n.d*g.ppb+4;
     if(bot<-10)break;if(top>g.H)continue;if(n.hit>=1)continue;
+    if(n.holding){bot=g.line;const x=n.lane*g.lw+4,w=g.lw-8;c.fillStyle=COL[n.m%12];c.globalAlpha=.55;roundRect(c,x,Math.max(top,-20),w,bot-Math.max(top,-20),12);c.fill();c.globalAlpha=1;
+      c.fillStyle="#fff";roundRect(c,x+w*.38,Math.max(top,-20),w*.24,bot-Math.max(top,-20),8);c.fill();continue}
+    if(n.hold&&!n.hit){const x=n.lane*g.lw+4,w=g.lw-8;c.fillStyle="rgba(255,255,255,.35)";roundRect(c,x+w*.4,Math.max(top,-20)+4,w*.2,Math.max(0,bot-Math.max(top,-20)-26),6);c.fill()}
     const x=n.lane*g.lw+4,w=g.lw-8,pc=n.m%12;c.globalAlpha=n.hit?1-n.hit:1;
     c.fillStyle=n.hit?"#ffffff":COL[pc];roundRect(c,x,Math.max(top,-20),w,bot-Math.max(top,-20)-2,12);c.fill();
     if(!n.hit){c.fillStyle="rgba(0,0,0,.22)";roundRect(c,x,bot-10,w,8,6);c.fill()}
@@ -187,24 +228,41 @@ function frame(dt){const g=geom(),c=S.ctx,nx=S.notes[S.next];
     c.globalAlpha=1}
   S.notes.forEach(n=>{if(n.hit&&n.hit<1)n.hit=Math.min(1,n.hit+dt*5)});
   // progress along the top
-  c.fillStyle="rgba(255,255,255,.12)";c.fillRect(0,0,g.W,5);c.fillStyle="#f2c230";c.fillRect(0,0,g.W*S.next/S.notes.length,5)}
+  c.fillStyle="rgba(255,255,255,.12)";c.fillRect(0,0,g.W,5);c.fillStyle="#f2c230";c.fillRect(0,0,g.W*S.next/S.notes.length,5);
+  // Fast and Pro: score, combo, and how good the last tap was
+  if(S.tier){c.textAlign="left";c.textBaseline="top";c.fillStyle="#fff";c.font="800 18px system-ui,sans-serif";c.fillText(S.score.toLocaleString(),10,12);
+    if(S.combo>=3){c.fillStyle="#f2c230";c.font="800 15px system-ui,sans-serif";c.fillText("Combo "+S.combo,10,34)}
+    if(S.judge&&S.judge.t>0){S.judge.t-=dt;c.globalAlpha=Math.min(1,S.judge.t*2);c.textAlign="center";c.font="900 "+Math.round(g.W*.075)+"px system-ui,sans-serif";
+      c.fillStyle=S.judge.c;c.fillText(S.judge.txt,g.W/2,g.line-g.H*.16-(1-S.judge.t)*14);c.globalAlpha=1}}}
 function roundRect(c,x,y,w,h,r){h=Math.max(h,2);r=Math.min(r,h/2,w/2);c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath()}
-function tap(e){e.preventDefault();if(!S||S.done||K.busy)return;const g=geom(),r=S.cv.getBoundingClientRect(),lane=Math.max(0,Math.min(3,Math.floor((e.clientX-r.left)/g.lw)));hitLane(lane)}
-function hitLane(lane){const n=S.notes[S.next];if(!n)return;audio();
-  const bot=g2bot(n);
+function tap(e){e.preventDefault();if(!S||S.done||K.busy)return;S.pid=e.pointerId;const g=geom(),r=S.cv.getBoundingClientRect(),lane=Math.max(0,Math.min(3,Math.floor((e.clientX-r.left)/g.lw)));hitLane(lane)}
+// q: 2 Perfect, 1 Good, 0 OK
+function score(q,txt){const pts=[40,70,100][q];S.combo++;S.maxCombo=Math.max(S.maxCombo,S.combo);S.score+=Math.round(pts*(1+Math.min(S.combo,50)/50));S.acc+=[.5,.8,1][q];
+  S.judge={txt,t:.7,c:q===2?"#7CFF8A":q===1?"#ffffff":"#9ad0ff"}}
+function letGo(){const h=S.hold;if(!h)return;S.hold=null;h.n.holding=false;h.n.hit=.01;if(S.pos<h.end-.05){S.combo=0;S.judge={txt:"Let go too soon",t:.8,c:"#ffb3a8"}}}
+function hitLane(lane){const grp=S.notes[S.next]?group():[];if(!grp.length)return;audio();
+  const n=grp.find(x=>x.lane===lane&&!x.hit)||grp.find(x=>!x.hit),bot=g2bot(n),early=(n.b-S.pos)/(S.bps*S.slow); // seconds before the line
   // the right lane counts even a little early (the tile may still be above the top); far too early is just ignored
   if(lane===n.lane&&bot<-geom().H)return;
-  if(lane===n.lane){n.hit=.01;play(n.m,n.d/S.bps/S.slow);S.next++;
+  if(lane===n.lane&&S.tier===2&&S.running&&early>.32){S.combo=0;lose(lane,"Too early! Wait until the tile reaches the line.");return}
+  if(lane===n.lane){n.hit=.01;play(n.m,n.d/S.bps/S.slow);
+    if(S.tier&&S.running){const e=Math.abs(early);score(e<.09?2:e<.18?1:0,e<.09?"Perfect!":e<.18?"Good":"OK")}
+    if(n.hold&&S.tier===2){n.hit=0;n.holding=true;S.hold={n,end:n.b+n.d*.85,pid:S.pid}}
+    if(grp.some(x=>!x.hit&&!x.holding))return; // a double: tap the other tile too
+    S.next+=grp.length;
     if(!S.running){S.running=true;K.tip("")}
     // when the next tile is waiting at the line, tapping catches the song up
     if(S.waiting){S.waiting=false}
     if(S.next>=S.notes.length&&S.n===null){S.done=true;setTimeout(()=>{[72,76,79,84].forEach((m,i)=>setTimeout(()=>play(m,.3),i*110));
       MINE.open("🎉 You played "+S.song.title+(S.oops?"!":" without a mistake!"))},700);return}
     if(S.next>=S.notes.length){S.done=true;setTimeout(()=>{[72,76,79,84].forEach((m,i)=>setTimeout(()=>play(m,.3),i*110));const st=S.oops===0?3:S.oops<=2?2:1;
-      const nx=S.n+1,need=nx<=LIST.length?cost(nx)-TS.notes.count():0;
-      K.win({stars:st,text:"You played "+S.song.title+(st===3?" without a mistake!":"!")+(need>0?" Earn "+need+" more 🎵 to open the next song: finish levels in other games and answer maths questions.":"")})},700)}
+      const nx=S.n+1,need=nx<=LIST.length?cost(nx)-TS.notes.count():0,D=TSV.data,was=D.best[S.n],first=was==null||was<S.tier;D.best[S.n]=Math.max(was==null?-1:was,S.tier);
+      const key=S.n+":"+S.tier,pb=S.tier&&S.score>(D.score[key]||0);if(pb)D.score[key]=S.score;TSV.save();
+      const pct=S.tier?Math.round(100*S.acc/S.notes.length):0,unlock=first&&S.tier<2?" "+TIERS[S.tier+1].icon+" "+TIERS[S.tier+1].name+" is open for this song!":"";
+      K.win({stars:st,title:S.tier?TIERS[S.tier].icon+" "+TIERS[S.tier].name+" cleared!":null,text:(S.tier?"Score "+S.score.toLocaleString()+(pb?" (new best!)":" (best "+(D.score[key]||0).toLocaleString()+")")+" · "+pct+"% · longest combo "+S.maxCombo+".":"You played "+S.song.title+(st===3?" without a mistake!":"!"))+
+        unlock+(need>0?" Earn "+need+" more 🎵 to open the next song.":"")})},700)}
     return}
-  if(!S.running)return;lose(lane,"Oops, wrong lane! Tap the coloured tile.")}
+  if(!S.running)return;S.combo=0;lose(lane,"Oops, wrong lane! Tap the coloured tile.")}
 function g2bot(n){const g=geom();return g.line-(n.b-S.pos)*g.ppb}
 function lose(lane,msg){if(S.done)return;S.oops++;S.hearts--;S.flash.push({l:lane,t:.5});buzz();K.stat(Math.max(0,S.hearts),"Hearts");K.sub("Oops "+S.oops);K.tip(msg);
   if(S.hearts<=0&&S.n===null){S.done=true;K.tip("Out of hearts! Let's try that song again.");const song=S.song;setTimeout(()=>playSong(song,null),1400);return}
@@ -286,7 +344,7 @@ const MINE=(()=>{const KEY="tilesolve:mysongs",all=()=>TS.store.get(KEY,[]),put=
 K=TS_KIT({id:BOOK,name:BOOK==="carols"?"Christmas Tunes":"Tile Tunes",levels:LIST.length,start,hint,locked,
   howto:[["🎹","Coloured tiles slide down. Each one is a note of the song."],["👆","Tap each tile when it reaches the line. Tap the first tile to start."],["❤️","Wrong lane or a missed tile costs a heart."],["🐢","Turn on Wait for me and the tiles stop at the line until you tap."],["🎵","New songs open as you earn 🎵: finish levels in other games and answer maths questions."],["🎼","My songs: make your own song on the piano, then play it as tiles!"]],
   label:n=>LIST[n-1].title.length>14?LIST[n-1].title.slice(0,13)+"…":LIST[n-1].title});
-window.__game={get S(){return S},K,LIST,BOOK,PER,MINE,playSong,parse,hitLane,relaxed,cost,locked};// for tools/test_tunes.py
+window.__game={get S(){return S},K,LIST,BOOK,PER,MINE,playSong,parse,hitLane,relaxed,cost,locked,TSV,tierOpen,group,letGo};// for tools/test_tunes.py
 K.start();
 })();
 </script>

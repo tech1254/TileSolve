@@ -85,7 +85,7 @@ with sync_playwright() as p:
         wins.append(pg.is_visible("#kSheetWin"))
     check(all(wins), f"every song can be played to the end ({sum(wins)}/{len(wins)})")
     pg.click("#kReplay"); pg.wait_for_timeout(300)
-    check("Fifth" in pg.text_content(".tt-song") and "Beethoven" in pg.text_content(".tt-song"), "each song shows its name and composer")
+    check("Bumblebee" in pg.text_content(".tt-song") and "Rimsky-Korsakov" in pg.text_content(".tt-song"), "each song shows its name and composer")
     ctx.close()
 
     # iPad touch on the canvas
@@ -177,6 +177,29 @@ with sync_playwright() as p:
     check(cp.locator(".game[data-game='carols']").count() == 1, "Christmas Tunes is on the home screen")
     cctx.close()
 
+    # speeds: winning Normal opens Fast, winning Fast opens Pro; Pro has double tiles and hold tiles
+    sctx = b.new_context(viewport={"width": 768, "height": 1024}); sctx.add_init_script(player(3, "sp"))
+    sp = watch_errors(sctx.new_page(), errors); sp.goto(URL("tunes")); sp.wait_for_function("window.__game && __game.S", timeout=10000)
+    play_all = "(()=>{const S=__game.S;let g=0;while(S.next<S.notes.length&&!S.done&&g++<2000){const grp=__game.group();S.pos=Math.max(S.pos,grp[0].b);for(const n of grp){__game.hitLane(n.lane);if(n.holding){S.pos=n.b+n.d;}}}return{score:S.score,tier:S.tier,acc:S.acc}})()"
+    check(sp.evaluate("__game.S.tier")==0 and sp.locator("#ttTiers button[disabled]").count()==2, "a new song starts on Normal, with Fast and Pro locked")
+    sp.evaluate(play_all); sp.wait_for_timeout(1600)
+    check(sp.is_visible("#kSheetWin") and "Fast is open" in sp.text_content("#kWinText"), "winning Normal opens Fast for that song")
+    sp.click("#kReplay"); sp.wait_for_timeout(300)
+    check(sp.evaluate("__game.S.tier")==1 and sp.evaluate("__game.S.bps")>sp.evaluate("__game.LIST[0].bpm/60*.82*1.2"), "a grade 3 player is put on Fast once it's open, and it's quicker")
+    r = sp.evaluate(play_all); sp.wait_for_timeout(1600)
+    check(r["score"]>0 and "Score" in sp.text_content("#kWinText") and "Pro is open" in sp.text_content("#kWinText"), f"Fast scores every tap and winning it opens Pro ({r['score']})")
+    sp.evaluate("__game.K.load(11)"); sp.wait_for_timeout(200)
+    if sp.is_visible(".prob"): solve_math(sp)
+    sp.evaluate("__game.TSV.data.best[11]=1;__game.TSV.data.pick[11]=2;__game.K.load(11)"); sp.wait_for_timeout(300)
+    if sp.is_visible(".prob"): solve_math(sp)
+    info = sp.evaluate("(()=>{const S=__game.S;const by={};S.notes.forEach(n=>(by[n.b]=by[n.b]||[]).push(n));return{tier:S.tier,doubles:Object.values(by).filter(g=>g.length>1).length,holds:S.notes.filter(n=>n.hold).length}})()")
+    check(info["tier"]==2 and info["doubles"]>=5 and info["holds"]>=2, f"Pro adds two-finger double tiles and hold tiles ({info})")
+    one = sp.evaluate("(()=>{const S=__game.S;let g=__game.group();while(g.length<2&&S.next<S.notes.length){S.pos=g[0].b;__game.hitLane(g[0].lane);if(g[0].holding){S.pos=g[0].b+g[0].d}g=__game.group()}const n0=S.next;S.pos=g[0].b;__game.hitLane(g[0].lane);const after1=S.next;__game.hitLane(g[1].lane);return[n0,after1,S.next]})()")
+    check(one[1]==one[0] and one[2]==one[0]+2, f"a double needs both tiles tapped before the song moves on ({one})")
+    early = sp.evaluate("(()=>{const S=__game.S,h=S.hearts,g=__game.group();S.running=true;S.waiting=false;S.pos=g[0].b-S.bps*.6;__game.hitLane(g[0].lane);return[h,S.hearts]})()")
+    check(early[1]==early[0]-1, f"on Pro a tap much too early is a slip ({early})")
+    sp.screenshot(path=str(OUT / "tunes-pro.png"))
+    sctx.close()
     check(not errors, "no JavaScript errors" + ("" if not errors else ": " + "; ".join(errors[:3])))
     b.close()
 sys.exit(check.finish())
