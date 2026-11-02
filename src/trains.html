@@ -2,6 +2,13 @@
 <html lang="en">
 <head>
 <!--HEAD:Train Yard-->
+<style>
+.ty-tun{display:inline-block;flex:none;width:clamp(44px,12vw,62px);height:clamp(46px,12.5vw,64px);background:#161616;border:6px solid #b3a794;border-bottom:0;border-radius:40px 40px 0 0;box-sizing:border-box;margin-right:-4px;align-self:flex-end}
+.ty-bin{display:flex;flex-direction:column;align-items:center;gap:2px}.ty-bin b{font-size:clamp(22px,6vw,30px);line-height:1}
+.ty-cb{display:flex;flex-direction:column;align-items:center;gap:2px}
+.lr-combo .lr-cbt{height:auto;min-height:74px;padding:6px 8px}.ty-cb .lr-car{width:clamp(56px,15vw,72px)}.ty-cb .lr-nd b{font-size:22px}.ty-cb .lr-dice{width:30px;height:30px}
+.lr-flash .lr-dots{height:clamp(80px,22vw,120px)}
+</style>
 </head>
 <body>
 <!--KIT-->
@@ -9,7 +16,7 @@
 <script>
 (()=>{const U=TS_LEARN.util;TS.horn.load();
 
-TS_LEARN({id:"trains",name:"Train Yard",howto:[["🚂", "All aboard! Every level has train jobs to do."], ["🔢", "Hook up the cars in number order, count the passengers, and load the train."], ["🎨", "Finish the colour pattern and spell your name with letter cars."], ["🚃", "Every level you finish adds a car to YOUR train!"]],
+TS_LEARN({id:"trains",name:"Train Yard",howto:[["🚂", "All aboard! Every level has train jobs to do."], ["🔢", "Hook up cars in order, count passengers, find the cars in the tunnel, and load boxes."], ["👀", "Quick look! Passengers flash in the window. How many did you see?"], ["🎨", "Colours, patterns, first and last cars, sizes, sounds and your name."], ["🚃", "Every level you finish adds a car to YOUR train!"]],
 rounds:a=>a<=0?5:6,
 winText:(S,K)=>{TS.horn.play();const pr=K.save.grades[K.age]||{stars:{}},cars=Math.max(1,Object.keys(pr.stars||{}).length);
   return "🚂"+"🚃".repeat(Math.min(cars,12))+(cars>12?"+":"")+" Your train has "+cars+" car"+(cars>1?"s":"")+"!"},
@@ -17,10 +24,18 @@ make(n,i,r,a){
   /* Train-themed practice for a child who loves trains: number order, counting, ten-frame seats, patterns, letters of his name,
      comparing train lengths, missing numbers and sorting cargo. Content one grade back (pre-K for Kindergarten). */
   const COL=["#e2412e","#3b6fd9","#f2b705","#43a047","#8f5bd6","#f08a24","#1e9e8a","#e06aa6"],CN={"#e2412e":"red","#3b6fd9":"blue","#f2b705":"yellow","#43a047":"green","#8f5bd6":"purple","#f08a24":"orange","#1e9e8a":"teal","#e06aa6":"pink"};
-  const pr=TS.rngFrom(n*977+(a+3)*31),pool=["couple","passengers","board","pattern","longest","name","missing","cargo"].filter(k=>!(k==="missing"&&a<0&&n<6)&&!(k==="cargo"&&a<0&&n<4));
+  /* More kinds of train jobs (from the project's research notes): quick look (subitizing), the tunnel (number partners),
+     loading boxes (making a number from two parts), colour cars, first/last car (ordinal words), finding every car with a number,
+     sorting cargo by kind, lining cars up by size, counting on, and first sounds. Each level mixes 5-6 different jobs. */
+  const pr=TS.rngFrom(n*977+(a+3)*31),pool=["couple","passengers","board","pattern","longest","name","missing","cargo","quick","tunnel","bonds","colour","ordinal","hunt","sortcargo","sizes","counton","sound"]
+    .filter(k=>!(k==="missing"&&a<0&&n<6)&&!(k==="cargo"&&a<0&&n<4)&&!(k==="bonds"&&a<0&&n<8)&&!(k==="counton"&&a<0)&&!(k==="colour"&&a>=1)&&!(k==="sound"&&a>=1)&&!(k==="name"&&a>=1));
   for(let k=pool.length-1;k>0;k--){const j=Math.floor(pr()*(k+1));[pool[k],pool[j]]=[pool[j],pool[k]]}
-  const kind=i===0?"couple":pool[(i-1)%pool.length]==="couple"?pool[i%pool.length]:pool[(i-1)%pool.length];
+  const kind=pool[(i+n)%pool.length];
   const eng=U.car("#2b2f36","",true),num=v=>a<0?U.numdots(v):String(v);
+  const CNX={red:"#e2412e",blue:"#3b6fd9",yellow:"#f2b705",green:"#43a047",purple:"#8f5bd6",orange:"#f08a24",pink:"#e06aa6",brown:"#8b5a2b",grey:"#9aa3ad",black:"#262626"};
+  const CARGO=[["animals","🐄 🐖 🐑 🐔 🐴 🐐".split(" "),"🐾"],["food","🍎 🍌 🍇 🥕 🍞 🧀".split(" "),"🍎"],["building stuff","🪵 🧱 🪨 🛢️ 📦 🔩".split(" "),"🧱"],["toys","🧸 ⚽ 🪁 🎈 🧩 🪀".split(" "),"🧸"]];
+  const SOUNDS={b:[["ball","⚽"],["bear","🐻"],["bus","🚌"],["banana","🍌"]],m:[["moon","🌙"],["mouse","🐭"],["monkey","🐒"],["milk","🥛"]],s:[["sun","☀️"],["sock","🧦"],["seal","🦭"]],
+    f:[["fish","🐟"],["fox","🦊"],["fire","🔥"],["foot","🦶"]],d:[["dog","🐶"],["duck","🦆"],["door","🚪"]],p:[["pig","🐷"],["pizza","🍕"],["pear","🍐"]],t:[["tiger","🐯"],["turtle","🐢"],["tent","⛺"]]};
   if(kind==="couple"){ // hook up the cars in order behind the engine
     let seq;if(a<0){const k=n<=8?3:n<=20?4:5;seq=Array.from({length:k},(_,j)=>j+1)}
     else if(a===0){const k=n<=10?4:5,s=U.ri(r,1,10-k+1);seq=Array.from({length:k},(_,j)=>s+j);if(n>15&&r()<.4)seq.reverse()}
@@ -57,6 +72,54 @@ make(n,i,r,a){
     const k=5,s=a<0?1:U.ri(r,1,a===0?6:15),seq=Array.from({length:k},(_,j)=>s+j),hole=a<0?2:U.ri(r,1,k-2),ans=seq[hole],opts=U.near(r,ans,3,1,Math.max(s+k+2,6),1);
     return{type:"pick",say:"One train car is missing. Which number goes in the gap?",prompt:'<span class="ask">Which car is missing?</span><span class="lr-train">'+eng+seq.map((v,j)=>j===hole?U.car("#9aa3ad","?"):U.car(COL[j%COL.length],v)).join("")+"</span>",
       options:opts.map(v=>({key:v,html:num(v),say:String(v)})),answer:ans}}
+  if(kind==="quick"){ // quick look: passengers flash in the window, then hide (don't count, just look)
+    const N=a<0?U.ri(r,1,n<=10?3:n<=20?4:5):a===0?U.ri(r,n<=15?2:4,n<=15?6:9):U.ri(r,6,n<=15?10:18),k=a<0||N<=6?"dice":a===0?"pair":"frame",
+      split=k==="pair"?U.ri(r,Math.max(1,N-6),Math.min(6,N-1)):undefined;
+    return{type:"pick",flash:a<0?2600:2000,say:"Quick look! How many passengers are in the window?",prompt:'<span class="ask">👀 Quick look! How many passengers?</span><span class="lr-flash">'+U.dotpic(N,k,r,split)+"</span>",
+      options:U.near(r,N,a<0?3:4,1,Math.max(N+3,6),a<0?2:1).map(v=>({key:v,html:num(v),say:String(v)})),answer:N}}
+  if(kind==="tunnel"){ // number partners: some cars are in the tunnel
+    const N=a<0?U.ri(r,3,n<=10?4:5):a===0?U.ri(r,5,n<=15?7:10):U.ri(r,8,n<=15?12:20),h=U.ri(r,1,N-1),v=N-h;
+    const opts=[h];for(const x of[v,N,h+1,h-1,h+2])if(opts.length<(a<0?3:4)&&x>0&&!opts.includes(x))opts.push(x);
+    return{type:"pick",say:"The train has "+N+" cars. Some went into the tunnel. You can see "+v+". How many cars are in the tunnel?",
+      prompt:'<span class="ask">🚇 The train has <b>'+N+'</b> cars. How many are in the tunnel?</span><span class="lr-train"><i class="ty-tun"></i>'+Array.from({length:Math.min(v,10)},(_,k)=>U.car(COL[k%COL.length],"")).join("")+"</span>",
+      options:U.shuffle(r,opts).map(x=>({key:x,html:num(x),say:String(x)})),answer:h,text:"You can see "+v+". "+v+" and how many make "+N+"?"}}
+  if(kind==="bonds"){ // load boxes: tap cars that make the number together
+    const T=a<0?U.ri(r,3,5):a===0?(n<=15?5:10):a===1?10:20,x=U.ri(r,1,T-1),y=T-x,others=[];let g=0;
+    while(others.length<(a<0?2:3)&&g++<200){const v=U.ri(r,1,T-1);if(v!==x&&v!==y&&!others.includes(v))others.push(v)}
+    const cells=U.shuffle(r,[x,y,...others]);
+    return{type:"combo",target:T,say:"Load "+T+" boxes! Tap the cars that make "+T+" together.",prompt:'<span class="ask">📦 Tap cars that make <b>'+T+"</b> boxes</span>",
+      cells:cells.map(v=>({v,html:a<0?'<span class="ty-cb">'+U.car(COL[v%COL.length],"")+U.numdots(v)+"</span>":U.car(COL[v%COL.length],v),aria:v+" boxes"})),solution:[cells.indexOf(x),cells.lastIndexOf(y)]}}
+  if(kind==="colour"){ // colour words (brown and grey come up too: children learn them last)
+    const names=Object.keys(CNX),t=U.pick(r,names),opts=[t].concat(U.sample(r,names.filter(x=>x!==t),a<0?2:3));
+    return{type:"pick",say:"Hook up the "+t+" car!",prompt:'<span class="ask">🚃 Hook up the <b>'+t+"</b> car</span>",options:U.shuffle(r,opts).map(c=>({key:c,html:U.car(CNX[c],""),say:c,aria:c})),answer:t}}
+  if(kind==="ordinal"){ // first, second, third, last
+    const k=a<0?3:a===0?4:5,cols=U.sample(r,COL,k),W=a<0?[["first",0],["last",k-1]]:[["first",0],["second",1],["third",2],["last",k-1]].concat(a>=1?[["fourth",3]]:[]),[w,idx]=U.pick(r,W);
+    return{type:"pick",cols:Math.min(k,a<0?3:4),say:"Which car is "+w+"? The first car is right behind the engine.",prompt:'<span class="ask">Which car is <b>'+w+'</b>?</span><span class="lr-train">'+eng+cols.map(c=>U.car(c,"")).join("")+"</span>",
+      options:U.shuffle(r,cols.map((c,j)=>({key:"o"+j,html:U.car(c,""),say:"the "+CN[c]+" car",aria:CN[c]}))),answer:"o"+idx}}
+  if(kind==="hunt"){ // find every car with a number (confusable numbers are kept apart early on)
+    const max=a<0?5:a===0?10:20,t=U.ri(r,a<0?1:2,max),cnt=U.ri(r,2,a<0?3:4),size=a<0?6:9,BAD={6:9,9:6,2:5,5:2,1:7,7:1};
+    const others=[];let g=0;while(others.length<size-cnt&&g++<500){const v=U.ri(r,1,max);if(v!==t&&!(a<=0&&BAD[t]===v))others.push(v)}
+    const cells=U.shuffle(r,Array(cnt).fill(t).concat(others));
+    return{type:"hunt",cols:3,say:"Tap every car with the number "+t+"!",prompt:'<span class="ask">🔎 Tap every car with <b>'+t+"</b></span>"+(a<0?U.numdots(t):""),cells:cells.map(v=>({html:U.car(U.pick(r,COL),v),ok:v===t,aria:"car "+v}))}}
+  if(kind==="sortcargo"){ // sort cargo by kind
+    const G=U.sample(r,CARGO,a<0?2:3),items=[];G.forEach(([,em])=>U.sample(r,em,a<0?2:2).forEach(e=>items.push([G.findIndex(x=>x[1]===em),e])));
+    return{type:"sort",say:"Load the cargo! Put each one in the right car.",prompt:'<span class="ask">🚃 Put each thing in the right car</span>',
+      bins:G.map(([nm,,icon],j)=>({key:"g"+j,html:'<span class="ty-bin">'+U.car(COL[j*2],"")+"<b>"+icon+"</b></span>",label:nm})),items:U.shuffle(r,items).map(([j,e])=>({key:"g"+j,html:'<span style="font-size:1.6em">'+e+"</span>",aria:e}))}}
+  if(kind==="sizes"){ // line the cars up by size
+    const k=a<0?3:a===0?4:5,big=a>=0&&r()<.4,cols=U.sample(r,COL,k),W=[48,64,80,96,112];
+    const tiles=cols.map((c,j)=>({key:"s"+j,html:U.car(c,"").replace('class="lr-car"','class="lr-car" style="width:'+W[j]+'px"'),aria:["smallest","small","middle","big","biggest"][j]+" car",say:j===0?"the smallest":j===k-1?"the biggest":"next"}));
+    return{type:"order",wide:true,say:big?"Line up the cars from the biggest to the smallest!":"Line up the cars from the smallest to the biggest!",prompt:'<span class="ask">📏 Line them up: '+(big?"biggest first":"smallest first")+"</span>",
+      tiles:U.mix(r,tiles),answer:(big?tiles.slice().reverse():tiles).map(t=>t.key)}}
+  if(kind==="counton"){ // the car shows how many are on; more get on
+    const s0=a===0?U.ri(r,2,n<=15?5:8):U.ri(r,8,18),b=U.ri(r,1,3),ans=s0+b;
+    return{type:"pick",say:s0+" people are on the train. "+b+" more get on. How many now?",prompt:'<span class="ask">'+s0+" on the train. "+b+' more get on. How many now?</span><span class="lr-train">'+U.car("#e2412e",s0)+'</span><span class="lr-coach">'+"🧑".repeat(b)+"</span>",
+      options:U.near(r,ans,4,1,ans+4,2).map(v=>({key:v,html:num(v),say:String(v)})),answer:ans,text:"Start at "+s0+" and count on "+b+"."}}
+  if(kind==="sound"){ // first sounds: pre-K matches pictures by sound; K picks the letter
+    const L=Object.keys(SOUNDS),t=U.pick(r,a<0?["m","s","f","b"]:L),[q0,ans]=U.sample(r,SOUNDS[t],2),near={m:"n",b:"p",p:"b",d:"t",t:"d",f:"s",s:"f"},oth=U.sample(r,L.filter(x=>x!==t&&near[t]!==x),a<0?1:2);
+    if(a===0)return{type:"pick",say:q0[0]+". What letter does "+q0[0]+" start with?",prompt:'<span class="ask">🚃 <span style="font-size:1.6em">'+q0[1]+"</span> "+q0[0]+" starts with…</span>",
+      options:U.shuffle(r,[t].concat(oth)).map(x=>({key:x,html:U.car(COL["bdfmpst".indexOf(x)%COL.length],x),say:x,aria:x})),answer:t};
+    return{type:"pick",say:"Which one starts like "+q0[0]+"?",prompt:'<span class="ask">Which one starts like <span style="font-size:1.4em">'+q0[1]+"</span> "+q0[0]+"?</span>",
+      options:U.shuffle(r,[ans].concat(oth.map(x=>U.pick(r,SOUNDS[x])))).map(w=>({key:w[0],html:'<span style="font-size:1.8em">'+w[1]+"</span>",say:w[0],aria:w[0]})),answer:ans[0]}}
   // cargo: sort shapes (or colours for pre-K) into the right freight car
   const shapes=a<0?U.sample(r,["circle","square","triangle"],2):U.sample(r,["circle","square","triangle","star","heart"],3);
   const items=[];for(const sh of shapes)for(let k=0;k<(a<0?2:2);k++)items.push(sh);while(items.length<(a<0?4:6))items.push(U.pick(r,shapes));

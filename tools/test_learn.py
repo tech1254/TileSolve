@@ -26,6 +26,7 @@ VALIDATE = """(()=>{const bad=[],TR=TS_LEARN.TRACE;let rounds=0;
     else if(R.type==='trace'){if(!TR[R.ch])bad.push(id+' no strokes for '+R.ch)}
     else if(R.type==='meet'){if(!R.up||!R.pic||!R.word)bad.push(id+' meet missing letter/picture')}
     else if(R.type==='sing'){if(!R.letters.length||R.letters.length!==R.notes.length||R.notes.some(m=>!(m>=48&&m<=84)))bad.push(id+' bad song')}
+    else if(R.type==='combo'){const t=R.solution.reduce((x,k)=>x+R.cells[k].v,0);if(t!==R.target||new Set(R.solution).size!==R.solution.length)bad.push(id+' combo solution does not make target')}
     else bad.push(id+' unknown type')}}
   return{bad:bad.slice(0,8),n:bad.length,rounds}})()"""
 
