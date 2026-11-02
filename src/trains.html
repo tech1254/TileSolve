@@ -25,24 +25,25 @@
 </head>
 <body>
 <!--KIT-->
+<script src="../../shared/stickers.js?v=__V__"></script>
 <!--LEARN-->
 <script>
 (()=>{const U=TS_LEARN.util;TS.horn.load();
 
 /* ---------- rewards, shared with Train Trip: everything earned here is on his Train Trip train ----------
-   A new level won for the first time: a new car (and a sticker every third one). Every level won: 🎟️ tickets,
+   A new level won for the first time: a new car and a sticker (a full sticker page earns bonus tickets). Every level won: 🎟️ tickets,
    one per round minus oops (at least 1), spent in the Train Shop on engines, paint and special cars. */
 const TV=TS.gameSave("trip",{cars:[],forks:0,stations:0,step:{},hist:{},bag:[]}),TD=TV.data;
 const GIFTS=["coal","passenger","tanker","logs","box","grain","animal","mail","caboose","ice","party","flat"],CARN={rainbow:"rainbow car",passenger:"passenger car",coal:"coal car",tanker:"tank car",box:"box car",flat:"flat car",logs:"log car",caboose:"caboose",animal:"animal car",party:"party car",ice:"ice cream car",grain:"grain car",mail:"mail car"};
 const ICON={passenger:"🧑",coal:"⚫",tanker:"💧",box:"📦",logs:"🪵",caboose:"🏮",animal:"🐄",party:"🎈",ice:"🍦",grain:"🌾",mail:"✉️",rainbow:"🌈"};
 const PALC=["#e2412e","#3b6fd9","#f2b705","#43a047","#8f5bd6","#f08a24","#1e9e8a","#e06aa6"];
-const STICK=[["🚂","steam train"],["🚄","fast train"],["🚇","subway train"],["🚋","tram"],["🚞","mountain train"],["🚉","station"],["🦬","bison"],["🫎","moose"],["🦌","deer"],["🐻","bear"],["🦫","beaver"],["🦉","owl"],
-  ["🦅","eagle"],["🐿️","squirrel"],["🦊","fox"],["🐇","bunny"],["🦆","duck"],["🐸","frog"],["🦋","butterfly"],["⭐","star"],["🌈","rainbow"],["🎈","balloon"],["🍦","ice cream"],["🧸","teddy bear"],["🚀","rocket"],["🦖","dinosaur"],["🏆","trophy"],["🍁","maple leaf"],["❄️","snowflake"],["🚜","tractor"],["🚒","fire truck"]];
+const SB=TS_STICKERS,PAGE_BONUS=10;
 const carHTML=c=>U.car(c.k==="rainbow"?"#8f5bd6":c.c,c.k==="flat"?(c.e||"🦖"):ICON[c.k]||"");
 function reward(S,K){const pr=K.save.grades[K.age]||{stars:{}},first=!(pr.stars||{})[S.n],t=Math.max(1,S.total-S.miss);K.save.tickets=(K.save.tickets||0)+t;let out=[],say=[];
   if(first){const k=GIFTS[(TD.yardGifts||0)%GIFTS.length];TD.yardGifts=(TD.yardGifts||0)+1;const last=TD.cars[TD.cars.length-1];let c;do c=U.pick(Math.random,PALC);while(last&&c===last.c);
     TD.cars.push({k,c,e:k==="flat"?U.pick(Math.random,["🦖","🧸","🚜","🎁"]):k==="animal"?"🐄":"🚂",seed:Math.floor(Math.random()*1e6)});out.push("🎁 A new "+CARN[k]+" for your train!");say.push("You got a new "+CARN[k]+" for your train!");
-    if(TD.yardGifts%3===0){TD.stk=TD.stk||{};const fresh=STICK.filter(x=>!TD.stk[x[0]]),st=U.pick(Math.random,fresh.length?fresh:STICK);TD.stk[st[0]]=(TD.stk[st[0]]||0)+1;out.push(st[0]+" A "+st[1]+" sticker!");say.push("And a "+st[1]+" sticker for your sticker book!")}
+    TD.stk=TD.stk||{};const st=SB.next(TD.stk);out.push(st.em+(st.shiny?" A shiny ":" A ")+st.name+" sticker!");say.push(st.shiny?"And a shiny "+st.name+" sticker!":"And a "+st.name+" sticker for your sticker book!");
+    if(st.pageDone){K.save.tickets+=PAGE_BONUS;out.push(st.page.icon+"⭐ "+st.page.title+" page full! +"+PAGE_BONUS+" 🎟️");say.push("You filled the "+st.page.title+" page! "+PAGE_BONUS+" bonus tickets!");setTimeout(()=>SB.celebrate(st.page,PAGE_BONUS),600)}
     TV.save()}
   K.persist();ticketChip();out.push("+"+t+" 🎟️ (you have "+K.save.tickets+")");setTimeout(()=>TS.say(say.join(" ")||"You earned "+t+" tickets!"),1900);
   return" "+out.join(" ")+" Your train has "+TD.cars.length+" car"+(TD.cars.length===1?"":"s")+"."}
@@ -172,9 +173,11 @@ function sheet(html){if(!ov){ov=document.createElement("div");ov.className="ty-o
 function engineHTML(){const e=TD.engine||"steam",col=TD.paint||(TS.players.current()||{}).color||"#e2412e";return'<span class="ty-eng" style="--c:'+col+'">'+(e==="diesel"?"🚆":e==="bullet"?"🚄":"🚂")+"</span>"}
 function myTrain(){const cars=TD.cars;sheet('<div class="ty-row"><h2>🚂 My train</h2><button class="ty-btn" id="tyClose" type="button">Close</button></div>'+
     '<div class="ty-train">'+engineHTML()+cars.map(carHTML).join("")+"</div>"+
-    '<p class="ty-note">'+cars.length+" car"+(cars.length===1?"":"s")+" · "+Object.keys(TD.stk||{}).length+" stickers · ride it in <b>Train Trip</b>!</p>"+
+    '<p class="ty-note">'+cars.length+" car"+(cars.length===1?"":"s")+" · "+SB.total(TD.stk||{})+" stickers · ride it in <b>Train Trip</b>!</p>"+
+    '<button class="ty-btn" id="tyBook" type="button">📒 My stickers</button> '+
     '<button class="ty-btn go" id="tyShop" type="button">🎟️ Train Shop ('+(KY.save.tickets||0)+" tickets)</button>");
-  document.getElementById("tyClose").onclick=()=>{ov.hidden=true};document.getElementById("tyShop").onclick=shop}
+  document.getElementById("tyClose").onclick=()=>{ov.hidden=true};document.getElementById("tyShop").onclick=shop;
+  document.getElementById("tyBook").onclick=()=>{ov.hidden=true;SB.open(TD.stk=TD.stk||{},{onClose:myTrain})}}
 function shop(msg){const t=KY.save.tickets||0,o=own();
   const item=it=>{const have=it.kind==="engine"?o[it.id]:it.kind==="paint"?o["p_"+it.id]:false,using=it.kind==="engine"?(TD.engine||"steam")===it.id:it.kind==="paint"&&TD.paint===it.col;
     const look=it.kind==="engine"?'<span class="ty-big">'+it.icon+"</span>":it.kind==="paint"?'<span class="ty-sw" style="background:'+it.col+'"></span>':carHTML(it.car);

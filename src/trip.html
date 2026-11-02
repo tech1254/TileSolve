@@ -119,13 +119,9 @@ body{overflow:hidden}
 .bookbtn{padding:6px 12px;font-size:17px;text-transform:none}
 .bookbtn.bump{animation:tbump .5s}
 @keyframes tbump{40%{transform:scale(1.35)}}
-.bookov{position:absolute;inset:0;display:grid;place-items:center;background:rgba(0,0,0,.35);z-index:5}
-.sbook{display:grid;grid-template-columns:repeat(auto-fill,minmax(58px,1fr));gap:8px;width:min(400px,80vw);max-height:48vh;overflow-y:auto;padding:4px}
-.sbook i{position:relative;font-style:normal;aspect-ratio:1;border-radius:50%;display:grid;place-items:center;font-size:32px;background:#fff;box-shadow:0 0 0 3px #f2c230,0 3px 6px rgba(0,0,0,.3)}
-.sbook i.no{background:rgba(255,255,255,.12);box-shadow:inset 0 0 0 2px rgba(255,255,255,.25);color:rgba(255,255,255,.4);font-size:22px;font-family:var(--font-sign)}
-.sbook i b{position:absolute;right:-4px;bottom:-4px;background:var(--target);color:#fff;font:700 12px var(--font-body);border-radius:10px;padding:1px 5px}
 .stk{position:absolute;left:0;top:0;width:110px;height:110px;margin:-55px 0 0 -55px;border-radius:50%;background:#fff;display:grid;place-items:center;font-size:64px;
   box-shadow:0 0 0 6px #f2c230,0 10px 24px rgba(0,0,0,.35);z-index:4;pointer-events:none;transition:transform .8s cubic-bezier(.5,-.3,.6,1),opacity .8s;animation:twig .9s ease-in-out 2}
+.stk.shiny{background:radial-gradient(circle at 35% 30%,#fff,#fff3b0 60%,#ffd94a);box-shadow:0 0 0 6px #ffb300,0 0 30px 10px rgba(255,210,40,.8)}
 .yardbtn{font-family:var(--font-kid);font-weight:700;font-size:20px;background:var(--panel);color:#fff;border:2px solid var(--lane);border-radius:16px;padding:10px 20px;cursor:pointer}
 .yard{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;max-height:46vh;overflow-y:auto;padding:4px}
 .ycar{position:relative;background:#cfe6ff;border-radius:14px;padding:4px 4px 0}
@@ -140,6 +136,7 @@ body{overflow:hidden}
 </head>
 <body>
 <!--KIT-->
+<script src="../../shared/stickers.js?v=__V__"></script>
 <!--LEARN-->
 <div class="trip">
   <header class="tbar">
@@ -154,7 +151,6 @@ body{overflow:hidden}
     <div class="askc" id="ask" hidden><button class="spk" id="spk" type="button" aria-label="Hear it again">🔊</button><span id="askT"></span></div>
     <button class="horn" id="horn" type="button" aria-label="Toot the horn">📯</button>
     <div class="mid" id="mid"></div>
-    <div class="bookov" id="bookov" hidden><div class="stcard"><h2>My stickers</h2><p id="bookC"></p><div class="sbook" id="sbook"></div><button class="gobtn" id="bookX" type="button">Back to the train 🚂</button></div></div>
   </div>
 </div>
 <script>
@@ -627,7 +623,7 @@ function tap(f,k){if(mode!=="ask"||STOPS[sp]!==f||f.choice!=null)return;const q=
     TS.say(U.pick(R,["Yes!","Great!","You got it!","Right track!","All aboard!"])+" "+(q.yes||o.say[0].toUpperCase()+o.say.slice(1)+"!"));
     if(q.flash){clearTimeout(flashT);const el=$("askT").querySelector(".flash");if(el)el.classList.remove("hid")}
     learnt(q.kind,!f.miss);save.forks++;const got=maybeSticker(f,!f.miss);save.sinceStk=sinceStk;SV.save();sp++;mode="go";
-    if(got)setTimeout(()=>TS.say("A sticker! A "+got[1]+" for your sticker book!"),1000);
+    if(got)setTimeout(()=>TS.say(got[2]?"A shiny "+got[1]+" sticker! Sparkly!":"A sticker! A "+got[1]+" for your sticker book!"),1000);
     setTimeout(()=>{$("ask").hidden=true;toot();mode="run"},got?2300:900);return}
   f.miss++;legMiss++;TS.music.fx("bad");sg.el.classList.add("no");
   const right=f.signs[q.opts.findIndex(x=>x.key===q.ans)].el,left=f.signs.filter(x=>!x.el.classList.contains("no")).length;
@@ -640,28 +636,25 @@ function placeSigns(){for(const f of FORKS){if(!f.signs.length)continue;const sx
   f.signs.forEach((x,k)=>{const w=x.el.offsetWidth,h=x.el.offsetHeight;x.el.style.transform="translate("+(sx-w/2)+"px,"+((BASE+f.offs[k])*s-h/2)+"px)"})}}
 
 /* ---------- stickers: sometimes a right answer pops out a sticker for the sticker book ---------- */
-const STK=(()=>{const f=TS.players.fav&&TS.players.fav(),fav=f?f.em:[];const base=[["🚂","steam train"],["🚄","fast train"],["🚇","subway train"],["🚋","tram"],["🚞","mountain train"],["🚉","station"],
-  ["🦬","bison"],["🫎","moose"],["🦌","deer"],["🐻","bear"],["🦫","beaver"],["🦉","owl"],["🦅","eagle"],["🐿️","squirrel"],["🐺","wolf"],["🦊","fox"],["🐇","bunny"],["🦆","duck"],["🐸","frog"],["🦋","butterfly"],
-  ["⭐","star"],["🌈","rainbow"],["🎈","balloon"],["🍦","ice cream"],["🍩","donut"],["🧸","teddy bear"],["🚀","rocket"],["🦖","dinosaur"],["🦄","unicorn"],["🏆","trophy"],["🌻","sunflower"],["🍁","maple leaf"],
-  ["❄️","snowflake"],["🌞","sunshine"],["🐶","puppy"],["🐱","kitty"],["🚜","tractor"],["🚒","fire truck"],["⚽","soccer ball"],["🎉","party"]];
-  const seen=new Set(),out=[];for(const x of fav.concat(base))if(!seen.has(x[0])){seen.add(x[0]);out.push(x)}return out})();
+const SB=TS_STICKERS,STK=SB.ALL.map(x=>[x.em,x.name]);
 save.stk=save.stk||{};let sinceStk=save.sinceStk||0;
-function bookN(){$("bookN").textContent=Object.keys(save.stk).length}
+function bookN(){$("bookN").textContent=SB.total(save.stk)}
+/* A full sticker page earns Train Yard tickets. */
+const PAGE_BONUS=10;
+function pageBonus(pg){const y=TS.gameSave("trains",{});y.data.tickets=(y.data.tickets||0)+PAGE_BONUS;y.save();SB.celebrate(pg,PAGE_BONUS);TS.music.fx("win");
+  TS.say("You filled the "+pg.title+" page! Here are "+PAGE_BONUS+" tickets for the Train Shop!")}
 function maybeSticker(f,firstTry){if(!firstTry){sinceStk=0;return null}sinceStk++;
   if(!(R()<.33||sinceStk>=3))return null;sinceStk=0;save.sinceStk=0;
-  const fresh=STK.filter(x=>!save.stk[x[0]]),st=U.pick(R,fresh.length?fresh:STK);save.stk[st[0]]=(save.stk[st[0]]||0)+1;SV.save();
-  const el=document.createElement("div");el.className="stk";el.textContent=st[0];
+  const n=SB.next(save.stk,R),st=[n.em,n.name];SV.save();
+  const el=document.createElement("div");el.className="stk"+(n.shiny?" shiny":"");el.textContent=st[0];
   const sx=f?(f.xm+46-camX)*s:W/2,sy=f?(BASE+f.offs[f.choice])*s-60*s:H*.3;el.style.transform="translate("+sx+"px,"+sy+"px)";$("view").appendChild(el);TS.music.fx("win");
   setTimeout(()=>{const b=$("book").getBoundingClientRect(),v=$("view").getBoundingClientRect();el.style.animation="none";
     el.style.transform="translate("+(b.left+b.width/2-v.left)+"px,"+(b.top+b.height/2-v.top)+"px) scale(.25)";el.style.opacity=".2"},1300);
-  setTimeout(()=>{el.remove();bookN();$("book").classList.remove("bump");void $("book").offsetWidth;$("book").classList.add("bump")},2150);
-  return st}
+  setTimeout(()=>{el.remove();bookN();$("book").classList.remove("bump");void $("book").offsetWidth;$("book").classList.add("bump");if(n.pageDone)pageBonus(n.page)},2150);
+  if(n.shiny)st.push("shiny");return st}
 let paused=false;
-function openBook(){paused=true;const have=STK.filter(x=>save.stk[x[0]]).length;$("bookC").textContent=have+" of "+STK.length+" stickers";
-  $("sbook").innerHTML=STK.map(x=>save.stk[x[0]]?'<i title="'+x[1]+'">'+x[0]+(save.stk[x[0]]>1?"<b>×"+save.stk[x[0]]+"</b>":"")+"</i>":'<i class="no">?</i>').join("");
-  $("bookov").hidden=false;TS.say(have?"You have "+have+" stickers!":"No stickers yet. Pick the right tracks to find some!")}
-$("book").onclick=openBook;$("bookX").onclick=()=>{$("bookov").hidden=true;paused=false};
-$("sbook").addEventListener("click",e=>{const i=e.target.closest("i");if(!i||i.classList.contains("no"))return;const x=STK.find(y=>i.textContent.startsWith(y[0]));if(x)TS.say(x[1])});
+function openBook(){paused=true;SB.open(save.stk,{onClose:()=>{paused=false}})}
+$("book").onclick=openBook;
 
 /* ---------- stops between the Ys (one per leg, taking turns): a passenger stop, a broken bridge, animals on the track ----------
    Passenger stop: "pick up 4" (counting out a set, research: the Producer step), seats laid out as a five- or ten-frame;
@@ -678,7 +671,7 @@ function addSpecial(x,biome){const kind=nextSpecial();
 const PL={moose:"moose",deer:"deer",sheep:"sheep",bison:"bison"},plural=(n,w)=>n===1?w:(PL[w]||w+"s");
 function startTask(st){mode="task";task={st,miss:0};$("ask").hidden=true;if(st.type==="animal")animalTask(st);else if(st.type==="pickup")pickupTask(st);else bridgeTask(st)}
 function endTask(firstTry,kind){if(kind)learnt(kind,firstTry);const got=kind?maybeSticker(null,firstTry):null;save.sinceStk=sinceStk;SV.save();task=null;sp++;mode="go";
-  if(got)setTimeout(()=>TS.say("A sticker! A "+got[1]+" for your sticker book!"),900);
+  if(got)setTimeout(()=>TS.say(got[2]?"A shiny "+got[1]+" sticker! Sparkly!":"A sticker! A "+got[1]+" for your sticker book!"),900);
   setTimeout(()=>{card("");$("ask").hidden=true;$("horn").classList.remove("glow");toot();mode="run"},got?2300:1300)}
 function animalTask(st){const n=st.n;task.say=n===1?"Oh no! A "+st.nm+" is on the track! Toot the horn to move it!":"Oh no! "+n+" "+plural(n,st.nm)+" are on the track! Toot the horn "+n+" times. One toot for each "+st.nm+"!";
   $("askT").innerHTML=(n>1?"<b>"+n+"</b> ":"")+'<span class="emo">'+st.em+"</span> on the track! Toot the horn"+(n>1?" <b>"+n+"</b> times":"")+" 📯";$("ask").hidden=false;$("horn").classList.add("glow");TS.say(task.say)}
@@ -822,7 +815,7 @@ if(!CanvasRenderingContext2D.prototype.roundRect)CanvasRenderingContext2D.protot
 TS.horn.load();resize();score();bookN();const st0=station(0,stName(save.stations));STOPS.push(st0);sp=1;newLeg(0);
 startCard();requestAnimationFrame(frame);
 TS.howto.first("trip","Train Trip",HOWTO);
-window.__trip={STK,openBook,stickerNext(){sinceStk=99},tunnels:()=>TUNNELS,gives,get station(){return STATIONS.find(x=>x.stop===tx)},get mode(){return mode},get fork(){const f=STOPS[sp];return f&&f.type==="fork"?f:null},tap,save,get tx(){return tx},
+window.__trip={STK,SB,openBook,sticker(){sinceStk=99;return maybeSticker(null,true)},stickerNext(){sinceStk=99},tunnels:()=>TUNNELS,gives,get station(){return STATIONS.find(x=>x.stop===tx)},get mode(){return mode},get fork(){const f=STOPS[sp];return f&&f.type==="fork"?f:null},tap,save,get tx(){return tx},
   /* tests: answer the waiting Y right (or wrong), skip ahead to the next stop */
   right(){const f=STOPS[sp];if(mode==="task"&&task){const t=task,st=t.st;if(st.type==="animal")for(let k=st.gone;k<st.n;k++)hornTap();
       else if(st.type==="pickup"){for(let j=0;j<t.ppl.length&&t.have+t.on.length<t.need;j++)t.board(j);t.go()}else for(const v of t.vals.slice(t.next))t.place(v);return}

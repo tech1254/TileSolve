@@ -65,10 +65,26 @@ with sync_playwright() as p:
         pg.reload(); pg.wait_for_timeout(600)
         check(pg.evaluate("__trip.save.cars.length") == 1 and pg.evaluate("__trip.save.stations") == 1, f"grade {grade}: the train and stations are saved")
         pg.click("#book", force=True); pg.wait_for_timeout(200)
-        check(pg.is_visible("#bookov") and pg.locator("#sbook i:not(.no)").count() == pg.evaluate("Object.keys(__trip.save.stk).length") and pg.locator("#sbook i").count() == pg.evaluate("__trip.STK.length"),
-              f"grade {grade}: the sticker book shows the stickers found and spaces for the rest")
-        pg.click("#bookX", force=True); pg.wait_for_timeout(200)
-        check(not pg.is_visible("#bookov"), f"grade {grade}: the sticker book closes")
+        check(pg.is_visible(".stb-ov") and pg.locator(".stb-sheet i:not(.no)").count() == pg.evaluate("Object.keys(__trip.save.stk).length") and pg.locator(".stb-sheet i").count() == 20
+              and pg.locator(".stb-tab").count() == 16, f"grade {grade}: the sticker book opens on a page of 20 with the found stickers and spaces for the rest")
+        pg.click(".stb-arr[data-d='1']", force=True); pg.wait_for_timeout(150)
+        check(pg.locator(".stb-tab.on").get_attribute("data-i") == "1", f"grade {grade}: the arrow turns the page")
+        pg.click(".stb-x", force=True); pg.wait_for_timeout(200)
+        check(not pg.is_visible(".stb-ov") and not pg.evaluate("__trip.SB.isOpen()"), f"grade {grade}: the sticker book closes")
+        if grade == 0:
+            r = pg.evaluate("""()=>{const SB=__trip.SB,o=SB.order(),p0=o[0],stk={};p0.items.slice(0,19).forEach(x=>stk[x[0]]=1);
+              const a=SB.next(stk),b=SB.next(stk);stk['🦬']=2;const c=SB.next(Object.assign({}, {'🦬':2}),()=>0);
+              const old={'🚂':3,'🦄':1,'🐿️':2,'🎉':1};const full={};SB.ALL.forEach(x=>full[x.em]=1);const d=SB.next(full);
+              return {pages:SB.PAGES.length,all:SB.ALL.length,first:p0.id,aDone:a.pageDone,aPage:a.page.id,bPage:b.page.id,bDone:b.pageDone,oldN:SB.total(old),repeat:!!d.em&&d.count===2,shiny:SB.next({'🚂':2},()=>0)}}""")
+            check(r["pages"] == 16 and r["all"] == 320, f"sticker book has 16 pages and 320 stickers ({r['pages']}, {r['all']})")
+            check(r["aDone"] and r["aPage"] == r["first"] and r["bPage"] != r["first"] and not r["bDone"], f"the last sticker on a page fills it, then new stickers start the next page ({r})")
+            check(r["oldN"] == 4, "stickers from the old book all count in the new one")
+            check(r["repeat"], "once every page is full, stickers repeat")
+            pg.evaluate("__trip.save.stk={}; __trip.SB.order()[0].items.slice(0,19).forEach(x=>__trip.save.stk[x[0]]=1); localStorage.removeItem('tilesolve:p:'+TS.players.current().id+':trains')")
+            pg.evaluate("__trip.sticker()"); pg.wait_for_timeout(2400)
+            tix = pg.evaluate("(JSON.parse(localStorage.getItem('tilesolve:p:'+TS.players.current().id+':trains')||'{}').tickets)||0")
+            check(tix == 10 and pg.locator(".stb-new").count() == 1, f"filling a page celebrates and gives 10 Train Yard tickets ({tix})")
+            check(pg.text_content("#bookN") == "20", "the 📒 counts the full page")
         pg.click("#yard", force=True); pg.wait_for_timeout(300)
         check(pg.locator(".ycar").count() == 1, f"grade {grade}: My train shows every car")
         pg.click(".ycar button", force=True); pg.wait_for_timeout(300)
