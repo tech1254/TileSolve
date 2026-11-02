@@ -109,7 +109,7 @@ make(n,i,r,a){
     const k=a<0?3:a===0?4:5,big=a>=0&&r()<.4,cols=U.sample(r,COL,k),W=[48,64,80,96,112];
     const tiles=cols.map((c,j)=>({key:"s"+j,html:U.car(c,"").replace('class="lr-car"','class="lr-car" style="width:'+W[j]+'px"'),aria:["smallest","small","middle","big","biggest"][j]+" car",say:j===0?"the smallest":j===k-1?"the biggest":"next"}));
     return{type:"order",wide:true,say:big?"Line up the cars from the biggest to the smallest!":"Line up the cars from the smallest to the biggest!",prompt:'<span class="ask">📏 Line them up: '+(big?"biggest first":"smallest first")+"</span>",
-      tiles:U.mix(r,tiles),answer:(big?tiles.slice().reverse():tiles).map(t=>t.key)}}
+      tiles:U.mix(r,big?tiles.slice().reverse():tiles),answer:(big?tiles.slice().reverse():tiles).map(t=>t.key)}} // shuffled so it's never already in the right order
   if(kind==="counton"){ // the car shows how many are on; more get on
     const s0=a===0?U.ri(r,2,n<=15?5:8):U.ri(r,8,18),b=U.ri(r,1,3),ans=s0+b;
     return{type:"pick",say:s0+" people are on the train. "+b+" more get on. How many now?",prompt:'<span class="ask">'+s0+" on the train. "+b+' more get on. How many now?</span><span class="lr-train">'+U.car("#e2412e",s0)+'</span><span class="lr-coach">'+"🧑".repeat(b)+"</span>",
