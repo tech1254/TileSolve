@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#161b21">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box;height:100%}body{margin:0}[hidden]{display:none!important}</style>
+<title>Colour by Number · Tile Solve</title>
+<meta name="apple-mobile-web-app-title" content="Tile Solve">
+<link rel="apple-touch-icon" href="../../icon-180.png">
+<link rel="icon" type="image/png" href="../../icon-512.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Barlow:wght@400;600;700&display=swap">
+<link rel="stylesheet" href="../../shared/ts.css?v=b9dce2af">
+<link rel="stylesheet" href="../../shared/game.css?v=b9dce2af">
+<style>
+.pb{width:100%;flex:1;min-height:0;display:flex;flex-direction:column;align-items:center;gap:8px}
+.pb-title{margin:0;font:700 17px var(--font-body);text-align:center}
+.pb-title small{display:block;color:var(--muted);font-size:13px;font-weight:600}
+.pb-wrap{flex:1;min-height:0;width:100%;display:flex;justify-content:center;align-items:center}
+.pb-cv{display:block;touch-action:none;user-select:none;-webkit-user-select:none;border-radius:6px;box-shadow:0 6px 20px rgba(0,0,0,.35)}
+.pb-pal{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;max-width:700px}
+.pb-pal button{position:relative;width:48px;height:48px;border-radius:50%;border:3px solid rgba(255,255,255,.25);font:800 18px var(--font-body);cursor:pointer;touch-action:manipulation;display:grid;place-items:center;padding:0}
+.pb-pal button.on{border-color:#fff;transform:translateY(-4px);box-shadow:0 0 0 3px var(--paint)}
+.pb-pal button.done{opacity:.45}
+.pb-pal button small{position:absolute;bottom:-6px;right:-6px;background:var(--panel);color:var(--text);border-radius:9px;font-size:11px;padding:1px 5px;border:1px solid var(--lane)}
+.pb-bar{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.pb-bar button{border:0;border-radius:999px;padding:7px 14px;font:700 14px var(--font-body);background:var(--panel);color:var(--text);cursor:pointer;touch-action:manipulation}
+.pb-bar button[aria-pressed="true"]{background:var(--paint);color:var(--night)}
+.pb-ov{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:flex-end;justify-content:center;z-index:50}
+.pb-ov[hidden]{display:none}
+.pb-card{background:var(--night);color:var(--text);width:100%;max-width:620px;max-height:92vh;overflow:auto;border-radius:22px 22px 0 0;padding:16px 14px 22px;display:flex;flex-direction:column;gap:12px;box-sizing:border-box}
+.pb-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.pb-row h2{margin:0;flex:1;font-size:21px}
+.pb-btn{border:0;border-radius:12px;padding:10px 14px;font:700 16px var(--font-body);background:var(--panel);color:var(--text);cursor:pointer;touch-action:manipulation}
+.pb-btn.go{background:var(--paint);color:var(--night)}
+.pb-btn:disabled{opacity:.4}
+.pb-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px}
+.pb-item{background:var(--panel);border-radius:14px;padding:8px;display:flex;flex-direction:column;gap:6px;align-items:center;position:relative}
+.pb-item canvas{width:100%;aspect-ratio:1;image-rendering:pixelated;border-radius:8px;cursor:pointer;background:#f1f1f1}
+.pb-item b{font-size:13px;text-align:center}
+.pb-item .x{position:absolute;top:2px;right:2px;width:30px;height:30px;border-radius:50%;border:0;background:rgba(0,0,0,.55);color:#fff;font-weight:800;cursor:pointer}
+.pb-empty{color:var(--muted);text-align:center;margin:6px 0}
+.pb-prev{display:flex;gap:10px;justify-content:center;align-items:center;flex-wrap:wrap}
+.pb-prev canvas{width:min(42vw,240px);aspect-ratio:1;border-radius:10px;background:#222;image-rendering:pixelated}
+.pb-opt{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.pb-opt span{font-weight:700;min-width:64px}
+.pb-opt button{border:0;border-radius:999px;padding:6px 12px;font:700 14px var(--font-body);background:var(--panel);color:var(--text);cursor:pointer}
+.pb-opt button[aria-pressed="true"]{background:var(--paint);color:var(--night)}
+.pb-opt input[type=range]{flex:1;min-width:140px;accent-color:var(--paint)}
+.pb-name{font:700 16px var(--font-body);padding:9px 12px;border-radius:12px;border:2px solid var(--lane);background:transparent;color:var(--text);flex:1;min-width:0}
+.pb-note{color:var(--muted);font-size:13px;margin:0}
+</style>
+</head>
+<body>
+<script src="../../shared/ts.js?v=b9dce2af"></script>
+<script src="../../shared/kit.js?v=b9dce2af"></script>
+<script>
+(()=>{
+/* Colour by Number: pixel pictures where every square has a number; pick a colour from the palette and paint the squares
+   with that number (drag to paint, or use the bucket to fill a whole patch). Built-in pictures are drawn on the device from
+   emoji, then shrunk to a grid and reduced to a few colours. 📷 My pictures turns a photo into a paintable picture the same way:
+   the photo never leaves the device and only the small numbered grid is kept (in this browser's storage).
+   Pictures get bigger and use more colours as levels go up; younger players get fewer, bigger squares and the bucket. */
+let K,S=null;const R=Math.random;
+// grid size by grade, from the first picture to the last (more squares for older players)
+const RANGE=a=>a<=0?[12,18]:a===1?[14,22]:a<=3?[18,30]:[22,38];
+const lerp=(a,b,u)=>Math.round(a+(b-a)*u);
+
+/* ---------- turning a picture into a numbered grid ---------- */
+// k-means on colours (seeded, so a picture comes out the same each time), then small patches merged away
+function quantize(px,n,k,seed){let s=seed>>>0;const rnd=()=>{s=(s*1664525+1013904223)>>>0;return s/4294967296};
+  const pts=[];for(let i=0;i<n;i++)pts.push([px[i*4],px[i*4+1],px[i*4+2]]);
+  const d2=(a,b)=>(a[0]-b[0])**2*.9+(a[1]-b[1])**2*1.2+(a[2]-b[2])**2*.7;
+  const cs=[pts[Math.floor(rnd()*n)].slice()];
+  while(cs.length<k){const ds=pts.map(p=>Math.min(...cs.map(c=>d2(p,c))));const tot=ds.reduce((a,b)=>a+b,0);if(!tot)break;let r=rnd()*tot,i=0;for(;i<n-1&&r>ds[i];i++)r-=ds[i];cs.push(pts[i].slice())}
+  let lab=new Array(n).fill(0);
+  for(let it=0;it<14;it++){for(let i=0;i<n;i++){let b=0,bd=1e18;for(let j=0;j<cs.length;j++){const d=d2(pts[i],cs[j]);if(d<bd){bd=d;b=j}}lab[i]=b}
+    const acc=cs.map(()=>[0,0,0,0]);for(let i=0;i<n;i++){const a=acc[lab[i]];a[0]+=pts[i][0];a[1]+=pts[i][1];a[2]+=pts[i][2];a[3]++}
+    acc.forEach((a,j)=>{if(a[3])cs[j]=[a[0]/a[3],a[1]/a[3],a[2]/a[3]]})}
+  return{cs,lab}}
+function gridFrom(canvas,w,h,k,opt){opt=opt||{};const c=document.createElement("canvas");c.width=w;c.height=h;const g=c.getContext("2d",{willReadFrequently:true});
+  g.imageSmoothingEnabled=true;g.imageSmoothingQuality="high";g.drawImage(canvas,0,0,w,h);const px=g.getImageData(0,0,w,h).data,n=w*h;
+  let{cs,lab}=quantize(px,n,k,opt.seed||7);
+  if(opt.smooth){for(let pass=0;pass<opt.smooth;pass++){const nl=lab.slice();for(let y=0;y<h;y++)for(let x=0;x<w;x++){const cnt={};let best=lab[y*w+x],bc=0;
+      for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){const X=x+dx,Y=y+dy;if(X<0||Y<0||X>=w||Y>=h)continue;const l=lab[Y*w+X];cnt[l]=(cnt[l]||0)+(dx||dy?1:1.5);if(cnt[l]>bc){bc=cnt[l];best=l}}
+      nl[y*w+x]=bc>=4?best:lab[y*w+x]}lab=nl}}
+  // colours used by only a few squares are folded into their nearest neighbour colour
+  const count=cs.map((_,j)=>lab.filter(l=>l===j).length),min=Math.max(2,Math.round(n*.006));
+  const d2=(a,b)=>(a[0]-b[0])**2+(a[1]-b[1])**2+(a[2]-b[2])**2;
+  for(let j=0;j<cs.length;j++)if(count[j]>0&&count[j]<min){let b=-1,bd=1e18;for(let q=0;q<cs.length;q++)if(q!==j&&count[q]>=min){const d=d2(cs[j],cs[q]);if(d<bd){bd=d;b=q}}
+    if(b>=0){for(let i=0;i<n;i++)if(lab[i]===j)lab[i]=b;count[b]+=count[j];count[j]=0}}
+  // biggest colour is number 1
+  const order=cs.map((_,j)=>j).filter(j=>count[j]>0).sort((a,b)=>count[b]-count[a]),map={};order.forEach((j,i)=>map[j]=i);
+  const hex=c=>"#"+c.map(v=>Math.max(0,Math.min(255,Math.round(v))).toString(16).padStart(2,"0")).join("");
+  return{w,h,pal:order.map(j=>hex(cs[j])),cells:lab.map(l=>map[l])}}
+/* ---------- built-in pictures: simple drawings of bold flat shapes on a 240×240 canvas ----------
+   Each has its own palette; the grid takes the colour at each square, so the picture stays crisp at any size.
+   They are ordered from fewest colours to most. */
+function sceneCanvas(sc){const c=document.createElement("canvas");c.width=c.height=240;const g=c.getContext("2d");
+  const P=sc.pal,f=i=>{g.fillStyle=P[i]},rect=(i,x,y,w,h)=>{f(i);g.fillRect(x,y,w,h)},circ=(i,x,y,r)=>{f(i);g.beginPath();g.arc(x,y,r,0,7);g.fill()},
+    ell=(i,x,y,rx,ry,rot)=>{f(i);g.beginPath();g.ellipse(x,y,rx,ry,rot||0,0,7);g.fill()},poly=(i,...pts)=>{f(i);g.beginPath();for(let k=0;k<pts.length;k+=2)k?g.lineTo(pts[k],pts[k+1]):g.moveTo(pts[k],pts[k+1]);g.fill()},
+    band=(i,x,y,r0,r1,a0,a1)=>{f(i);g.beginPath();g.arc(x,y,r1,a0,a1);g.arc(x,y,r0,a1,a0,true);g.fill()};
+  rect(0,0,0,240,240);sc.draw({rect,circ,ell,poly,band,g});return c}
+const SCENES=[
+ {name:"Heart",pal:["#e9f4ff","#e2413b","#ff9aa8"],draw:({poly,circ,ell})=>{circ(1,82,92,52);circ(1,158,92,52);poly(1,34,112,120,206,206,112);ell(2,74,80,16,24,-.6)}},
+ {name:"Sun",pal:["#9fd8ff","#ffd23f","#f39c1f"],draw:({poly,circ})=>{for(let k=0;k<12;k++){const a=k*Math.PI/6,b=a+.18,c=a-.18;poly(2,120+Math.cos(a)*112,120+Math.sin(a)*112,120+Math.cos(b)*62,120+Math.sin(b)*62,120+Math.cos(c)*62,120+Math.sin(c)*62)}circ(1,120,120,64)}},
+ {name:"Apple",pal:["#fff4d6","#e2413b","#7a4a24","#4caf50"],draw:({circ,rect,ell})=>{circ(1,92,138,64);circ(1,148,138,64);rect(2,114,36,14,50);ell(3,154,58,32,16,-.5)}},
+ {name:"Mushroom",pal:["#bfe8a8","#e2413b","#ffffff","#f3e2c0"],draw:({band,rect,circ,ell})=>{rect(3,94,120,52,90);band(1,120,128,0,96,Math.PI,2*Math.PI);ell(1,120,128,96,14);circ(2,86,92,15);circ(2,138,72,13);circ(2,170,108,12);circ(2,112,112,9)}},
+ {name:"Fish",pal:["#bfe8ff","#f08a24","#ffffff","#1d2230","#ffd23f"],draw:({ell,poly,circ})=>{poly(1,150,120,212,72,212,168);ell(1,104,120,74,50);ell(4,104,120,14,48);circ(2,66,106,14);circ(3,62,106,7);circ(2,190,46,9);circ(2,206,24,6)}},
+ {name:"Watermelon",pal:["#fff6dc","#2e8b3a","#a5d86d","#e8394a","#1d2230"],draw:({band,circ})=>{band(1,120,70,0,112,0,Math.PI);band(2,120,70,0,98,0,Math.PI);band(3,120,70,0,86,0,Math.PI);
+   for(const[x,y]of[[86,104],[120,118],[154,104],[102,132],[140,132],[120,96]])circ(4,x,y,6)}},
+ {name:"Sailboat",pal:["#bfe6ff","#2a7bd6","#ffffff","#8b5a2b","#ffd23f"],draw:({rect,poly,circ})=>{circ(4,196,48,24);rect(1,0,170,240,70);poly(2,122,30,122,150,196,150);poly(2,112,52,112,150,52,150);rect(3,116,30,6,124);poly(3,40,154,200,154,176,190,64,190)}},
+ {name:"Butterfly",pal:["#e9fff0","#8f5bd6","#3b6fd9","#1d2230","#ffd23f"],draw:({ell,circ,rect})=>{ell(1,78,88,50,44,-.4);ell(1,162,88,50,44,.4);ell(2,86,160,38,32,.4);ell(2,154,160,38,32,-.4);
+   circ(4,76,86,14);circ(4,164,86,14);circ(4,86,160,10);circ(4,154,160,10);ell(3,120,124,10,62);rect(3,104,52,4,20);rect(3,132,52,4,20)}},
+ {name:"Pumpkin",pal:["#2b2140","#f08a24","#d96c12","#3f8a2e","#1d1205"],draw:({ell,rect,poly})=>{rect(3,112,38,16,34);ell(2,80,138,48,66);ell(2,160,138,48,66);ell(1,120,138,52,72);
+   poly(4,84,118,108,118,96,96);poly(4,132,118,156,118,144,96);poly(4,86,158,154,158,148,180,138,170,128,182,112,170,102,182,92,170)}},
+ {name:"Snowman",pal:["#9fd0ff","#ffffff","#1d2230","#f08a24","#e2413b"],draw:({rect,circ,poly})=>{rect(1,0,200,240,40);circ(1,120,168,52);circ(1,120,92,38);rect(2,90,34,60,30);rect(2,78,60,84,8);
+   circ(2,106,86,5);circ(2,134,86,5);poly(3,120,96,150,102,120,106);rect(4,82,124,76,12);circ(2,120,156,5);circ(2,120,178,5)}},
+ {name:"Tree",pal:["#cfeaff","#6bbf4a","#7a4a24","#2e8b3a","#e2413b"],draw:({rect,circ})=>{rect(1,0,196,240,44);rect(2,104,120,32,84);circ(3,120,82,52);circ(3,80,112,40);circ(3,160,112,40);
+   for(const[x,y]of[[96,74],[140,98],[110,118],[164,124],[76,118]])circ(4,x,y,8)}},
+ {name:"Flower",pal:["#d9f1ff","#4caf50","#ff7eb6","#ffd23f","#e05596"],draw:({rect,ell,circ})=>{rect(1,114,120,12,120);ell(1,90,180,28,12,-.5);ell(1,150,200,28,12,.5);
+   for(let k=0;k<6;k++){const a=k*Math.PI/3;circ(k%2?4:2,120+Math.cos(a)*44,96+Math.sin(a)*44,30)}circ(3,120,96,28)}},
+ {name:"Penguin",pal:["#cfeeff","#1d2230","#ffffff","#f08a24","#e6f6ff"],draw:({rect,ell,circ,poly})=>{rect(4,0,196,240,44);ell(1,120,128,62,86);ell(2,120,142,42,64);ell(1,62,132,14,46,.3);ell(1,178,132,14,46,-.3);
+   circ(2,104,82,11);circ(2,136,82,11);circ(1,106,84,5);circ(1,134,84,5);poly(3,110,98,130,98,120,114);ell(3,96,212,20,8);ell(3,144,212,20,8)}},
+ {name:"Whale",pal:["#7fc8f8","#3b6fd9","#ffffff","#1d2230","#cfeeff"],draw:({ell,poly,circ,rect})=>{rect(4,0,0,240,90);ell(1,110,142,84,52);poly(1,184,132,232,96,226,150);ell(2,104,170,60,20);circ(3,64,128,6);
+   rect(4,92,58,8,34);circ(4,86,52,12);circ(4,108,48,12)}},
+ {name:"Car",pal:["#cfeaff","#8a9097","#3b6fd9","#1d2230","#e8f6ff","#ffd23f"],draw:({rect,poly,circ})=>{rect(1,0,176,240,64);rect(5,20,204,40,8);rect(5,100,204,40,8);rect(5,180,204,40,8);
+   poly(2,30,160,40,124,78,124,104,88,166,88,192,124,214,128,214,160);poly(4,112,98,156,98,176,124,112,124);rect(4,82,104,24,20);circ(3,74,164,20);circ(3,174,164,20);circ(4,74,164,8);circ(4,174,164,8)}},
+ {name:"Ice cream",pal:["#ffe6f0","#d6a15e","#ff8fb8","#6b3b1f","#e2413b","#b07a3a"],draw:({poly,circ,rect,g})=>{poly(1,72,116,168,116,120,224);for(let k=0;k<5;k++)poly(5,76+k*20,116,80+k*20,116,120,220);
+   circ(2,92,106,34);circ(2,148,106,34);circ(2,120,80,40);poly(3,64,112,176,112,170,126,150,120,140,134,124,122,112,138,100,122,84,130,72,122);circ(4,120,38,12);rect(3,121,18,3,14)}},
+ {name:"Turtle",pal:["#ffeec2","#3f8a2e","#9ccc65","#2e6b23","#1d2230"],draw:({band,ell,circ,rect})=>{ell(2,46,152,22,16);ell(2,74,180,14,20);ell(2,166,180,14,20);ell(2,206,168,12,10,.5);
+   band(1,120,170,0,82,Math.PI,2*Math.PI);rect(3,38,166,164,12);for(const[x,y]of[[96,130],[144,130],[120,108],[120,150]])circ(3,x,y,16);circ(4,40,146,4)}},
+ {name:"Hot air balloon",pal:["#bfe6ff","#e2413b","#ffd23f","#8b5a2b","#ffffff","#5a3a1e"],draw:({ell,rect,poly,g})=>{ell(4,52,190,40,16);ell(4,200,60,34,14);
+   g.save();g.beginPath();g.ellipse(120,92,70,80,0,0,7);g.clip();for(let k=0;k<7;k++)rect(k%2?2:1,50+k*20,0,20,200);g.restore();poly(2,74,138,166,138,140,170,100,170);
+   rect(5,100,170,4,22);rect(5,136,170,4,22);rect(3,96,190,48,32)}},
+ {name:"Robot",pal:["#e9f0ff","#9aa3ad","#3b6fd9","#e2413b","#ffd23f","#5a6270"],draw:({rect,circ})=>{rect(5,116,28,8,26);circ(4,120,24,10);rect(1,72,52,96,72);circ(2,98,84,14);circ(2,142,84,14);rect(3,96,104,48,10);
+   rect(1,62,132,116,84);rect(4,92,150,56,30);circ(3,104,165,7);circ(2,136,165,7);rect(5,34,140,24,60);rect(5,182,140,24,60)}},
+ {name:"Owl",pal:["#1f2c5c","#8b5a2b","#ffffff","#ffd23f","#1d2230","#f08a24","#fff3b0"],draw:({ell,circ,poly,rect})=>{circ(6,196,40,22);rect(1,20,206,200,12);ell(1,120,132,64,82);poly(1,58,62,82,88,70,48);poly(1,182,62,158,88,170,48);
+   ell(6,120,156,40,48);circ(2,96,104,26);circ(2,144,104,26);circ(3,96,104,15);circ(3,144,104,15);circ(4,96,104,8);circ(4,144,104,8);poly(5,112,124,128,124,120,140)}},
+ {name:"Train",pal:["#cfeaff","#6bbf4a","#e2413b","#1d2230","#ffd23f","#8b5a2b","#ffffff"],draw:({rect,circ,poly})=>{rect(1,0,190,240,50);rect(5,0,184,240,8);
+   rect(2,40,104,112,68);rect(2,120,64,64,108);rect(4,132,78,40,30);rect(3,60,60,22,46);rect(2,140,58,52,10);poly(2,184,150,214,172,184,172);
+   circ(6,70,44,16);circ(6,96,30,12);circ(3,76,176,18);circ(3,124,176,18);circ(3,166,180,14);circ(4,76,176,6);circ(4,124,176,6)}},
+ {name:"Rocket",pal:["#1c2450","#ffffff","#e2413b","#3b6fd9","#f08a24","#ffd23f","#c9d2dc"],draw:({ell,poly,circ,rect})=>{for(const[x,y]of[[30,40],[200,30],[60,190],[210,170],[40,110],[190,104]])circ(5,x,y,4);
+   poly(4,104,176,136,176,120,222);poly(2,92,140,62,180,92,176);poly(2,148,140,178,180,148,176);ell(1,120,112,30,72);poly(2,94,72,146,72,120,30);circ(3,120,104,15);circ(6,120,104,8);rect(6,104,166,32,8)}},
+ {name:"Dinosaur",pal:["#d9f1ff","#c2a26b","#4caf50","#2e7d32","#ffffff","#1d2230","#f5e1a4"],draw:({rect,ell,poly,circ})=>{rect(6,0,200,240,40);
+   poly(2,30,168,92,150,96,176);ell(2,120,150,58,38);rect(2,150,60,26,90);ell(2,176,62,30,18);rect(3,90,168,18,36);rect(3,140,168,18,36);
+   for(const[x,y]of[[96,114],[120,110],[144,116]])poly(3,x-10,y+4,x,y-14,x+10,y+4);circ(4,184,56,6);circ(5,186,56,3)}},
+ {name:"Castle",pal:["#bfe6ff","#9aa3ad","#6b737d","#5a3a1e","#3b6fd9","#e2413b","#6bbf4a"],draw:({rect,poly,circ})=>{rect(6,0,206,240,34);rect(1,46,100,148,106);for(let k=0;k<7;k++)rect(1,46+k*22,88,12,14);
+   rect(2,22,64,40,142);rect(2,178,64,40,142);poly(5,18,66,42,26,66,66);poly(5,174,66,198,26,222,66);rect(3,98,140,44,66);circ(3,120,140,22);rect(4,72,116,20,24);rect(4,148,116,20,24);rect(2,40,6,4,24);poly(4,44,6,68,12,44,20)}},
+ {name:"Bee",pal:["#e6f8d8","#ffd23f","#1d2230","#ffffff","#ff7eb6","#4caf50"],draw:({ell,rect,circ,g})=>{rect(5,0,196,240,44);circ(4,30,200,16);circ(4,210,206,14);ell(3,92,72,34,44,-.4);ell(3,148,72,34,44,.4);
+   g.save();g.beginPath();g.ellipse(120,130,74,54,0,0,7);g.clip();ell(1,120,130,74,54);for(let k=0;k<3;k++)rect(2,80+k*34,70,16,120);g.restore();circ(2,46,124,24);circ(3,40,118,7);circ(2,40,118,3)}},
+ {name:"Lighthouse",pal:["#9fd8ff","#2a7bd6","#ffffff","#e2413b","#ffd23f","#6b737d","#1d2230"],draw:({rect,poly,circ})=>{rect(1,0,180,240,60);poly(5,40,240,70,176,170,176,200,240);
+   poly(2,96,176,144,176,134,70,106,70);rect(3,100,150,40,22);rect(3,104,104,32,22);rect(6,100,48,40,24);rect(4,108,54,24,14);poly(3,94,48,146,48,120,22);
+   poly(4,140,58,236,30,236,86);rect(2,30,40,40,12);rect(2,180,120,36,10)}},
+ {name:"Cat",pal:["#ffe9f1","#f08a24","#ffffff","#4caf50","#1d2230","#ff7eb6","#d96c12"],draw:({circ,poly,ell,rect})=>{poly(1,52,104,62,30,108,72);poly(1,188,104,178,30,132,72);poly(5,64,86,68,48,94,72);poly(5,176,86,172,48,146,72);
+   circ(1,120,130,82);rect(6,108,50,24,10);rect(6,104,66,32,8);ell(2,120,168,46,32);ell(3,90,118,16,20);ell(3,150,118,16,20);ell(4,90,120,6,16);ell(4,150,120,6,16);poly(5,110,150,130,150,120,162)}},
+ {name:"Lion",pal:["#d9f1ff","#c26b1d","#f2b53a","#fff1c9","#1d2230","#8b4513","#ffffff"],draw:({circ,ell,poly})=>{for(let k=0;k<14;k++){const a=k*Math.PI/7;circ(k%2?1:5,120+Math.cos(a)*76,124+Math.sin(a)*76,30)}circ(2,120,124,70);
+   circ(2,66,70,16);circ(2,174,70,16);ell(3,120,156,40,30);circ(6,96,112,12);circ(6,144,112,12);circ(4,98,114,6);circ(4,146,114,6);poly(5,106,140,134,140,120,156)}},
+ {name:"Octopus",pal:["#bfe6ff","#8f5bd6","#c49bf0","#ffffff","#1d2230","#ff7eb6","#2a7bd6"],draw:({ell,circ,rect})=>{rect(6,0,210,240,30);for(let k=0;k<8;k++){ell(1,46+k*21,176,11,46,(k-3.5)*.1)}
+   ell(1,120,100,72,70);ell(2,96,70,22,14,-.4);circ(3,96,104,18);circ(3,144,104,18);circ(4,100,108,9);circ(4,148,108,9);ell(5,74,132,12,7);ell(5,166,132,12,7)}},
+ {name:"Alberta mountains",pal:["#a8dcff","#8a96a8","#ffffff","#2e7d4f","#1e5a3a","#3b8ed6","#6bbf4a","#ffd23f"],draw:({rect,poly,circ})=>{circ(7,196,40,20);
+   poly(1,-10,170,70,46,150,170);poly(1,90,170,170,30,250,170);poly(2,70,46,92,80,80,74,70,90,58,76,48,80);poly(2,170,30,194,66,182,60,170,78,158,62,146,66);
+   rect(6,0,160,240,80);rect(5,0,196,240,44);for(const x of[20,46,200,224]){poly(3,x-18,190,x,120,x+18,190);poly(4,x-14,166,x,116,x+14,166)}}}];
+
+// each square takes the palette colour that covers most of it
+function gridFromScene(sc,w){const c=sceneCanvas(sc),px=c.getContext("2d").getImageData(0,0,240,240).data,pal=sc.pal.map(h=>{const v=parseInt(h.slice(1),16);return[v>>16,v>>8&255,v&255]});
+  const near=(r,g,b)=>{let bi=0,bd=1e9;pal.forEach((q,i)=>{const d=(q[0]-r)**2+(q[1]-g)**2+(q[2]-b)**2;if(d<bd){bd=d;bi=i}});return bi},cells=[],used=new Set();
+  for(let y=0;y<w;y++)for(let x=0;x<w;x++){const cnt=new Array(pal.length).fill(0);for(let sy=0;sy<3;sy++)for(let sx=0;sx<3;sx++){const X=Math.floor((x+(sx+.5)/3)*240/w),Y=Math.floor((y+(sy+.5)/3)*240/w),o=(Y*240+X)*4;cnt[near(px[o],px[o+1],px[o+2])]++}
+    const k=cnt.indexOf(Math.max(...cnt));cells.push(k);used.add(k)}
+  // renumber so colours that ended up unused at this size drop out, biggest colour first
+  const count=sc.pal.map((_,j)=>cells.filter(c2=>c2===j).length),order=sc.pal.map((_,j)=>j).filter(j=>count[j]).sort((a,b)=>count[b]-count[a]),map={};order.forEach((j,i)=>map[j]=i);
+  return{w,h:w,pal:order.map(j=>sc.pal[j]),cells:cells.map(c2=>map[c2])}}
+
+/* ---------- painting ---------- */
+let cv,ctx;
+function start(n){const a=K.age,Rg=RANGE(a),u=(n-1)/(SCENES.length-1),sc=SCENES[n-1],w=Math.min(maxGrid(),lerp(Rg[0],Rg[1],u));
+  const pic=gridFromScene(sc,w);pic.name=sc.name;pic.key="b"+n+"w"+w;openPic(pic,n)}
+function maxGrid(){const r=K.stage.getBoundingClientRect(),side=Math.min(r.width||360,(r.height||600)-170);return Math.max(10,Math.floor(side/(side<420?17:15)))}
+function openPic(pic,n){const a=K.age;K.stage.innerHTML='<div class="pb"><p class="pb-title">'+esc(pic.name)+'<small id="pbLeft"></small></p><div class="pb-wrap"><canvas class="pb-cv" id="pbCv"></canvas></div>'+
+    '<div class="pb-pal" id="pbPal"></div><div class="pb-bar"><button type="button" id="pbPaint">✏️ Paint</button><button type="button" id="pbFill">🪣 Fill a patch</button><button type="button" id="pbPeek">👀 Peek</button><button type="button" id="pbMine">📷 My pictures</button></div></div>';
+  cv=document.getElementById("pbCv");ctx=cv.getContext("2d");
+  const saved=n?(K.save.prog||{})[pic.key]:(pic.prog||{})[TS.players.current().id];
+  S={pic,n,filled:saved&&saved.length===pic.cells.length?saved.split("").map(Number):pic.cells.map(()=>0),sel:0,tool:a<=0?"fill":"paint",peek:a<=0,helps:0,down:false,done:false,flash:null};
+  const first=S.pic.pal.findIndex((_,j)=>left(j)>0);S.sel=first<0?0:first;
+  document.getElementById("pbPaint").onclick=()=>tool("paint");document.getElementById("pbFill").onclick=()=>tool("fill");
+  document.getElementById("pbPeek").onclick=()=>{S.peek=!S.peek;bar();draw()};document.getElementById("pbMine").onclick=()=>MINE.open();
+  cv.addEventListener("pointerdown",e=>{e.preventDefault();S.down=true;cv.setPointerCapture&&cv.setPointerCapture(e.pointerId);touch(e,true)});
+  cv.addEventListener("pointermove",e=>{if(S.down&&S.tool==="paint")touch(e,false)});
+  const up=()=>{if(S)S.down=false;persist()};cv.addEventListener("pointerup",up);cv.addEventListener("pointercancel",up);
+  K.sub(n?"":"📷 My picture");K.stat(pic.pal.length,"colours");
+  K.tip(a<=0?"Tap a number colour, then tap the squares with that number!":"Pick a colour, then paint every square with its number. Drag to paint lots at once!");
+  layout();pal();bar();draw();if(isDone())finish()}
+function tool(t){S.tool=t;bar()}
+function bar(){document.getElementById("pbPaint").setAttribute("aria-pressed",S.tool==="paint");document.getElementById("pbFill").setAttribute("aria-pressed",S.tool==="fill");document.getElementById("pbPeek").setAttribute("aria-pressed",S.peek)}
+const left=j=>S.pic.cells.reduce((a,c,i)=>a+(c===j&&!S.filled[i]?1:0),0);
+const isDone=()=>S.filled.every(Boolean);
+function pal(){const P=document.getElementById("pbPal");P.innerHTML="";S.pic.pal.forEach((c,j)=>{const b=document.createElement("button");b.type="button";const l=left(j);
+    b.style.background=c;b.style.color=light(c)?"#1d2230":"#fff";b.innerHTML=(j+1)+(l?"<small>"+l+"</small>":"<small>✓</small>");b.className=(j===S.sel?"on ":"")+(l?"":"done");
+    b.setAttribute("aria-label","colour "+(j+1));b.onclick=()=>{S.sel=j;TS.music.fx("tap");pal();draw()};P.appendChild(b)});
+  const tot=S.filled.filter(x=>!x).length;document.getElementById("pbLeft").textContent=tot?tot+" squares to go":"All done!"}
+const light=h=>{const v=parseInt(h.slice(1),16);return((v>>16)*.299+(v>>8&255)*.587+(v&255)*.114)>150};
+let cell=12;
+function layout(){const r=cv.parentElement.getBoundingClientRect(),w=S.pic.w,h=S.pic.h;cell=Math.max(6,Math.floor(Math.min(r.width/w,r.height/h)));
+  const dpr=Math.min(2,devicePixelRatio||1);cv.style.width=cell*w+"px";cv.style.height=cell*h+"px";cv.width=cell*w*dpr;cv.height=cell*h*dpr;ctx.setTransform(dpr,0,0,dpr,0,0)}
+addEventListener("resize",()=>{if(S&&cv&&cv.isConnected){layout();draw()}});
+function draw(){const{w,h,cells,pal:P}=S.pic,c=ctx;c.textAlign="center";c.textBaseline="middle";c.font="700 "+Math.max(7,Math.floor(cell*.52))+"px Barlow,system-ui,sans-serif";
+  for(let y=0;y<h;y++)for(let x=0;x<w;x++){const i=y*w+x,n=cells[i],X=x*cell,Y=y*cell;
+    if(S.filled[i]){c.fillStyle=P[n];c.fillRect(X,Y,cell,cell);continue}
+    c.fillStyle=n===S.sel?"#cfdcff":(x+y)%2?"#f4f4f4":"#ececec";c.fillRect(X,Y,cell,cell);
+    if(S.peek){c.globalAlpha=.28;c.fillStyle=P[n];c.fillRect(X,Y,cell,cell);c.globalAlpha=1}
+    if(S.flash&&S.flash.i===i){c.fillStyle="rgba(226,65,46,.5)";c.fillRect(X,Y,cell,cell)}
+    if(cell>=9){c.fillStyle=n===S.sel?"#1d3d85":"#8a8f98";c.fillText(n+1,X+cell/2,Y+cell/2+1)}}
+  if(!S.done){c.strokeStyle="rgba(0,0,0,.07)";c.lineWidth=1;c.beginPath();for(let x=1;x<w;x++){c.moveTo(x*cell+.5,0);c.lineTo(x*cell+.5,h*cell)}for(let y=1;y<h;y++){c.moveTo(0,y*cell+.5);c.lineTo(w*cell,y*cell+.5)}c.stroke()}}
+function cellAt(e){const r=cv.getBoundingClientRect(),x=Math.floor((e.clientX-r.left)/cell),y=Math.floor((e.clientY-r.top)/cell);if(x<0||y<0||x>=S.pic.w||y>=S.pic.h)return-1;return y*S.pic.w+x}
+let tipT=0;
+function touch(e,first){if(S.done||K.busy)return;const i=cellAt(e);if(i<0)return;paintAt(i,first)}
+function paintAt(i,first){const n=S.pic.cells[i];if(S.filled[i])return;
+  if(n!==S.sel){if(first){S.flash={i};draw();setTimeout(()=>{if(S)S.flash=null,draw()},250);
+      const now=Date.now();if(now-tipT>1500){tipT=now;K.tip("That square is number "+(n+1)+". You have colour "+(S.sel+1)+".");if(K.age<=1)TS.say("That's a "+(n+1)+".")}}return}
+  let got=0;if(S.tool==="fill"){const q=[i],{w,h,cells}=S.pic;S.filled[i]=1;got=1;while(q.length){const j=q.pop(),x=j%w,y=(j/w)|0;for(const[dx,dy]of[[1,0],[-1,0],[0,1],[0,-1]]){const X=x+dx,Y=y+dy;if(X<0||Y<0||X>=w||Y>=h)continue;const k=Y*w+X;if(!S.filled[k]&&cells[k]===n){S.filled[k]=1;got++;q.push(k)}}}}
+  else{S.filled[i]=1;got=1}
+  if(first||S.tool==="fill")TS.music.fx("tap");
+  if(!left(S.sel)){TS.music.fx("good");const nx=S.pic.pal.findIndex((_,j)=>left(j)>0);if(nx>=0){S.sel=nx;K.tip("Colour "+(S.sel+1)+" next!")}}
+  pal();draw();if(isDone())finish()}
+function persist(){if(!S)return;const str=S.filled.join("");
+  if(S.n){const P=K.save.prog||(K.save.prog={});P[S.pic.key]=str;K.persist()}else MINE.saveProg(S.pic,str)}
+function finish(){if(S.done)return;S.done=true;persist();draw();TS.music.fx("win");
+  // reveal: a sweep of light across the finished picture
+  let t=0;const sweep=()=>{if(!S||!S.done||!cv.isConnected)return;t+=.04;draw();const W=S.pic.w*cell,H=S.pic.h*cell,x=(t*1.6-.3)*(W+H);
+    const g=ctx.createLinearGradient(x-80,0,x,H);g.addColorStop(0,"rgba(255,255,255,0)");g.addColorStop(.5,"rgba(255,255,255,.55)");g.addColorStop(1,"rgba(255,255,255,0)");ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+    if(t<1)requestAnimationFrame(sweep);else draw()};sweep();
+  if(S.n){const st=S.helps===0?3:S.helps<=2?2:1;setTimeout(()=>K.win({stars:st,title:S.pic.name+"!",text:"You coloured all "+S.pic.cells.length+" squares!"}),1300)}
+  else{K.tip("🎉 Your picture is finished!");setTimeout(()=>MINE.open("🎉 You finished "+S.pic.name+"!"),1500)}}
+/* Hint (after the maths question): fill in some squares of the current colour */
+function hint(){if(!S||S.done)return;S.helps++;let n=0;S.pic.cells.forEach((c,i)=>{if(c===S.sel&&!S.filled[i]&&n<25){S.filled[i]=1;n++}});K.tip("✨ Magic paint! "+n+" squares of colour "+(S.sel+1)+".");
+  if(!left(S.sel)){const nx=S.pic.pal.findIndex((_,j)=>left(j)>0);if(nx>=0)S.sel=nx}pal();draw();persist();if(isDone())finish()}
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+/* ---------- 📷 My pictures: a photo becomes a picture to colour ----------
+   Kept on this device for everyone who plays here (so brothers and sisters can colour each other's photos);
+   each player keeps their own progress. Only the small numbered grid is stored, never the photo. */
+const MINE=(()=>{const KEY="tilesolve:mypics",all=()=>TS.store.get(KEY,[]),put=l=>{try{localStorage.setItem(KEY,JSON.stringify(l));return true}catch(e){return false}};let ov=null,img=null;
+  const pack=p=>({id:p.id,name:p.name,w:p.w,h:p.h,pal:p.pal,cells:p.cells.map(c=>c.toString(36)).join(""),prog:p.prog||{}}),unpack=p=>({...p,cells:p.cells.split("").map(c=>parseInt(c,36)),key:"m"+p.id});
+  function sheet(html){if(!ov){ov=document.createElement("div");ov.className="pb-ov";ov.id="pbOv";document.body.appendChild(ov);ov.addEventListener("click",e=>{if(e.target===ov)close()})}
+    ov.innerHTML='<div class="pb-card">'+html+"</div>";ov.hidden=false}
+  function close(){if(ov)ov.hidden=true}
+  function thumb(c,p,prog){c.width=p.w;c.height=p.h;const g=c.getContext("2d"),d=g.createImageData(p.w,p.h);
+    p.cells.forEach((n,i)=>{const done=prog&&prog[i]==="1",v=parseInt(p.pal[n].slice(1),16);d.data.set(done?[v>>16,v>>8&255,v&255,255]:[236,236,236,255],i*4)});g.putImageData(d,0,0)}
+  function open(msg){const l=all(),me=TS.players.current().id;
+    sheet('<div class="pb-row"><h2>📷 My pictures</h2><button class="pb-btn" id="mClose" type="button">Close</button></div>'+(msg?'<p class="pb-note" style="color:var(--paint);font-weight:700">'+esc(msg)+"</p>":"")+
+      '<button class="pb-btn go" id="mNew" type="button">📷 Take or choose a photo</button><p class="pb-note">The photo turns into squares to colour. It stays on this iPad: only the coloured squares are kept.</p>'+
+      '<div class="pb-list" id="mList"></div>'+(l.length?"":'<p class="pb-empty">No pictures yet. Make one from a photo!</p>'));
+    document.getElementById("mClose").onclick=close;document.getElementById("mNew").onclick=pickPhoto;
+    const L=document.getElementById("mList");l.forEach((raw,k)=>{const p=unpack(raw),prog=(raw.prog||{})[me]||"",pct=Math.round(100*(prog.split("1").length-1)/p.cells.length);
+      const d=document.createElement("div");d.className="pb-item";d.innerHTML='<canvas></canvas><b>'+esc(p.name)+"<br><small>"+(pct>=100?"✓ finished":pct+"%")+'</small></b><button class="x" type="button" aria-label="Delete">✕</button>';
+      thumb(d.querySelector("canvas"),p,prog);d.querySelector("canvas").onclick=()=>{close();openPic(p,null)};
+      d.querySelector(".x").onclick=()=>{if(!confirmDel(d))return;const l2=all();l2.splice(k,1);put(l2);open()};L.appendChild(d)})}
+  // first tap on ✕ asks, second tap deletes
+  function confirmDel(d){if(d.dataset.sure)return true;d.dataset.sure=1;const x=d.querySelector(".x");x.textContent="?";x.style.background="#e2412e";setTimeout(()=>{delete d.dataset.sure;x.textContent="✕";x.style.background=""},2500);return false}
+  function pickPhoto(){const inp=document.createElement("input");inp.type="file";inp.accept="image/*";inp.onchange=()=>{const f=inp.files&&inp.files[0];if(!f)return;const url=URL.createObjectURL(f),im=new Image();
+      im.onload=()=>{img=im;editor()};im.onerror=()=>{sheet('<div class="pb-row"><h2>Hmm</h2><button class="pb-btn" id="mBack" type="button">Back</button></div><p class="pb-empty">That photo couldn\'t be opened. Try another one.</p>');document.getElementById("mBack").onclick=()=>open()};im.src=url};
+    inp.click()}
+  function editor(){const a=K.age,opts={detail:a<=0?16:a<=1?20:a<=3?28:36,colours:a<=0?5:a<=1?6:a<=3?8:10,zoom:1},fit=maxGrid();
+    const D=[["Big squares",Math.min(fit,16)],["Medium",Math.min(fit,24)],["Small",Math.min(fit,32)],["Tiny",Math.min(fit,40)]].filter((x,i,arr)=>i===0||x[1]>arr[i-1][1]);
+    if(!D.some(x=>x[1]===opts.detail))opts.detail=D[Math.min(D.length-1,a<=0?0:a<=1?0:a<=3?1:2)][1];
+    const n=all().length+1;
+    sheet('<div class="pb-row"><h2>Make a picture</h2><button class="pb-btn" id="mBack" type="button">Back</button></div>'+
+      '<div class="pb-prev"><canvas id="mPhoto"></canvas><canvas id="mPrev"></canvas></div>'+
+      '<div class="pb-opt"><span>Zoom</span><input type="range" id="mZoom" min="1" max="3" step=".05" value="1"></div>'+
+      '<div class="pb-opt"><span>Squares</span>'+D.map(([t,v])=>'<button type="button" data-d="'+v+'" aria-pressed="'+(v===opts.detail)+'">'+t+"</button>").join("")+"</div>"+
+      '<div class="pb-opt"><span>Colours</span>'+[4,6,8,10,12].map(v=>'<button type="button" data-k="'+v+'" aria-pressed="'+(v===opts.colours)+'">'+v+"</button>").join("")+"</div>"+
+      '<div class="pb-row"><input class="pb-name" id="mName" maxlength="20" value="My picture '+n+'"><button class="pb-btn go" id="mMake" type="button">🎨 Colour it!</button></div>');
+    const ph=document.getElementById("mPhoto"),pv=document.getElementById("mPrev");let pic=null;
+    const crop=()=>{const s=Math.min(img.naturalWidth,img.naturalHeight)/opts.zoom,c=document.createElement("canvas");c.width=c.height=360;const g=c.getContext("2d");
+      g.drawImage(img,(img.naturalWidth-s)/2,(img.naturalHeight-s)/2,s,s,0,0,360,360);return c};
+    const redo=()=>{const c=crop();ph.width=ph.height=360;ph.getContext("2d").drawImage(c,0,0);pic=gridFrom(c,opts.detail,opts.detail,opts.colours,{smooth:1,seed:5});
+      pv.width=pic.w;pv.height=pic.h;const g=pv.getContext("2d"),d=g.createImageData(pic.w,pic.h);pic.cells.forEach((k,i)=>{const v=parseInt(pic.pal[k].slice(1),16);d.data.set([v>>16,v>>8&255,v&255,255],i*4)});g.putImageData(d,0,0)};
+    document.getElementById("mBack").onclick=()=>open();document.getElementById("mZoom").oninput=e=>{opts.zoom=+e.target.value;redo()};
+    document.querySelectorAll("[data-d]").forEach(b=>b.onclick=()=>{opts.detail=+b.dataset.d;document.querySelectorAll("[data-d]").forEach(x=>x.setAttribute("aria-pressed",x===b));redo()});
+    document.querySelectorAll("[data-k]").forEach(b=>b.onclick=()=>{opts.colours=+b.dataset.k;document.querySelectorAll("[data-k]").forEach(x=>x.setAttribute("aria-pressed",x===b));redo()});
+    document.getElementById("mMake").onclick=()=>{pic.name=(document.getElementById("mName").value.trim()||"My picture").slice(0,20);pic.id=Date.now().toString(36);pic.prog={};
+      const l=all();l.unshift(pack(pic));while(l.length>24)l.pop();if(!put(l)){l.pop();put(l)}close();openPic(unpack(pack(pic)),null)};
+    redo()}
+  function saveProg(p,str){const l=all(),me=TS.players.current().id,raw=l.find(x=>x.id===p.id);if(!raw)return;raw.prog=raw.prog||{};raw.prog[me]=str;put(l)}
+  return{open,close,saveProg,all,editor,set img(v){img=v},get img(){return img},pack,unpack}})();
+
+K=TS_KIT({id:"paint",name:"Colour by Number",levels:SCENES.length,start,hint,
+  howto:[["🎨","Every square has a number. Each number has a colour."],["👆","Tap a colour, then paint the squares with that number. Drag to paint lots at once."],
+    ["🪣","Fill a patch paints a whole patch of the same number in one tap."],["📷","My pictures: take a photo and turn it into a picture to colour!"]],
+  point:()=>document.querySelector("#pbPal button"),label:n=>SCENES[n-1].name.length>9?SCENES[n-1].name.slice(0,8)+"…":SCENES[n-1].name});
+window.__game={get S(){return S},K,gridFrom,gridFromScene,sceneCanvas,MINE,paintAt,openPic,SCENES};
+K.start();
+})();
+</script>
+</body>
+</html>
