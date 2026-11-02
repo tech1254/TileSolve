@@ -405,7 +405,7 @@ function learnt(kind,ok){const h=(save.hist[kind]=save.hist[kind]||[]);h.push(ok
   else if(h.length>=2&&!h[h.length-1]&&!h[h.length-2]&&st>0){save.step[kind]=st-1;save.hist[kind]=[]}}
 
 /* ---------- cars you can win ---------- */
-const CARS={passenger:"passenger car",coal:"coal car",tanker:"tank car",box:"box car",flat:"flat car",logs:"log car",caboose:"caboose",animal:"animal car",party:"party car",ice:"ice cream car",grain:"grain car",mail:"mail car"};
+const CARS={rainbow:"rainbow car",passenger:"passenger car",coal:"coal car",tanker:"tank car",box:"box car",flat:"flat car",logs:"log car",caboose:"caboose",animal:"animal car",party:"party car",ice:"ice cream car",grain:"grain car",mail:"mail car"};
 const PAL=["#e2412e","#3b6fd9","#f2b705","#43a047","#8f5bd6","#f08a24","#1e9e8a","#e06aa6"];
 const FAVEM=(()=>{const f=TS.players.fav&&TS.players.fav();return f?f.em.map(x=>x[0]):["🦖","🧸","🎁","🚜","🦄","🏆"]})();
 /* each station gives its own kind of car (its sign shows what) */
@@ -569,7 +569,8 @@ const ENG=112,CAR=90,GAP=6;
 function wheel(x,y,r){ctx.fillStyle="#2b2f36";ctx.beginPath();ctx.arc(x,y,r,0,7);ctx.fill();ctx.strokeStyle="#8d949c";ctx.lineWidth=1.4;
   for(let k=0;k<3;k++){const a=wheelA+k*Math.PI/3;ctx.beginPath();ctx.moveTo(x-Math.cos(a)*r*.8,y-Math.sin(a)*r*.8);ctx.lineTo(x+Math.cos(a)*r*.8,y+Math.sin(a)*r*.8);ctx.stroke()}
   ctx.fillStyle="#c0c4c8";ctx.beginPath();ctx.arc(x,y,r*.28,0,7);ctx.fill()}
-function drawEngine(){const col=P.color||"#e2412e";
+/* engines: the steam engine, plus a diesel and a bullet train bought with 🎟️ tickets in Train Yard; save.paint is a colour from the Train Shop */
+function drawEngine(){const col=save.paint||P.color||"#e2412e";if(save.engine==="diesel")return drawDiesel(col);if(save.engine==="bullet")return drawBullet(col);
   ctx.fillStyle="#2b2f36";ctx.fillRect(-54,-22,104,8);ctx.fillStyle="#b0302a";ctx.beginPath();ctx.moveTo(44,-20);ctx.lineTo(60,-2);ctx.lineTo(44,-2);ctx.fill();
   ctx.fillStyle=col;ctx.beginPath();ctx.roundRect(-14,-52,62,32,8);ctx.fill();ctx.fillStyle="rgba(0,0,0,.25)";ctx.fillRect(40,-52,9,32);
   ctx.fillStyle="#f2c230";for(const bx of [2,20])ctx.fillRect(bx,-52,4,32);
@@ -579,6 +580,16 @@ function drawEngine(){const col=P.color||"#e2412e";
   ctx.fillStyle="#cfe9ff";ctx.fillRect(-48,-68,28,22);emo(P.avatar||"🙂",-34,-44,20);
   wheel(-36,-13,13);wheel(-6,-13,13);wheel(24,-13,13);wheel(46,-6,6);
   const cx=Math.cos(wheelA)*6,cy=Math.sin(wheelA)*6;ctx.strokeStyle="#c0c4c8";ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(-36+cx,-13+cy);ctx.lineTo(24+cx,-13+cy);ctx.stroke()}
+function drawDiesel(col){ctx.fillStyle="#2b2f36";ctx.fillRect(-54,-20,108,8);
+  ctx.fillStyle=col;ctx.beginPath();ctx.roundRect(-54,-66,104,48,8);ctx.fill();ctx.fillStyle="rgba(0,0,0,.2)";ctx.fillRect(-54,-30,104,8);
+  ctx.fillStyle="#f2c230";ctx.fillRect(-54,-44,104,6);ctx.fillStyle="#3a3f46";ctx.fillRect(-46,-72,60,8);for(let k=0;k<4;k++)ctx.fillRect(-40+k*14,-62,8,14);
+  ctx.fillStyle="#cfe9ff";ctx.beginPath();ctx.roundRect(22,-62,24,18,4);ctx.fill();emo(P.avatar||"🙂",34,-42,16);
+  ctx.fillStyle="#ffe680";ctx.beginPath();ctx.arc(50,-28,4.5,0,7);ctx.fill();for(const x of[-38,-20,18,36])wheel(x,-9,9)}
+function drawBullet(col){ctx.fillStyle="#2b2f36";ctx.fillRect(-54,-18,100,6);
+  ctx.fillStyle="#eef2f6";ctx.beginPath();ctx.moveTo(-54,-60);ctx.lineTo(10,-60);ctx.quadraticCurveTo(52,-58,60,-18);ctx.lineTo(-54,-18);ctx.closePath();ctx.fill();
+  ctx.fillStyle=col;ctx.beginPath();ctx.moveTo(-54,-34);ctx.lineTo(56,-34);ctx.lineTo(60,-18);ctx.lineTo(-54,-18);ctx.closePath();ctx.fill();
+  ctx.fillStyle="#1d2a3a";ctx.beginPath();ctx.moveTo(14,-56);ctx.quadraticCurveTo(40,-54,48,-40);ctx.lineTo(14,-40);ctx.closePath();ctx.fill();emo(P.avatar||"🙂",28,-40,14);
+  ctx.fillStyle="#9fd3ff";for(let k=0;k<4;k++)ctx.fillRect(-48+k*14,-54,10,12);ctx.fillStyle="#ffe680";ctx.beginPath();ctx.arc(54,-24,3.5,0,7);ctx.fill();for(const x of[-40,-24,16,32])wheel(x,-8,7)}
 function rnd(seed){let a=seed>>>0;return()=>{a=(a*1664525+1013904223)>>>0;return a/4294967296}}
 function drawCar(c){const k=c.k,col=c.c,rr=rnd(c.seed||1);
   ctx.fillStyle="#2b2f36";ctx.fillRect(-44,-20,88,7);ctx.fillRect(-49,-18,6,4);ctx.fillRect(43,-18,6,4);
@@ -596,6 +607,7 @@ function drawCar(c){const k=c.k,col=c.c,rr=rnd(c.seed||1);
   else if(k==="flat"||k==="logs"||k==="ice"){ctx.fillStyle=col;ctx.fillRect(-44,-28,88,9);
     if(k==="logs"){for(let j=0;j<3;j++){ctx.fillStyle="#8b5a2b";ctx.fillRect(-40,-40-j*0-j*10,80,10);ctx.fillStyle="#d2a36c";ctx.beginPath();ctx.arc(40,-35-j*10,5,0,7);ctx.fill()}ctx.fillStyle="#2b2f36";ctx.fillRect(-30,-62,4,36);ctx.fillRect(26,-62,4,36)}
     else emo(k==="ice"?"🍦":c.e||"🦖",0,-24,k==="ice"?46:44)}
+  else if(k==="rainbow"){["#e2412e","#f08a24","#f2c230","#43a047","#3b6fd9","#8f5bd6"].forEach((cc,j)=>{ctx.fillStyle=cc;ctx.fillRect(-42,-62+j*7,84,7)});ctx.fillStyle="rgba(255,255,255,.35)";ctx.fillRect(-42,-62,84,4)}
   else if(k==="caboose"){body(-58,-20);ctx.fillStyle=col;ctx.fillRect(-14,-74,28,18);ctx.fillStyle="rgba(0,0,0,.3)";ctx.fillRect(-18,-78,36,5);ctx.fillRect(-44,-62,88,5);
     ctx.fillStyle="#fff6c9";ctx.fillRect(-8,-70,16,10);ctx.fillRect(-32,-48,14,13);ctx.fillRect(18,-48,14,13)}
   else if(k==="animal"){body(-60,-20);ctx.fillStyle="rgba(0,0,0,.28)";for(let j=0;j<5;j++)ctx.fillRect(-40,-56+j*8,80,3);emo(/^[🐄🦬🦌]/u.test(c.e||"")?c.e:"🐄",-16,-50,30);emo("🐑",18,-50,26)}

@@ -23,6 +23,19 @@
 .ty-cb{display:flex;flex-direction:column;align-items:center;gap:2px}
 .lr-combo .lr-cbt{height:auto;min-height:74px;padding:6px 8px}.ty-cb .lr-car{width:clamp(56px,15vw,72px)}.ty-cb .lr-nd b{font-size:22px}.ty-cb .lr-dice{width:30px;height:30px}
 .lr-flash .lr-dots{height:clamp(80px,22vw,120px)}
+.ty-tix{padding:0 12px;height:36px;font-size:15px;text-transform:none}
+.ty-ov{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:flex-end;justify-content:center;z-index:50}.ty-ov[hidden]{display:none}
+.ty-card{background:var(--night);color:var(--text);width:100%;max-width:640px;max-height:92vh;overflow:auto;border-radius:22px 22px 0 0;padding:16px 14px 22px;display:flex;flex-direction:column;gap:10px;box-sizing:border-box}
+.ty-card h3{margin:6px 0 0;font-size:17px;color:var(--paint)}
+.ty-row{display:flex;align-items:center;gap:10px}.ty-row h2{margin:0;flex:1;font-size:21px}.ty-have{color:var(--paint)}
+.ty-btn{border:0;border-radius:12px;padding:9px 12px;font:700 15px var(--font-body);background:var(--panel);color:var(--text);cursor:pointer}
+.ty-btn.go{background:var(--paint);color:var(--night)}.ty-btn:disabled{opacity:.45;cursor:default}
+.ty-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px}
+.ty-item{background:var(--panel);border-radius:14px;padding:10px;display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center}
+.ty-item .lr-car{width:84px}.ty-big{font-size:44px;line-height:1}.ty-sw{width:46px;height:46px;border-radius:50%;border:3px solid rgba(255,255,255,.5)}
+.ty-train{display:flex;flex-wrap:wrap;align-items:flex-end;gap:2px;background:#cfeaff;border-radius:14px;padding:10px;border-bottom:8px solid #8b5a2b}
+.ty-train .lr-car{width:64px}.ty-eng{font-size:52px;line-height:1;filter:drop-shadow(0 0 0 var(--c));background:radial-gradient(circle at 50% 60%,var(--c) 0 40%,transparent 41%);border-radius:10px}
+.ty-note{margin:0;color:var(--muted);font-size:14px}.ty-msg{margin:0;color:var(--paint);font-weight:700}
 </style>
 </head>
 <body>
@@ -34,10 +47,27 @@
 <script>
 (()=>{const U=TS_LEARN.util;TS.horn.load();
 
-TS_LEARN({id:"trains",name:"Train Yard",howto:[["🚂", "All aboard! Every level has train jobs to do."], ["🔢", "Hook up cars in order, count passengers, find the cars in the tunnel, and load boxes."], ["👀", "Quick look! Passengers flash in the window. How many did you see?"], ["🎨", "Colours, patterns, first and last cars, sizes, sounds and your name."], ["🚃", "Every level you finish adds a car to YOUR train!"]],
+/* ---------- rewards, shared with Train Trip: everything earned here is on his Train Trip train ----------
+   A new level won for the first time: a new car (and a sticker every third one). Every level won: 🎟️ tickets,
+   one per round minus oops (at least 1), spent in the Train Shop on engines, paint and special cars. */
+const TV=TS.gameSave("trip",{cars:[],forks:0,stations:0,step:{},hist:{},bag:[]}),TD=TV.data;
+const GIFTS=["coal","passenger","tanker","logs","box","grain","animal","mail","caboose","ice","party","flat"],CARN={rainbow:"rainbow car",passenger:"passenger car",coal:"coal car",tanker:"tank car",box:"box car",flat:"flat car",logs:"log car",caboose:"caboose",animal:"animal car",party:"party car",ice:"ice cream car",grain:"grain car",mail:"mail car"};
+const ICON={passenger:"🧑",coal:"⚫",tanker:"💧",box:"📦",logs:"🪵",caboose:"🏮",animal:"🐄",party:"🎈",ice:"🍦",grain:"🌾",mail:"✉️",rainbow:"🌈"};
+const PALC=["#e2412e","#3b6fd9","#f2b705","#43a047","#8f5bd6","#f08a24","#1e9e8a","#e06aa6"];
+const STICK=[["🚂","steam train"],["🚄","fast train"],["🚇","subway train"],["🚋","tram"],["🚞","mountain train"],["🚉","station"],["🦬","bison"],["🫎","moose"],["🦌","deer"],["🐻","bear"],["🦫","beaver"],["🦉","owl"],
+  ["🦅","eagle"],["🐿️","squirrel"],["🦊","fox"],["🐇","bunny"],["🦆","duck"],["🐸","frog"],["🦋","butterfly"],["⭐","star"],["🌈","rainbow"],["🎈","balloon"],["🍦","ice cream"],["🧸","teddy bear"],["🚀","rocket"],["🦖","dinosaur"],["🏆","trophy"],["🍁","maple leaf"],["❄️","snowflake"],["🚜","tractor"],["🚒","fire truck"]];
+const carHTML=c=>U.car(c.k==="rainbow"?"#8f5bd6":c.c,c.k==="flat"?(c.e||"🦖"):ICON[c.k]||"");
+function reward(S,K){const pr=K.save.grades[K.age]||{stars:{}},first=!(pr.stars||{})[S.n],t=Math.max(1,S.total-S.miss);K.save.tickets=(K.save.tickets||0)+t;let out=[],say=[];
+  if(first){const k=GIFTS[(TD.yardGifts||0)%GIFTS.length];TD.yardGifts=(TD.yardGifts||0)+1;const last=TD.cars[TD.cars.length-1];let c;do c=U.pick(Math.random,PALC);while(last&&c===last.c);
+    TD.cars.push({k,c,e:k==="flat"?U.pick(Math.random,["🦖","🧸","🚜","🎁"]):k==="animal"?"🐄":"🚂",seed:Math.floor(Math.random()*1e6)});out.push("🎁 A new "+CARN[k]+" for your train!");say.push("You got a new "+CARN[k]+" for your train!");
+    if(TD.yardGifts%3===0){TD.stk=TD.stk||{};const fresh=STICK.filter(x=>!TD.stk[x[0]]),st=U.pick(Math.random,fresh.length?fresh:STICK);TD.stk[st[0]]=(TD.stk[st[0]]||0)+1;out.push(st[0]+" A "+st[1]+" sticker!");say.push("And a "+st[1]+" sticker for your sticker book!")}
+    TV.save()}
+  K.persist();ticketChip();out.push("+"+t+" 🎟️ (you have "+K.save.tickets+")");setTimeout(()=>TS.say(say.join(" ")||"You earned "+t+" tickets!"),1900);
+  return" "+out.join(" ")+" Your train has "+TD.cars.length+" car"+(TD.cars.length===1?"":"s")+"."}
+let ticketChip=()=>{};
+const KY=TS_LEARN({id:"trains",name:"Train Yard",howto:[["🚂", "All aboard! Every level has train jobs to do."], ["🔢", "Hook up cars in order, count passengers, find the cars in the tunnel, and load boxes."], ["👀", "Quick look! Passengers flash in the window. How many did you see?"], ["🎨", "Colours, patterns, first and last cars, sizes, sounds and your name."], ["🚃", "Every level you finish adds a car to YOUR train!"]],
 rounds:a=>a<=0?5:6,
-winText:(S,K)=>{TS.horn.play();const pr=K.save.grades[K.age]||{stars:{}},cars=Math.max(1,Object.keys(pr.stars||{}).length);
-  return "🚂"+"🚃".repeat(Math.min(cars,12))+(cars>12?"+":"")+" Your train has "+cars+" car"+(cars>1?"s":"")+"!"},
+winText:(S,K)=>{TS.horn.play();return reward(S,K)},
 make(n,i,r,a){
   /* Train-themed practice for a child who loves trains: number order, counting, ten-frame seats, patterns, letters of his name,
      comparing train lengths, missing numbers and sorting cargo. Content one grade back (pre-K for Kindergarten). */
@@ -144,6 +174,42 @@ make(n,i,r,a){
   return{type:"sort",say:"Load the cargo! Put each shape in its train car.",prompt:'<span class="ask">🚃 Load the cargo into the right car</span>',
     bins:shapes.map((sh,j)=>({key:sh,html:U.car(COL[j],"")+'<span style="display:block;margin-top:-6px">'+U.shape(sh,"#ffffff",0,.55)+"</span>",label:sh+"s"})),
     items:U.shuffle(r,items).map(sh=>({key:sh,html:U.shape(sh,U.pick(r,U.SHAPE_COLS)),aria:sh}))}}});
+
+/* ---------- 🎟️ the Train Shop and My train ---------- */
+const SHOP=[
+  {id:"diesel",kind:"engine",name:"Diesel engine",icon:"🚆",price:15},{id:"bullet",kind:"engine",name:"Bullet train",icon:"🚄",price:25},
+  {id:"red",kind:"paint",name:"Red paint",col:"#e2412e",price:5},{id:"blue",kind:"paint",name:"Blue paint",col:"#3b6fd9",price:5},{id:"green",kind:"paint",name:"Green paint",col:"#43a047",price:5},
+  {id:"purple",kind:"paint",name:"Purple paint",col:"#8f5bd6",price:5},{id:"gold",kind:"paint",name:"Shiny gold paint",col:"#e0b020",price:15},
+  {id:"rainbow",kind:"car",name:"Rainbow car",car:{k:"rainbow",c:"#8f5bd6"},price:12},{id:"dino",kind:"car",name:"Dino car",car:{k:"flat",c:"#43a047",e:"🦖"},price:10},
+  {id:"rocket",kind:"car",name:"Rocket car",car:{k:"flat",c:"#3b6fd9",e:"🚀"},price:10},{id:"goldcab",kind:"car",name:"Golden caboose",car:{k:"caboose",c:"#e0b020"},price:20}];
+const own=()=>TD.owned||(TD.owned={steam:1});
+const top=document.querySelector(".top .left");top.insertAdjacentHTML("beforeend",'<button class="chip ty-tix" id="tyTix" type="button" aria-label="Train Shop">🎟️ <b id="tyTixN">0</b></button>');
+ticketChip=()=>{document.getElementById("tyTixN").textContent=KY.save.tickets||0};ticketChip();
+let ov=null;
+function sheet(html){if(!ov){ov=document.createElement("div");ov.className="ty-ov";document.body.appendChild(ov);ov.addEventListener("click",e=>{if(e.target===ov)ov.hidden=true})}ov.innerHTML='<div class="ty-card">'+html+"</div>";ov.hidden=false}
+function engineHTML(){const e=TD.engine||"steam",col=TD.paint||(TS.players.current()||{}).color||"#e2412e";return'<span class="ty-eng" style="--c:'+col+'">'+(e==="diesel"?"🚆":e==="bullet"?"🚄":"🚂")+"</span>"}
+function myTrain(){const cars=TD.cars;sheet('<div class="ty-row"><h2>🚂 My train</h2><button class="ty-btn" id="tyClose" type="button">Close</button></div>'+
+    '<div class="ty-train">'+engineHTML()+cars.map(carHTML).join("")+"</div>"+
+    '<p class="ty-note">'+cars.length+" car"+(cars.length===1?"":"s")+" · "+Object.keys(TD.stk||{}).length+" stickers · ride it in <b>Train Trip</b>!</p>"+
+    '<button class="ty-btn go" id="tyShop" type="button">🎟️ Train Shop ('+(KY.save.tickets||0)+" tickets)</button>");
+  document.getElementById("tyClose").onclick=()=>{ov.hidden=true};document.getElementById("tyShop").onclick=shop}
+function shop(msg){const t=KY.save.tickets||0,o=own();
+  const item=it=>{const have=it.kind==="engine"?o[it.id]:it.kind==="paint"?o["p_"+it.id]:false,using=it.kind==="engine"?(TD.engine||"steam")===it.id:it.kind==="paint"&&TD.paint===it.col;
+    const look=it.kind==="engine"?'<span class="ty-big">'+it.icon+"</span>":it.kind==="paint"?'<span class="ty-sw" style="background:'+it.col+'"></span>':carHTML(it.car);
+    const btn=using?'<button class="ty-btn" disabled>Using it</button>':have?'<button class="ty-btn go" data-use="'+it.id+'">Use it</button>':'<button class="ty-btn'+(t>=it.price?" go":"")+'" data-buy="'+it.id+'"'+(t>=it.price?"":" disabled")+">🎟️ "+it.price+"</button>";
+    return'<div class="ty-item">'+look+"<b>"+it.name+"</b>"+btn+"</div>"};
+  const sec=(k,title)=>"<h3>"+title+'</h3><div class="ty-grid">'+(k==="engine"?item({id:"steam",kind:"engine",name:"Steam engine",icon:"🚂",price:0}):"")+(k==="paint"?'<div class="ty-item"><span class="ty-sw" style="background:'+((TS.players.current()||{}).color||"#e2412e")+'"></span><b>My colour</b>'+(TD.paint?'<button class="ty-btn go" data-use="mine">Use it</button>':'<button class="ty-btn" disabled>Using it</button>')+"</div>":"")+SHOP.filter(x=>x.kind===k).map(item).join("")+"</div>";
+  sheet('<div class="ty-row"><h2>🎟️ Train Shop</h2><b class="ty-have">'+t+' tickets</b><button class="ty-btn" id="tyClose" type="button">Close</button></div>'+(msg?'<p class="ty-msg">'+msg+"</p>":"")+
+    '<p class="ty-note">Earn tickets by finishing Train Yard levels. Everything you get rides on your train in <b>Train Trip</b>!</p>'+sec("engine","Engines")+sec("paint","Paint for your engine")+sec("car","Special cars")+
+    '<button class="ty-btn" id="tyMine" type="button">🚂 See my train</button>');
+  document.getElementById("tyClose").onclick=()=>{ov.hidden=true};document.getElementById("tyMine").onclick=myTrain;
+  ov.querySelectorAll("[data-buy]").forEach(b=>b.onclick=()=>{const it=SHOP.find(x=>x.id===b.dataset.buy);if((KY.save.tickets||0)<it.price)return;KY.save.tickets-=it.price;KY.persist();ticketChip();
+    if(it.kind==="engine"){own()[it.id]=1;TD.engine=it.id}else if(it.kind==="paint"){own()["p_"+it.id]=1;TD.paint=it.col}else TD.cars.push({...it.car,seed:Math.floor(Math.random()*1e6)});
+    TV.save();TS.music.fx("win");TS.horn.play();TS.say("You got the "+it.name+"!");shop("🎉 You got the "+it.name+"!"+(it.kind==="car"?" It's on your train.":""))});
+  ov.querySelectorAll("[data-use]").forEach(b=>b.onclick=()=>{const id=b.dataset.use;if(id==="mine")delete TD.paint;else{const it=SHOP.find(x=>x.id===id)||{kind:"engine",id};if(it.kind==="engine")TD.engine=id;else TD.paint=it.col}
+    TV.save();TS.music.fx("tap");shop()})}
+document.getElementById("tyTix").onclick=()=>myTrain();
+window.__yard={shop,myTrain,TD,TV,get K(){return KY},reward};
 })();
 </script>
 </body>
