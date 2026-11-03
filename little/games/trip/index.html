@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#161b21">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box;height:100%}body{margin:0}[hidden]{display:none!important}</style>
-<title>Train Trip · Little Learners</title>
+<title>Nathaniel Express · Little Learners</title>
 <meta name="apple-mobile-web-app-title" content="Little Learners">
 <link rel="apple-touch-icon" href="../../icon-180.png">
 <link rel="icon" type="image/png" href="../../icon-512.png">
@@ -160,7 +160,7 @@ body{overflow:hidden}
   <header class="tbar">
     <div class="left"><a class="chip icon" id="kHome" href="../../index.html" aria-label="Home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg></a>
       <button class="chip icon" id="kMusic" type="button"></button></div>
-    <div class="ttl">TRAIN TRIP</div>
+    <div class="ttl">NATHANIEL EXPRESS</div>
     <div class="right"><span class="score" id="score"></span><button class="chip bookbtn" id="book" type="button" aria-label="My stickers">📒 <b id="bookN">0</b></button><button class="chip icon help" id="kHelp" type="button" aria-label="How to play">?</button></div>
   </header>
   <div id="view">
@@ -186,7 +186,7 @@ TS.report.game="trip";
 $("kMusic").innerHTML=TS.MUSIC_SVG;TS.music.button($("kMusic"));
 const HOWTO=[["🚂","Ride the train from station to station."],["🛤️","At every Y in the tracks the train stops. Listen, then tap the sign on the right track."],
   ["🎁","Every station has a present: a new car for your train!"],["📯","Tap the horn to toot!"]];
-$("kHelp").onclick=()=>TS.howto.show("trip","Train Trip",HOWTO);
+$("kHelp").onclick=()=>TS.howto.show("trip","Nathaniel Express",HOWTO);
 const NO=A<0?2:3; // tracks at each Y
 
 /* ---------- questions ---------- */
@@ -775,7 +775,7 @@ function nextName(){const st=STOPS.slice(sp).find(x=>x.type==="station");return 
 function thumb(cvs,c){const o=ctx;ctx=cvs.getContext("2d");ctx.setTransform(1.15,0,0,1.15,cvs.width/2,cvs.height-4);drawCar(c);ctx=o}
 function startCard(title){const nx=nextName();card("<h2>"+(title||"All aboard, "+(P.name||"friend")+"!")+"</h2><p>Next stop: "+nx+" "+gives(nx)[1]+"</p><button class=\"gobtn\" id=\"go\" type=\"button\">▶ Go!</button>"+
     (save.cars.length?'<button class="yardbtn" id="yard" type="button">🚃 My train</button>':""));
-  $("go").onclick=()=>{card("");TS.say("All aboard! Next stop, "+nx+"!");toot();legT0=Date.now();legMiss=0;mode="run"};
+  $("go").onclick=()=>{card("");TS.say("All aboard the Nathaniel Express! Next stop, "+nx+"!");toot();legT0=Date.now();legMiss=0;mode="run"};
   if($("yard"))$("yard").onclick=()=>yard(title)}
 /* My train: see every car, and tap ✖ to leave one at the station */
 function yard(title){const st=STATIONS.find(x=>x.stop===tx),here=st?st.name:"the station";
@@ -831,8 +831,9 @@ function draw(){ctx.setTransform(dpr*s,0,0,dpr*s,0,0);
 /* ---------- start at the station the player last reached ---------- */
 if(!CanvasRenderingContext2D.prototype.roundRect)CanvasRenderingContext2D.prototype.roundRect=function(x,y,w,h,r){this.moveTo(x+r,y);this.arcTo(x+w,y,x+w,y+h,r);this.arcTo(x+w,y+h,x,y+h,r);this.arcTo(x,y+h,x,y,r);this.arcTo(x,y,x+w,y,r);this.closePath();return this};
 TS.horn.load();resize();score();bookN();const st0=station(0,stName(save.stations));STOPS.push(st0);sp=1;newLeg(0);
-startCard();requestAnimationFrame(frame);
-TS.howto.first("trip","Train Trip",HOWTO);
+startCard("All aboard the Nathaniel Express!");requestAnimationFrame(frame);
+TS.say("All aboard the Nathaniel Express!"); // spoken as the game opens (on an iPad, at the first touch)
+TS.howto.first("trip","Nathaniel Express",HOWTO);
 window.__trip={STK,SB,openBook,sticker(){sinceStk=99;return maybeSticker(null,true)},stickerNext(){sinceStk=99},tunnels:()=>TUNNELS,gives,get station(){return STATIONS.find(x=>x.stop===tx)},get mode(){return mode},get fork(){const f=STOPS[sp];return f&&f.type==="fork"?f:null},tap,save,get tx(){return tx},
   /* tests: answer the waiting Y right (or wrong), skip ahead to the next stop */
   right(){const f=STOPS[sp];if(mode==="task"&&task){const t=task,st=t.st;if(st.type==="animal")for(let k=st.gone;k<st.n;k++)hornTap();

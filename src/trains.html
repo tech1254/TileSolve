@@ -183,7 +183,7 @@ function sheet(html){if(!ov){ov=document.createElement("div");ov.className="ty-o
 function engineHTML(){const e=TD.engine||"steam",col=TD.paint||(TS.players.current()||{}).color||"#e2412e";return'<span class="ty-eng" style="--c:'+col+'">'+(e==="diesel"?"🚆":e==="bullet"?"🚄":"🚂")+"</span>"}
 function myTrain(){const cars=TD.cars;sheet('<div class="ty-row"><h2>🚂 My train</h2><button class="ty-btn" id="tyClose" type="button">Close</button></div>'+
     '<div class="ty-train">'+engineHTML()+cars.map(carHTML).join("")+"</div>"+
-    '<p class="ty-note">'+cars.length+" car"+(cars.length===1?"":"s")+" · "+SB.total(TD.stk||{})+" stickers · ride it in <b>Train Trip</b>!</p>"+
+    '<p class="ty-note">'+cars.length+" car"+(cars.length===1?"":"s")+" · "+SB.total(TD.stk||{})+" stickers · ride it on the <b>Nathaniel Express</b>!</p>"+
     '<button class="ty-btn" id="tyBook" type="button">📒 My stickers</button> '+
     '<button class="ty-btn go" id="tyShop" type="button">🎟️ Train Shop ('+(KY.save.tickets||0)+" tickets)</button>");
   document.getElementById("tyClose").onclick=()=>{ov.hidden=true};document.getElementById("tyShop").onclick=shop;
@@ -195,7 +195,7 @@ function shop(msg){const t=KY.save.tickets||0,o=own();
     return'<div class="ty-item">'+look+"<b>"+it.name+"</b>"+btn+"</div>"};
   const sec=(k,title)=>"<h3>"+title+'</h3><div class="ty-grid">'+(k==="engine"?item({id:"steam",kind:"engine",name:"Steam engine",icon:"🚂",price:0}):"")+(k==="paint"?'<div class="ty-item"><span class="ty-sw" style="background:'+((TS.players.current()||{}).color||"#e2412e")+'"></span><b>My colour</b>'+(TD.paint?'<button class="ty-btn go" data-use="mine">Use it</button>':'<button class="ty-btn" disabled>Using it</button>')+"</div>":"")+SHOP.filter(x=>x.kind===k).map(item).join("")+"</div>";
   sheet('<div class="ty-row"><h2>🎟️ Train Shop</h2><b class="ty-have">'+t+' tickets</b><button class="ty-btn" id="tyClose" type="button">Close</button></div>'+(msg?'<p class="ty-msg">'+msg+"</p>":"")+
-    '<p class="ty-note">Earn tickets by finishing Train Yard levels. Everything you get rides on your train in <b>Train Trip</b>!</p>'+sec("engine","Engines")+sec("paint","Paint for your engine")+sec("car","Special cars")+
+    '<p class="ty-note">Earn tickets by finishing Train Yard levels. Everything you get rides on the <b>Nathaniel Express</b>!</p>'+sec("engine","Engines")+sec("paint","Paint for your engine")+sec("car","Special cars")+
     '<button class="ty-btn" id="tyMine" type="button">🚂 See my train</button>');
   document.getElementById("tyClose").onclick=()=>{ov.hidden=true};document.getElementById("tyMine").onclick=myTrain;
   ov.querySelectorAll("[data-buy]").forEach(b=>b.onclick=()=>{const it=SHOP.find(x=>x.id===b.dataset.buy);if((KY.save.tickets||0)<it.price)return;KY.save.tickets-=it.price;KY.persist();ticketChip();
