@@ -72,6 +72,7 @@ with sync_playwright() as p:
     ctx = b.new_context(viewport={"width": 1024, "height": 768}); ctx.add_init_script(player(4, "h2", HERO, True))
     pg = watch_errors(ctx.new_page(), errors); pg.goto(URL("hero")); pg.wait_for_function("window.__game&&__game.S", timeout=10000); pg.wait_for_timeout(300)
     check(not pg.is_visible(".hm"), "a saved hero skips the maker")
+    pg.evaluate("window.__heroNoMission=true")
     loops = 0; results = {}
     for n in range(1, 25):
         r = pg.evaluate(BOT + f"({n},150)"); results[n] = r
@@ -84,6 +85,45 @@ with sync_playwright() as p:
     check(not bad, f"a simple button-pressing bot finishes all 24 levels {bad}")
     check(loops >= 8, f"there are loop-the-loops to zoom round ({loops})")
     print("  bot:", {n: (r["t"], r["lost"], f"{r['got']}/{r['total']}") for n, r in results.items()})
-    ctx.close(); b.close()
+    ctx.close()
+    # 5. story missions: maths to fix the Number Engines
+    for grade in (1, 3, 5):
+        ctx = b.new_context(viewport={"width": 1024, "height": 768}); ctx.add_init_script(player(grade, f"ms{grade}", HERO, True))
+        pg = watch_errors(ctx.new_page(), errors); pg.goto(URL("hero")); pg.wait_for_function("window.__game&&__game.S", timeout=10000); pg.wait_for_timeout(300)
+        bad = pg.evaluate("""()=>{const out=[];for(let age=0;age<=5;age++)for(let w=0;w<6;w++)for(let i=0;i<150;i++){const q=__game.mathQ(age,w,Math.random);
+          if(!(Number.isInteger(q.ans)&&q.ans>=0&&q.ans<100000&&q.eq.includes('?')&&q.text&&q.how))out.push([age,w,q])}return out.slice(0,3)}""")
+        if grade == 1: check(not bad, f"5400 maths problems for every grade and world have whole-number answers and a how-to {bad}")
+        pg.evaluate("(()=>{const S=__game.S;S.x=S.L.end+2;S.on=1;S.y=S.L.gy[Math.floor(S.x/20)]})()"); pg.wait_for_timeout(2000)
+        check(pg.is_visible(".ms") and "Professor Muddle" in pg.text_content(".ms-story") and not pg.is_visible("#kSheetWin"), f"grade {grade}: winning level 1 opens the first story mission before the next level")
+        if OUT: pg.screenshot(path=str(OUT / f"hero_mission_g{grade}.png"))
+        q = pg.evaluate("__mission.q"); pg.evaluate(f"__mission.answer({q['ans']+1})"); pg.wait_for_timeout(300)
+        check("Not quite" in pg.text_content("#msHelp") and str(q["ans"]) in pg.text_content("#msHelp"), f"grade {grade}: a wrong answer shows the answer and how to work it out")
+        pg.wait_for_timeout(4000)
+        check(pg.evaluate("__mission.q.text") != q["text"] or pg.evaluate("__mission.q.eq") != q["eq"], f"grade {grade}: then a fresh problem")
+        for k in range(3):
+            pg.evaluate("__mission.answer(__mission.q.ans)"); pg.wait_for_timeout(1100)
+        check("done" in pg.text_content("#msQ") and pg.evaluate("__game.K.save.eng[0]") == 1, f"grade {grade}: 3 right answers fix part 1 of the Meadow engine")
+        pg.click(".ms-btn"); pg.wait_for_timeout(1200)
+        check(pg.is_visible("#kSheetWin") and not pg.is_visible(".ms"), f"grade {grade}: then the level-done card shows")
+        # replaying a level already won: no mission
+        pg.evaluate("__game.K.load(1)"); pg.wait_for_timeout(300)
+        pg.evaluate("(()=>{const S=__game.S;S.x=S.L.end+2;S.on=1;S.y=S.L.gy[Math.floor(S.x/20)]})()"); pg.wait_for_timeout(2400)
+        check(pg.is_visible("#kSheetWin") and not pg.is_visible(".ms"), f"grade {grade}: replaying a won level skips the mission")
+        if grade == 3:
+            # level 3 win: the usual maths checkpoint is replaced by the missions
+            for n in (2, 3):
+                pg.evaluate(f"__game.K.load({n})"); pg.wait_for_timeout(300)
+                pg.evaluate("(()=>{const S=__game.S;S.x=S.L.end+2;S.on=1;S.y=S.L.gy[Math.floor(S.x/20)]})()"); pg.wait_for_timeout(1700)
+                for k in range(3): pg.evaluate("__mission.answer(__mission.q.ans)"); pg.wait_for_timeout(1100)
+                pg.click(".ms-btn"); pg.wait_for_timeout(1200)
+            check(pg.text_content("#kWinNext") == "Next level" and not pg.evaluate("(__game.K.save.grades[__game.K.age]||{}).gate"), f"grade {grade}: no extra maths checkpoint after level 3 ({pg.text_content('#kWinNext')})")
+            pg.evaluate("__game.K.load(4)"); pg.wait_for_timeout(300)
+            pg.evaluate("(()=>{const S=__game.S;S.boss.hp=0;})()"); pg.wait_for_timeout(2600)
+            check(pg.is_visible(".ms") and "Restart" in pg.text_content(".ms-main h2"), "beating the boss leads to the Restart the engine mission")
+            for k in range(3): pg.evaluate("__mission.answer(__mission.q.ans)"); pg.wait_for_timeout(1100)
+            check("is saved" in pg.text_content("#msQ") and pg.evaluate("__game.K.save.eng[0]") == 4, "restarting the engine saves Meadow Run")
+            if OUT: pg.screenshot(path=str(OUT / "hero_saved.png"))
+        ctx.close()
+    b.close()
 check(not errors, f"no page errors {errors[:3]}")
 check.finish()
