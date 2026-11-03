@@ -282,9 +282,11 @@ const talk=(()=>{let unlocked=false,pending=null,voice=null;
   function list(){if(!ok())return[];try{return speechSynthesis.getVoices().filter(v=>score(v)>-50).sort((a,b)=>score(b)-score(a))}catch(e){return[]}}
   function pickVoice(){if(voice)return voice;const vs=list();voice=(data.voice&&vs.find(v=>v.voiceURI===data.voice))||vs[0]||null;return voice}
   if(ok())try{speechSynthesis.addEventListener("voiceschanged",()=>{voice=null})}catch(e){}
-  function speak(t){try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t),v=pickVoice();if(v){u.voice=v;u.lang=v.lang}else u.lang="en-CA";
+  /* never read emoji aloud ("electric light bulb"): drop pictographs, their joiners and variation marks, and HTML tags */
+  const clean=t=>String(t).replace(/<[^>]*>/g,"").replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\u{1F1E6}-\u{1F1FF}\u{2190}-\u{21FF}\u{2300}-\u{23FF}\u{FE0F}\u{200D}\u{20E3}\u{E0020}-\u{E007F}]/gu,"").replace(/\s+([.,!?])/g,"$1").replace(/\s{2,}/g," ").trim();
+  function speak(t){t=clean(t);if(!t)return;try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t),v=pickVoice();if(v){u.voice=v;u.lang=v.lang}else u.lang="en-CA";
     u.rate=.92;u.pitch=1;speechSynthesis.speak(u)}catch(e){}}
-  const api={get on(){return data.talk!==false},
+  const api={clean,get on(){return data.talk!==false},
     set(on){data.talk=!!on;persist();if(!on)try{speechSynthesis.cancel()}catch(e){}},
     say(t){api.last=t;if(!t||!api.on||!ok()||music.muted)return;if(!unlocked){pending=t;return}speak(t)},last:"",
     voices:()=>list().map(v=>({uri:v.voiceURI,name:v.name,lang:v.lang})),

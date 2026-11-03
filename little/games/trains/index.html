@@ -15,8 +15,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Barlow:wght@400;600;700&display=swap">
-<link rel="stylesheet" href="../../shared/ts.css?v=75690562">
-<link rel="stylesheet" href="../../shared/game.css?v=75690562">
+<link rel="stylesheet" href="../../shared/ts.css?v=290290d9">
+<link rel="stylesheet" href="../../shared/game.css?v=290290d9">
 <style>
 .ty-tun{display:inline-block;flex:none;width:clamp(44px,12vw,62px);height:clamp(46px,12.5vw,64px);background:#161616;border:6px solid #b3a794;border-bottom:0;border-radius:40px 40px 0 0;box-sizing:border-box;margin-right:-4px;align-self:flex-end}
 .ty-bin{display:flex;flex-direction:column;align-items:center;gap:2px}.ty-bin b{font-size:clamp(22px,6vw,30px);line-height:1}
@@ -39,12 +39,12 @@
 </style>
 </head>
 <body>
-<script src="../../shared/ts.js?v=75690562"></script>
-<script src="../../shared/kit.js?v=75690562"></script>
-<script src="../../shared/stickers.js?v=75690562"></script>
+<script src="../../shared/ts.js?v=290290d9"></script>
+<script src="../../shared/kit.js?v=290290d9"></script>
+<script src="../../shared/stickers.js?v=290290d9"></script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&display=swap">
-<link rel="stylesheet" href="../../shared/learn.css?v=75690562">
-<script src="../../shared/learn.js?v=75690562"></script>
+<link rel="stylesheet" href="../../shared/learn.css?v=290290d9">
+<script src="../../shared/learn.js?v=290290d9"></script>
 <script>
 (()=>{const U=TS_LEARN.util;TS.horn.load();
 
@@ -75,8 +75,8 @@ make(n,i,r,a){
   const COL=["#e2412e","#3b6fd9","#f2b705","#43a047","#8f5bd6","#f08a24","#1e9e8a","#e06aa6"],CN={"#e2412e":"red","#3b6fd9":"blue","#f2b705":"yellow","#43a047":"green","#8f5bd6":"purple","#f08a24":"orange","#1e9e8a":"teal","#e06aa6":"pink"};
   /* More kinds of train jobs (from the project's research notes): quick look (subitizing), the tunnel (number partners),
      loading boxes (making a number from two parts), colour cars, first/last car (ordinal words), finding every car with a number,
-     sorting cargo by kind, lining cars up by size, counting on, and first sounds. Each level mixes 5-6 different jobs. */
-  const pr=TS.rngFrom(n*977+(a+3)*31),pool=["couple","passengers","board","pattern","longest","name","missing","cargo","quick","tunnel","bonds","colour","ordinal","hunt","sortcargo","sizes","counton","sound"]
+     sorting cargo by kind, passengers riding in the car that matches their shirt, lining cars up by size, counting on, and first sounds. Each level mixes 5-6 different jobs. */
+  const pr=TS.rngFrom(n*977+(a+3)*31),pool=["couple","passengers","board","pattern","longest","name","missing","cargo","quick","tunnel","bonds","colour","ordinal","hunt","sortcargo","riders","sizes","counton","sound"]
     .filter(k=>!(k==="missing"&&a<0&&n<6)&&!(k==="cargo"&&a<0&&n<4)&&!(k==="bonds"&&a<0&&n<8)&&!(k==="counton"&&a<0)&&!(k==="colour"&&a>=1)&&!(k==="sound"&&a>=1)&&!(k==="name"&&a>=1));
   for(let k=pool.length-1;k>0;k--){const j=Math.floor(pr()*(k+1));[pool[k],pool[j]]=[pool[j],pool[k]]}
   const kind=pool[(i+n)%pool.length];
@@ -154,6 +154,16 @@ make(n,i,r,a){
     const G=U.sample(r,CARGO,a<0?2:3),items=[];G.forEach(([,em])=>U.sample(r,em,a<0?2:2).forEach(e=>items.push([G.findIndex(x=>x[1]===em),e])));
     return{type:"sort",say:"Load the cargo! Put each one in the right car.",prompt:'<span class="ask">🚃 Put each thing in the right car</span>',
       bins:G.map(([nm,,icon],j)=>({key:"g"+j,html:'<span class="ty-bin">'+U.car(COL[j*2],"")+"<b>"+icon+"</b></span>",label:nm})),items:U.shuffle(r,items).map(([j,e])=>({key:"g"+j,html:'<span style="font-size:1.6em">'+e+"</span>",aria:e}))}}
+  if(kind==="riders"){ // passengers in coloured shirts ride in the car that matches (his sister's idea)
+    const k=a<0&&n<4?3:4,cols=U.sample(r,["red","blue","yellow","green","purple","orange","pink"],k),per=a<0?2:a===0?2:3,items=[];
+    cols.forEach(c=>{for(let j=0;j<per;j++)items.push(c)});
+    const kid=(c,j)=>{const skin=["#f1c9a5","#d9a074","#a8714a","#6e4630"][j%4],hair=["#3b2412","#e0b04a","#1d1d1d","#8a3b12"][(j*3+c.length)%4];
+      return'<svg viewBox="0 0 40 52" width="44" height="58" aria-hidden="true"><path d="M8 50 L10 30 Q20 24 30 30 L32 50 Z" fill="'+CNX[c]+'" stroke="rgba(0,0,0,.35)" stroke-width="1.5"/>'+
+        '<circle cx="20" cy="17" r="10" fill="'+skin+'"/><path d="M10 15 Q12 5 20 6 Q29 6 30 15 Q25 10 20 11 Q15 10 10 15Z" fill="'+hair+'"/>'+
+        '<circle cx="16.5" cy="17" r="1.4" fill="#222"/><circle cx="23.5" cy="17" r="1.4" fill="#222"/><path d="M16 21.5 Q20 25 24 21.5" fill="none" stroke="#222" stroke-width="1.4" stroke-linecap="round"/></svg>'};
+    return{type:"sort",say:"All aboard! Each person rides in the car that matches their shirt.",prompt:'<span class="ask">👕 Each person rides in the car that matches their shirt</span>',
+      bins:cols.map(c=>({key:c,html:'<span class="ty-bin">'+U.car(CNX[c],"")+"</span>",label:c})),
+      items:U.shuffle(r,items.map((c,j)=>({key:c,html:kid(c,j),aria:"person in a "+c+" shirt"})))}}
   if(kind==="sizes"){ // line the cars up by size
     const k=a<0?3:a===0?4:5,big=a>=0&&r()<.4,cols=U.sample(r,COL,k),W=[48,64,80,96,112];
     const tiles=cols.map((c,j)=>({key:"s"+j,html:U.car(c,"").replace('class="lr-car"','class="lr-car" style="width:'+W[j]+'px"'),aria:["smallest","small","middle","big","biggest"][j]+" car",say:j===0?"the smallest":j===k-1?"the biggest":"next"}));

@@ -15,7 +15,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Barlow:wght@400;600;700&display=swap">
-<link rel="stylesheet" href="shared/ts.css?v=75690562">
+<link rel="stylesheet" href="shared/ts.css?v=290290d9">
 <style>
 body{overflow-y:auto}
 .app{min-height:100%;max-width:760px;margin:0 auto;box-sizing:border-box;display:flex;flex-direction:column;gap:22px;
@@ -124,7 +124,7 @@ h1{font-family:var(--font-sign);font-weight:400;font-size:clamp(26px,6vw,36px);m
   </form>
 </div>
 
-<script src="shared/ts.js?v=75690562"></script>
+<script src="shared/ts.js?v=290290d9"></script>
 <script>
 (()=>{
 const{players,music}=TS,$=id=>document.getElementById(id);
@@ -160,6 +160,7 @@ const GAMES=[
   {id:"carols",name:"Christmas Tunes",desc:"Carols to play, earned with 🎵",art:"🎄",href:"games/carols/index.html",g:["#2e7d32","#a3201b"]},
   {id:"trains",name:"Train Yard",desc:"Numbers, letters and patterns on the train",art:"🚂",href:"games/trains/index.html",g:["#3b6fd9","#1d3d85"],group:"little"},
   {id:"trip",name:"Train Trip",desc:"Ride the rails and pick the right track",art:"🛤️",href:"games/trip/index.html",g:["#2e9e5b","#165a32"],group:"little"},
+  {id:"mine",name:"Mine Cart",desc:"Ride the coaster, grab gems, load the coal",art:"⛏️",href:"games/mine/index.html",g:["#8a5a2b","#3b2412"],group:"little"},
   {id:"abc",name:"My ABCs",desc:"Learn every letter, starting with your name",art:"🔤",href:"games/abc/index.html",g:["#e2412e","#8a2318"],group:"little"},
   {id:"missletter",name:"Missing Letter",desc:"Which letter is gone?",art:"❓",href:"games/missletter/index.html",g:["#f08a24","#99500d"],group:"little"},
   {id:"case",name:"Big & Little",desc:"Match A to a",art:"🅰️",href:"games/case/index.html",g:["#c9a400","#6b5600"],group:"little"},
@@ -230,7 +231,7 @@ function drawGames(){const g=$("gameGrid");g.innerHTML="";const cur=players.curr
   const L=["little","Little learners","Letters, numbers and shapes"],X=APP==="little"?["explore","More to explore",""]:["explore","Learn & explore","Picked for "+players.gradeName(cur?cur.grade:3)],
     P=APP==="little"?["puzzles","Music","Earn 🎵 by playing"]:["puzzles","Puzzles","Every grade"];
   // Little Learners lists its games by subject
-  const SUBJ={letters:["abc","trace","sound","rhyme","syllables","blend","missletter","case"],numbers:["trains","trip","count","quicklook","dotmatch","numorder","moreless","tenframe","hidebugs","counton","missnum","patterns","paint"],
+  const SUBJ={letters:["abc","trace","sound","rhyme","syllables","blend","missletter","case"],numbers:["trains","trip","mine","count","quicklook","dotmatch","numorder","moreless","tenframe","hidebugs","counton","missnum","patterns","paint"],
     shapes:["shapesort","shapehunt","colours","position","shapes3d","sizeorder"],science:["animals","senses","seasons","oddone"]};
   const subj=x=>Object.keys(SUBJ).find(k=>SUBJ[k].includes(x.id))||(x.group==="puzzles"||!x.group?"puzzles":"science");
   const LS=[["letters","Letters & sounds","🔤"],["numbers","Numbers","🔢"],["shapes","Shapes & space","🔺"],["science","Science & thinking","🔬"],P];

@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!--HEAD:Mine Cart-->
+<style>
+body{overflow:hidden}
+.mine{height:100%;display:flex;flex-direction:column}
+.tbar{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;padding:8px max(12px,env(safe-area-inset-right,0px)) 8px max(12px,env(safe-area-inset-left,0px))}
+.tbar .left,.tbar .right{display:flex;gap:6px;align-items:center}
+.tbar .right{justify-content:flex-end}
+.tbar .ttl{font-family:var(--font-sign);color:var(--paint);font-size:18px;letter-spacing:.04em}
+.gemc{font-family:var(--font-sign);font-size:17px;white-space:nowrap}
+@media (max-width:520px){.tbar .ttl{display:none}}
+#view{position:relative;flex:1;min-height:0;overflow:hidden;background:#140d08}
+#cv{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
+.jump{position:absolute;right:max(14px,env(safe-area-inset-right,0px));bottom:14px;width:84px;height:84px;border-radius:50%;font:700 18px var(--font-kid);color:#fff;
+  background:radial-gradient(circle at 35% 30%,#ffd36b,#f08a24);border:3px solid rgba(255,255,255,.6);box-shadow:0 6px 0 #a3530e,0 10px 20px rgba(0,0,0,.4);cursor:pointer;touch-action:manipulation}
+.jump:active{transform:translateY(4px);box-shadow:0 2px 0 #a3530e}
+.jump[hidden]{display:none}
+.zone{position:absolute;left:0;right:0;top:16%;text-align:center;font:400 clamp(28px,7vw,46px) var(--font-sign);color:#fff;text-shadow:0 3px 0 rgba(0,0,0,.5),0 0 20px rgba(0,0,0,.6);pointer-events:none;opacity:0;transition:opacity .6s}
+.zone.on{opacity:1}
+.mid{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none;padding:8px}
+.mid>*{pointer-events:auto}
+.mcard{min-width:min(440px,94vw);background:rgba(28,22,18,.94);border:3px solid #6d4c2a;border-radius:24px;padding:14px 18px;text-align:center;display:grid;gap:12px;justify-items:center;color:#fff;
+  max-width:min(640px,94vw);max-height:calc(100% - 8px);overflow-y:auto;box-shadow:0 12px 30px rgba(0,0,0,.45);box-sizing:border-box}
+.mcard h2{font-family:var(--font-sign);font-weight:400;color:var(--paint);margin:0;font-size:clamp(22px,5vw,30px)}
+.mcard p{margin:0;font-family:var(--font-kid);font-size:clamp(18px,4vw,22px);font-weight:700}
+.mq{display:flex;align-items:center;gap:10px;font:700 clamp(19px,4.4vw,25px) var(--font-kid);flex-wrap:wrap;justify-content:center}
+.mq b{color:var(--paint);font-size:1.2em}
+.mq .spk{width:46px;height:46px;border-radius:50%;border:0;background:var(--paint);font-size:22px;flex:none;cursor:pointer}
+.mq .lr-nd b{color:var(--paint)}
+.gobtn{font-family:var(--font-sign);font-size:clamp(24px,6vw,32px);background:var(--good);color:#fff;border:0;border-radius:22px;padding:14px 32px;cursor:pointer;
+  box-shadow:inset 0 -6px 0 rgba(0,0,0,.2),0 8px 20px rgba(0,0,0,.3)}
+.gobtn.bob{animation:mbob 1.3s ease-in-out infinite}
+@keyframes mbob{50%{transform:translateY(-6px)}}
+@keyframes mshake{20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
+@keyframes mpop{0%{transform:scale(.4)}60%{transform:scale(1.2)}100%{transform:scale(1)}}
+.shake{animation:mshake .45s}
+/* the cart with coal slots */
+.mcart{position:relative;display:flex;gap:10px;padding:12px 14px 22px;border-radius:12px 12px 26px 26px;background:linear-gradient(#7a7f88,#4b4f57);box-shadow:inset 0 0 0 4px #33363c}
+.mcart::before,.mcart::after{content:"";position:absolute;bottom:-14px;width:26px;height:26px;border-radius:50%;background:#2b2b2b;border:4px solid #888}
+.mcart::before{left:18%}.mcart::after{right:18%}
+.frame{display:grid;grid-template-columns:repeat(5,1fr);gap:5px}
+.slot{width:clamp(34px,8.5vw,46px);aspect-ratio:1;border-radius:10px;background:rgba(0,0,0,.3);box-shadow:inset 0 2px 4px rgba(0,0,0,.5);display:grid;place-items:center;cursor:pointer;border:0;padding:0}
+.lump{display:block;width:80%;height:80%;border-radius:45% 55% 40% 60%/55% 45% 60% 40%;background:radial-gradient(circle at 35% 30%,#6b6b6b,#1b1b1b 70%);box-shadow:0 2px 0 rgba(0,0,0,.4)}
+.slot .lump{animation:mpop .3s}
+.slot.pre .lump{outline:3px solid rgba(255,207,74,.0)}
+.pile{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;max-width:520px;padding:8px;border-radius:16px;background:rgba(255,255,255,.06)}
+.pile button{width:clamp(44px,10vw,56px);aspect-ratio:1;border:0;background:none;padding:0;cursor:pointer;display:grid;place-items:center;touch-action:manipulation}
+.pile button[hidden]{display:none}
+.pile .lump{width:90%;height:90%}
+/* gem sorting */
+.bins{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.bin{position:relative;min-width:clamp(78px,18vw,110px);padding:8px 8px 18px;border-radius:12px 12px 22px 22px;border:0;color:#fff;cursor:pointer;display:grid;justify-items:center;gap:4px;
+  font:700 clamp(15px,3.5vw,19px) var(--font-kid);box-shadow:inset 0 -6px 0 rgba(0,0,0,.25),0 4px 0 rgba(0,0,0,.35);touch-action:manipulation}
+.bin .in{display:flex;flex-wrap:wrap;justify-content:center;gap:2px;min-height:22px;max-width:100px}
+.bin .in i{font-style:normal;font-size:16px}
+.bin .lbl{background:rgba(0,0,0,.35);border-radius:8px;padding:1px 8px}
+.chute{display:grid;place-items:center;min-height:96px}
+.chute svg{width:84px;height:84px;animation:mpop .35s}
+.rock{display:grid;place-items:center;width:86px;height:72px;border-radius:44% 56% 48% 52%/60% 55% 45% 40%;background:radial-gradient(circle at 35% 30%,#a99c8a,#6b5f50);
+  font:400 38px var(--font-sign);color:#fff;text-shadow:0 2px 0 rgba(0,0,0,.4);animation:mpop .35s}
+.gsv{width:30px;height:30px}
+/* answer buttons */
+.opts{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.opt{min-width:84px;min-height:72px;border-radius:18px;border:0;background:#fffaf0;color:#1d2230;font:400 clamp(30px,7vw,40px) var(--font-sign);cursor:pointer;box-shadow:0 5px 0 #b59a6a;padding:6px 14px;touch-action:manipulation}
+.opt.no{opacity:.3;pointer-events:none}
+.opt.cartopt{background:none;box-shadow:none;padding:0}
+.gems{display:flex;flex-wrap:wrap;gap:4px 14px;justify-content:center;max-width:520px}
+.gems span{display:flex;gap:2px}
+.mini{position:relative;display:grid;gap:6px;justify-items:center}
+.mini .mcart{padding:10px 10px 18px;min-width:110px;min-height:64px;justify-content:center;align-items:center;flex-wrap:wrap;gap:4px;max-width:150px}
+.mini .lump{width:24px;height:24px}
+.mini .num{font:400 30px var(--font-sign);color:#fff}
+.chest{font-size:clamp(90px,22vw,130px);line-height:1;background:none;border:0;cursor:pointer;animation:mbob 1s ease-in-out infinite;padding:0}
+.carts{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
+.carts button{border:3px solid transparent;border-radius:16px;background:rgba(255,255,255,.08);padding:6px;cursor:pointer;color:#fff;font:700 14px var(--font-kid);display:grid;justify-items:center;gap:2px}
+.carts button.on{border-color:var(--paint)}
+.carts canvas{width:96px;height:64px}
+@media (prefers-reduced-motion:reduce){.gobtn.bob,.chest{animation:none}}
+</style>
+</head>
+<body>
+<!--KIT-->
+<!--LEARN-->
+<div class="mine">
+  <header class="tbar">
+    <div class="left"><a class="chip icon" id="kHome" href="../../index.html" aria-label="Home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg></a>
+      <button class="chip icon" id="kMusic" type="button"></button></div>
+    <div class="ttl">MINE CART</div>
+    <div class="right"><span class="gemc" id="gemN">💎 0</span><button class="chip" id="cartBtn" type="button" aria-label="My carts">🛒</button><button class="chip icon help" id="kHelp" type="button" aria-label="How to play">?</button></div>
+  </header>
+  <div id="view">
+    <canvas id="cv"></canvas>
+    <div class="zone" id="zone"></div>
+    <button class="jump" id="jump" type="button" aria-label="Jump" hidden>⬆<br>JUMP</button>
+    <div class="mid" id="mid"></div>
+  </div>
+</div>
+<script>
+/* Mine Cart: a roller-coaster ride through the mine. The cart zooms over hills, down big drops and round loop-the-loops;
+   tap (or the Jump button) to hop up and grab gems. Every 15 seconds or so the cart stops at a loading station with a job:
+   load exactly N lumps of coal (one-to-one counting, ten frames, counting on), sort gems into carts by colour (or numbered rocks
+   by size or even/odd for older kids), count the gems you grabbed, or pick the cart with the most coal (adding for older kids).
+   Content is one grade back (pre-K for Kindergarten). Each job steps up after 2 first-try wins and down after 2 misses.
+   Every third station is a treasure room with a new cart. The mine changes at every station (coal, crystal, ice, lava, gold, outside). */
+(()=>{
+const P=TS.requirePlayer(),GR=TS.players.gnum(P.grade),A=Math.max(-1,Math.min(3,GR-1)),U=TS_LEARN.util,R=Math.random;
+const SV=TS.gameSave("mine",{gems:0,stations:0,lv:{},st:{},bag:[],carts:["wood"],cart:"wood",zone:0}),save=SV.data;
+const $=id=>document.getElementById(id);
+TS.report.game="mine";
+$("kMusic").innerHTML=TS.MUSIC_SVG;TS.music.button($("kMusic"));
+const HOWTO=[["🛒","Ride the mine cart over hills, drops and loops!"],["⬆","Tap the screen or the Jump button to hop up and grab gems."],
+  ["⛏️","At each station, do the job: load the coal, sort the gems, count your treasure."],["💰","Every third station has a treasure room with a new cart!"]];
+$("kHelp").onclick=()=>TS.howto.show("mine","Mine Cart",HOWTO);
+
+/* ---------- sound ---------- */
+let AC=null;
+function ac(){if(TS.music.muted)return null;try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();if(AC.state==="suspended")AC.resume();return AC}catch(e){return null}}
+function tone(f,d,type,vol,slide,delay){const a=ac();if(!a)return;const t=a.currentTime+.01+(delay||0),o=a.createOscillator(),g=a.createGain();o.type=type||"sine";o.frequency.setValueAtTime(f,t);
+  if(slide)o.frequency.exponentialRampToValueAtTime(slide,t+d);g.gain.setValueAtTime(vol||.12,t);g.gain.exponentialRampToValueAtTime(.001,t+d);o.connect(g);g.connect(a.destination);o.start(t);o.stop(t+d+.02)}
+let NB=null;function clack(v){const a=ac();if(!a)return;try{if(!NB){NB=a.createBuffer(1,a.sampleRate*.05,a.sampleRate);const d=NB.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/d.length,3)}
+  const s=a.createBufferSource(),f=a.createBiquadFilter(),g=a.createGain();s.buffer=NB;f.type="bandpass";f.frequency.value=900;g.gain.value=Math.min(.09,.02+v/9000);s.connect(f);f.connect(g);g.connect(a.destination);s.start()}catch(e){}}
+const hz=m=>440*Math.pow(2,(m-69)/12),CHIME=[72,74,76,79,81,84,86,88,91];
+let combo=0,comboT=0;
+function chime(){tone(hz(CHIME[Math.min(combo,CHIME.length-1)]),.35,"triangle",.13);tone(hz(CHIME[Math.min(combo,CHIME.length-1)]+12),.25,"sine",.05,0,.04);combo++;comboT=1.6}
+const boing=()=>tone(220,.28,"sine",.12,520);
+const bell=()=>{tone(1318,.6,"triangle",.1);tone(1318,.6,"triangle",.1,0,.28)};
+const whoosh=()=>tone(300,.7,"sawtooth",.025,80);
+
+/* ---------- canvas ---------- */
+const cv=$("cv"),g=cv.getContext("2d");let W=0,H=0,DPR=1,s=1,VW=0,VH=0;
+function resize(){const v=$("view").getBoundingClientRect();DPR=Math.min(2,window.devicePixelRatio||1);W=v.width;H=v.height;cv.width=Math.round(W*DPR);cv.height=Math.round(H*DPR);
+  s=Math.min(H/520,W/640);VW=W/s;VH=H/s}
+window.addEventListener("resize",resize);
+
+/* deterministic noise: scenery is picked from position, so it never changes as you look at it */
+const hash=(i,k)=>{const x=Math.sin(i*127.1+(k||0)*311.7)*43758.5453;return x-Math.floor(x)};
+const noise=(x,k)=>{const i=Math.floor(x),f=x-i,u=f*f*(3-2*f);return hash(i,k)*(1-u)+hash(i+1,k)*u};
+
+/* ---------- zones ---------- */
+const ZONES=[
+  {id:"coal",name:"the Coal Cave",top:"#2b1e14",bot:"#120b06",rock:"#3a291b",rock2:"#4f3825",glow:"#ffb347",crys:["#ffcf6b","#ff9a3c"],lamp:1},
+  {id:"crystal",name:"the Crystal Cave",top:"#1e1540",bot:"#0a0720",rock:"#2c2052",rock2:"#3d2c6e",glow:"#c48cff",crys:["#d690ff","#7fd8ff","#ff8ce0"],lamp:1},
+  {id:"sky",name:"the Mountain Run",sky:1,top:"#6fb8ff",bot:"#d8efff",rock:"#6c7a89",rock2:"#8a99a8",glow:"#fff",crys:["#fff"],lamp:0},
+  {id:"ice",name:"the Ice Cave",top:"#1c3d5a",bot:"#0b1c2d",rock:"#2e5c7d",rock2:"#4c82a6",glow:"#bff0ff",crys:["#e4faff","#9be7ff"],lamp:1},
+  {id:"lava",name:"the Lava Cave",top:"#2d0f09",bot:"#140504",rock:"#3e1a12",rock2:"#58251a",glow:"#ff6a2a",crys:["#ffb03a","#ff5a1f"],lamp:1,lava:1},
+  {id:"gold",name:"the Gold Mine",top:"#2b2310",bot:"#130f05",rock:"#3e3218",rock2:"#58472a",glow:"#ffd84a",crys:["#ffe066","#fff3a8"],lamp:1}];
+let Z=ZONES[save.zone%ZONES.length];
+
+/* ---------- carts ---------- */
+const CARTS=[["wood","Wooden cart"],["red","Red racer"],["blue","Blue cart"],["green","Green machine"],["gold","Gold cart"],["rainbow","Rainbow cart"],["rocket","Rocket cart"],["dino","Dino cart"]];
+const GEMC=[["red","#e8344a"],["blue","#2f7cf0"],["green","#2fbf5a"],["yellow","#f7c928"],["purple","#9b59e8"],["orange","#ff8a1f"],["pink","#ff6fb5"]];
+const gemSVG=(c,cls)=>'<svg class="'+(cls||"gsv")+'" viewBox="0 0 40 40" aria-hidden="true"><path d="M8 14 L14 6 H26 L32 14 L20 34Z" fill="'+c+'" stroke="rgba(0,0,0,.35)" stroke-width="1.5"/>'+
+  '<path d="M8 14 H32 M14 6 L17 14 L20 34 M26 6 L23 14 L20 34" fill="none" stroke="rgba(255,255,255,.45)" stroke-width="1.2"/><path d="M12 12 L15 8" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>';
+
+/* ---------- the track ---------- */
+let pts=[],gems=[],stations=[],legFrom=0,legLen=0,loopsThisLeg=0,segN=0;
+const last=()=>pts[pts.length-1];
+function push(x,y,loop){const l=last(),d=l?Math.hypot(x-l.x,y-l.y):0;pts.push({x,y,s:(l?l.s:0)+d,loop:!!loop})}
+function flat(L){const p=last();for(let x=6;x<=L;x+=6)push(p.x+x,p.y)}
+function hill(L,dy){const p=last(),x0=p.x,y0=p.y,ny=Math.max(-240,Math.min(240,y0+dy));dy=ny-y0;const n=Math.max(2,Math.round(L/6));
+  for(let i=1;i<=n;i++){const t=i/n;push(x0+L*t,y0+dy*(1-Math.cos(Math.PI*t))/2)}}
+function loop(){flat(50);const p=last(),x0=p.x,y0=p.y,Rr=86,dr=96,n=110;
+  for(let i=1;i<=n;i++){const t=i/n;push(x0+Rr*Math.sin(2*Math.PI*t)+dr*t,y0-Rr+Rr*Math.cos(2*Math.PI*t),true)}flat(70)}
+function normalAt(i){const a=pts[Math.max(0,i-1)],b=pts[Math.min(pts.length-1,i+1)],l=Math.hypot(b.x-a.x,b.y-a.y)||1,tx=(b.x-a.x)/l,ty=(b.y-a.y)/l;return[ty,-tx]}
+function gemRow(i0,i1,h,k){if(i1<=i0)return;for(let j=0;j<k;j++){const i=Math.round(i0+(i1-i0)*(k===1?.5:j/(k-1))),p=pts[i];if(!p||p.loop)continue;const n=normalAt(i);
+  gems.push({x:p.x+n[0]*h,y:p.y+n[1]*h,s:p.s,c:GEMC[Math.floor(R()*GEMC.length)],got:0,ph:R()*6})}}
+function seg(){segN++;const p=last();
+  if(p.s-legFrom>legLen){ // a loading station
+    flat(160);const q=last(),st={s:q.s+150,x:q.x+150,y:q.y,done:false,n:stations.length};flat(380);stations.push(st);
+    legFrom=st.s;legLen=4300+R()*1500;loopsThisLeg=0;return}
+  const sinceSt=p.s-legFrom,i0=pts.length;
+  if(sinceSt<700){hill(300,140+R()*60);const i1=pts.length;gemRow(i1-30,i1-1,24,3);hill(260,-120);return} // a big first drop
+  const r=R();
+  if(r<.17&&loopsThisLeg<2&&sinceSt>1200){loopsThisLeg++;loop();gemRow(pts.length-12,pts.length-2,26,2);return}
+  if(r<.42){const L=260+R()*120;hill(L,140+R()*110);const i1=pts.length;gemRow(i1-40,i1-8,R()<.5?95:24,R()<.5?3:4);hill(240+R()*80,-(90+R()*90));return}
+  if(r<.64){for(let k=0;k<3;k++){hill(100,-46);gemRow(pts.length-2,pts.length-1,26,1);hill(100,46)}return}
+  if(r<.84){hill(320+R()*100,-(80+R()*90));const i1=pts.length;gemRow(i0+10,i1-10,R()<.6?95:26,3);return}
+  flat(200+R()*120);gemRow(i0+5,pts.length-5,95,3)}
+function genTo(sNeed){while(last().s<sNeed)seg()}
+function startTrack(){pts=[];gems=[];stations=[];push(0,0);flat(260);legFrom=last().s-120;legLen=3600+R()*800;loopsThisLeg=0}
+
+/* ---------- cart state ---------- */
+let cs=60,v=0,h=0,vh=0,idx=0,camX=0,camY=0,mode="start",T=0,lastClack=0,rideGems=[],legMiss=0,legT0=Date.now(),parts=[],bats=[],batT=6,stopAt=null;
+function at(sv){while(idx<pts.length-2&&pts[idx+1].s<sv)idx++;while(idx>0&&pts[idx].s>sv)idx--;const a=pts[idx],b=pts[idx+1]||a,d=(b.s-a.s)||1,t=Math.max(0,Math.min(1,(sv-a.s)/d)),
+  l=Math.hypot(b.x-a.x,b.y-a.y)||1;return{x:a.x+(b.x-a.x)*t,y:a.y+(b.y-a.y)*t,tx:(b.x-a.x)/l,ty:(b.y-a.y)/l,loop:a.loop}}
+function trim(){const k=pts.findIndex(p=>p.s>cs-1600);if(k>200){pts.splice(0,k);idx=Math.max(0,idx-k)}
+  if(gems.length&&gems[0].s<cs-1600)gems=gems.filter(q=>q.s>cs-1600);stations=stations.filter(q=>q.s>cs-1600||!q.done)}
+function jump(){if(mode!=="ride"&&mode!=="brake")return;const p=at(cs);if(h>2||p.loop)return;vh=560;boing()}
+cv.addEventListener("pointerdown",e=>{e.preventDefault();ac();jump()});
+$("jump").onclick=()=>jump();
+document.addEventListener("keydown",e=>{if(e.code==="Space"||e.code==="ArrowUp"){e.preventDefault();jump()}});
+
+function step(dt){T+=dt;if(comboT>0){comboT-=dt;if(comboT<=0)combo=0}
+  genTo(cs+3200);
+  const p=at(cs);
+  if(mode==="ride"||mode==="brake"){
+    const st=stations.find(q=>!q.done&&q.s>cs-1);
+    v+=(900*p.ty-.0009*v*Math.abs(v))*dt;const vmin=p.loop?330:170;if(!(v>=vmin))v=vmin;if(v>640)v=640; // a chain pulls it up the hills: never slower than vmin
+    if(st&&st.s-cs<420){mode="brake";v=Math.min(v,Math.max(18,Math.sqrt(2*340*Math.max(0,st.s-cs))))}
+    cs+=v*dt;
+    if(st&&cs>=st.s-.5){cs=st.s;v=0;stopAt=st;arrive(st)}
+    if(cs-lastClack>58){lastClack=cs;clack(v)}
+    if(p.ty>.45&&v>380&&R()<.5)parts.push({x:p.x-p.tx*22,y:p.y-p.ty*22,vx:-p.tx*80+(R()-.5)*90,vy:-120-R()*80,t:.5,c:"#ffb347",r:2.2});
+  }
+  if(h>0||vh>0){h+=vh*dt;vh-=1350*dt;if(h<=0){h=0;vh=0}}
+  // gems
+  const n=[p.ty,-p.tx],cx=p.x+n[0]*(h+24),cy=p.y+n[1]*(h+24);
+  for(const q of gems){if(q.got||Math.abs(q.s-cs)>120)continue;if(Math.hypot(q.x-cx,q.y-cy)<38){q.got=1;rideGems.push(q.c);save.gems++;gemN();chime();
+    for(let k=0;k<10;k++){const a=R()*6.28,sp=60+R()*120;parts.push({x:q.x,y:q.y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,t:.6,c:q.c[1],r:2.5,star:1})}}}
+  for(const q of parts){q.x+=q.vx*dt;q.y+=q.vy*dt;q.vy+=300*dt;q.t-=dt}parts=parts.filter(q=>q.t>0);
+  if(!Z.sky&&(mode==="ride"||mode==="brake")){batT-=dt;if(batT<0){batT=8+R()*10;const k=3+Math.floor(R()*4);for(let i=0;i<k;i++)bats.push({x:VW+40+i*30+R()*30,y:VH*(.12+R()*.25),v:140+R()*80,ph:R()*6})}}
+  for(const b of bats)b.x-=b.v*dt;bats=bats.filter(b=>b.x>-60);
+  // camera: smooth, ahead of the cart
+  const tx=p.x-VW*.33,ty=p.y-VH*.56;camX+=(tx-camX)*Math.min(1,dt*6);camY+=(ty-camY)*Math.min(1,dt*3.5);
+  trim()}
+
+/* ---------- drawing ---------- */
+function bg(){const gr=g.createLinearGradient(0,0,0,VH);gr.addColorStop(0,Z.top);gr.addColorStop(1,Z.bot);g.fillStyle=gr;g.fillRect(0,0,VW,VH);
+  if(Z.sky){ // mountains, clouds
+    g.fillStyle="rgba(255,255,255,.8)";for(let i=Math.floor(camX*.05/300)-1;i<(camX*.05+VW)/300+1;i++){const x=i*300-camX*.05+hash(i,3)*120,y=40+hash(i,4)*80;
+      g.beginPath();g.ellipse(x,y,46,16,0,0,7);g.ellipse(x+30,y-8,34,16,0,0,7);g.ellipse(x-28,y-4,28,12,0,0,7);g.fill()}
+    for(const [f,col,hh,k] of [[.15,"#8796b0",.45,1],[.3,"#6b7d96",.6,2]]){g.fillStyle=col;g.beginPath();g.moveTo(0,VH);
+      for(let sx=0;sx<=VW+20;sx+=20){const px=(sx+camX*f)/170,y=VH*hh-170*Math.abs(noise(px,k)*2-1)*1.1-30*noise(px*3,k+5)-(camY*f*.3);g.lineTo(sx,y)}g.lineTo(VW,VH);g.fill();
+      if(k===1){g.fillStyle="rgba(255,255,255,.75)";for(let i=Math.floor(camX*f/170);i<(camX*f+VW)/170+1;i++){const sx=i*170-camX*f,peak=VH*hh-170*Math.abs(noise(i,k)*2-1)*1.1-30*noise(i*3,k+5)-(camY*f*.3);
+        if(Math.abs(noise(i,k)*2-1)>.5){g.beginPath();g.moveTo(sx-22,peak+26);g.lineTo(sx,peak);g.lineTo(sx+22,peak+26);g.lineTo(sx+8,peak+20);g.lineTo(sx,peak+28);g.lineTo(sx-8,peak+20);g.fill()}}}}
+    return}
+  // far rock walls with veins and crystals
+  for(const [f,col,k] of [[.18,Z.rock,1],[.4,Z.rock2,2]]){
+    g.fillStyle=col;g.beginPath();g.moveTo(0,0);for(let sx=0;sx<=VW+20;sx+=16){const px=(sx+camX*f)/120;g.lineTo(sx,VH*(k===1?.12:.06)+60*noise(px,k)+22*noise(px*3.1,k+7))}g.lineTo(VW,0);g.fill();
+    g.beginPath();g.moveTo(0,VH);for(let sx=0;sx<=VW+20;sx+=16){const px=(sx+camX*f)/140;g.lineTo(sx,VH*(k===1?.78:.88)-70*noise(px,k+3)-20*noise(px*2.7,k+9))}g.lineTo(VW,VH);g.fill()}
+  // stalactites (ceiling) at mid depth
+  const f=.55;g.fillStyle=Z.rock2;for(let i=Math.floor(camX*f/70)-1;i<(camX*f+VW)/70+1;i++){if(hash(i,11)<.45)continue;const x=i*70-camX*f+hash(i,12)*40,L=30+hash(i,13)*70,w=10+hash(i,14)*14;
+    g.beginPath();g.moveTo(x-w,0);g.lineTo(x+w,0);g.lineTo(x+w*.25,L);g.lineTo(x,L+8);g.lineTo(x-w*.3,L*.8);g.closePath();g.fill();
+    if(Z.id==="ice"){g.fillStyle="rgba(220,250,255,.5)";g.fillRect(x-1,4,2,L-6);g.fillStyle=Z.rock2}}
+  // glowing crystals on the lower wall
+  for(let i=Math.floor(camX*.4/90)-1;i<(camX*.4+VW)/90+1;i++){if(hash(i,21)<.55)continue;const x=i*90-camX*.4+hash(i,22)*50,y=VH*.88-70*noise((x+camX*.4)/140,5)-6,c=Z.crys[Math.floor(hash(i,23)*Z.crys.length)];
+    const k=2+Math.floor(hash(i,24)*3),pul=.6+.4*Math.sin(T*2+i);g.save();g.globalAlpha=.35*pul;g.fillStyle=c;g.beginPath();g.arc(x,y-14,30,0,7);g.fill();g.restore();
+    for(let j=0;j<k;j++){const a=-.5+j*.5+hash(i,25+j)*.3,L=16+hash(i,30+j)*18;g.save();g.translate(x+(j-1)*6,y);g.rotate(a);g.fillStyle=c;g.beginPath();g.moveTo(-5,0);g.lineTo(-4,-L);g.lineTo(0,-L-7);g.lineTo(4,-L);g.lineTo(5,0);g.fill();
+      g.fillStyle="rgba(255,255,255,.5)";g.fillRect(-2,-L+2,1.5,L-4);g.restore()}}
+  if(Z.lava){const y=VH*.93,gr=g.createLinearGradient(0,y-40,0,VH);gr.addColorStop(0,"rgba(255,90,20,0)");gr.addColorStop(.5,"rgba(255,110,30,.6)");gr.addColorStop(1,"#ffb03a");g.fillStyle=gr;g.fillRect(0,y-40,VW,VH-y+40);
+    g.fillStyle="#ff7a1f";g.beginPath();g.moveTo(0,VH);for(let sx=0;sx<=VW+10;sx+=10)g.lineTo(sx,y+6*Math.sin(sx*.05+T*2+camX*.02));g.lineTo(VW,VH);g.fill()}}
+function torch(x,y){g.fillStyle="#5a3a1c";g.fillRect(x-2,y,4,16);const fl=1+.15*Math.sin(T*13+x);g.save();g.globalAlpha=.25;g.fillStyle=Z.glow;g.beginPath();g.arc(x,y-4,34*fl,0,7);g.fill();g.restore();
+  g.fillStyle="#ff9a2a";g.beginPath();g.ellipse(x,y-4,5*fl,9*fl,0,0,7);g.fill();g.fillStyle="#ffe27a";g.beginPath();g.ellipse(x,y-2,2.5,5,0,0,7);g.fill()}
+function track(){const x0=camX-60,x1=camX+VW+60,bottom=camY+VH+20;let i0=pts.findIndex(p=>p.x>x0-200&&p.s>cs-VW*2);if(i0<0)return;i0=Math.max(0,i0-1);
+  // supports
+  g.lineWidth=5;let lastCol=null;for(let i=i0;i<pts.length;i++){const p=pts[i];if(p.s>cs+VW*2.2)break;if(p.loop||p.x<x0||p.x>x1)continue;const col=Math.floor(p.x/64);if(col===lastCol)continue;lastCol=col;
+    if(pts[Math.min(pts.length-1,i+12)].loop||pts[Math.max(0,i-12)].loop)continue;g.strokeStyle=Z.sky?"#7a5530":"#5a3d22";g.beginPath();g.moveTo(p.x,p.y+6);g.lineTo(p.x,bottom);g.stroke();
+    if(col%2===0){g.lineWidth=3;g.beginPath();g.moveTo(p.x,p.y+30);g.lineTo(p.x+64,Math.min(bottom,p.y+90));g.stroke();g.lineWidth=5}
+    if(!Z.sky&&Z.lamp&&col%7===0)torch(p.x,p.y-60)}
+  // loop supports: one sturdy leg
+  // ties
+  g.fillStyle=Z.sky?"#6d4c2a":"#4a3220";for(let i=i0;i<pts.length;i+=3){const p=pts[i];if(p.s>cs+VW*2.2)break;if(p.x<x0-40||p.x>x1+40)continue;const n=normalAt(i);
+    g.save();g.translate(p.x-n[0]*4,p.y-n[1]*4);g.rotate(Math.atan2(-n[0],n[1]));g.fillRect(-3,-2,6,10);g.restore()}
+  // rails
+  g.lineJoin="round";g.lineCap="round";for(const [w,c] of [[8,"#2a2a2e"],[4,"#b7c0ca"]]){g.lineWidth=w;g.strokeStyle=c;g.beginPath();let on=false;
+    for(let i=i0;i<pts.length;i++){const p=pts[i];if(p.s>cs+VW*2.2)break;if(!on){g.moveTo(p.x,p.y);on=true}else g.lineTo(p.x,p.y)}g.stroke()}
+  g.lineWidth=1.5;g.strokeStyle="rgba(255,255,255,.55)";g.beginPath();let on=false;for(let i=i0;i<pts.length;i++){const p=pts[i];if(p.s>cs+VW*2.2)break;if(!on){g.moveTo(p.x,p.y-1.5);on=true}else g.lineTo(p.x,p.y-1.5)}g.stroke()}
+function stationArt(st){const x=st.x,y=st.y;if(x<camX-300||x>camX+VW+300)return;
+  g.fillStyle="#7a5530";g.fillRect(x-150,y+8,300,14);g.fillStyle="#5a3d22";for(let k=-140;k<=140;k+=46)g.fillRect(x+k-4,y+22,8,VH);
+  // chute with coal
+  g.fillStyle="#4b4f57";g.beginPath();g.moveTo(x-30,y-120);g.lineTo(x+40,y-120);g.lineTo(x+18,y-62);g.lineTo(x-6,y-62);g.fill();g.fillStyle="#1d1d1d";for(let k=0;k<6;k++){g.beginPath();g.arc(x-14+k*10,y-122-(k%2)*6,7,0,7);g.fill()}
+  g.fillStyle="#5a3d22";g.fillRect(x-36,y-130,6,138);g.fillRect(x+40,y-130,6,138);
+  // sign
+  g.fillStyle="#6d4c2a";g.fillRect(x+90,y-74,6,82);g.fillStyle="#fff3d6";g.strokeStyle="#6d4c2a";g.lineWidth=4;g.beginPath();g.roundRect?g.roundRect(x+62,y-112,62,42,8):g.rect(x+62,y-112,62,42);g.fill();g.stroke();
+  g.font="26px system-ui";g.textAlign="center";g.textBaseline="middle";g.fillText("⛏️",x+93,y-90);
+  if(!Z.sky)torch(x-110,y-70)}
+function gem(q){if(q.got)return;const x=q.x,y=q.y+Math.sin(T*3+q.ph)*3;if(x<camX-40||x>camX+VW+40)return;const k=1+.08*Math.sin(T*5+q.ph);
+  g.save();g.translate(x,y);g.scale(k,k);g.globalAlpha=.3;g.fillStyle=q.c[1];g.beginPath();g.arc(0,0,20,0,7);g.fill();g.globalAlpha=1;
+  g.fillStyle=q.c[1];g.strokeStyle="rgba(0,0,0,.4)";g.lineWidth=1.5;g.beginPath();g.moveTo(-12,-4);g.lineTo(-7,-11);g.lineTo(7,-11);g.lineTo(12,-4);g.lineTo(0,13);g.closePath();g.fill();g.stroke();
+  g.strokeStyle="rgba(255,255,255,.55)";g.beginPath();g.moveTo(-12,-4);g.lineTo(12,-4);g.moveTo(-3,-11);g.lineTo(-4,-4);g.lineTo(0,13);g.moveTo(3,-11);g.lineTo(4,-4);g.stroke();
+  if(Math.sin(T*4+q.ph)>.8){g.fillStyle="#fff";g.beginPath();g.moveTo(-6,-14);g.lineTo(-5,-9);g.lineTo(0,-8);g.lineTo(-5,-7);g.lineTo(-6,-2);g.lineTo(-7,-7);g.lineTo(-12,-8);g.lineTo(-7,-9);g.fill()}g.restore()}
+function cartBody(c,kind,wheelA,fast,cargo){ // drawn at origin, rail at y=0, facing right
+  const body={wood:["#9a6a3a","#6d4c2a"],red:["#e2412e","#9c2a1d"],blue:["#3b6fd9","#264a94"],green:["#43a047","#2b6d2e"],gold:["#f2c230","#b8901a"],rainbow:["#8f5bd6","#5a3a8a"],rocket:["#c9d1da","#7d8793"],dino:["#5fbf4a","#3d7d30"]}[kind]||["#9a6a3a","#6d4c2a"];
+  if(kind==="rocket"&&fast){c.fillStyle="#ffb03a";c.beginPath();c.moveTo(-34,-22);c.lineTo(-56-Math.random()*12,-16);c.lineTo(-34,-10);c.fill();c.fillStyle="#fff3a8";c.beginPath();c.moveTo(-34,-19);c.lineTo(-46,-16);c.lineTo(-34,-13);c.fill()}
+  // wheels
+  for(const wx of [-18,18]){c.save();c.translate(wx,-8);c.fillStyle="#2b2b2b";c.beginPath();c.arc(0,0,9,0,7);c.fill();c.strokeStyle="#9aa3ad";c.lineWidth=2;c.beginPath();c.arc(0,0,6,0,7);c.stroke();
+    c.rotate(wheelA);c.beginPath();c.moveTo(-6,0);c.lineTo(6,0);c.moveTo(0,-6);c.lineTo(0,6);c.stroke();c.restore()}
+  // cargo peeking out
+  (cargo||[]).slice(-6).forEach((col,k)=>{c.fillStyle=col[1];c.beginPath();const x=-20+k*8,y=-44-(k%2)*3;c.moveTo(x-5,y);c.lineTo(x,y-6);c.lineTo(x+5,y);c.lineTo(x,y+6);c.fill()});
+  // body
+  c.fillStyle=body[0];c.strokeStyle=body[1];c.lineWidth=3;c.beginPath();c.moveTo(-32,-44);c.lineTo(32,-44);c.lineTo(26,-12);c.lineTo(-26,-12);c.closePath();c.fill();c.stroke();
+  if(kind==="wood"){c.strokeStyle="rgba(0,0,0,.25)";c.lineWidth=1.5;for(const y of [-34,-24]){c.beginPath();c.moveTo(-30+(y+44)*.18,y);c.lineTo(30-(y+44)*.18,y);c.stroke()}}
+  if(kind==="rainbow"){const cols=["#e2412e","#f08a24","#f2c230","#43a047","#3b6fd9"];cols.forEach((cc,k)=>{c.fillStyle=cc;c.fillRect(-28+k*1,-40+k*5.6,56-k*2,5.6)})}
+  if(kind==="gold"){c.fillStyle="rgba(255,255,255,.5)";c.fillRect(-24,-40,6,24)}
+  if(kind==="dino"){c.fillStyle="#3d7d30";for(let k=0;k<4;k++){c.beginPath();c.moveTo(-24+k*14,-44);c.lineTo(-18+k*14,-54);c.lineTo(-12+k*14,-44);c.fill()}}
+  if(kind==="rocket"){c.fillStyle="#e2412e";c.beginPath();c.moveTo(32,-44);c.lineTo(44,-28);c.lineTo(26,-12);c.fill()}
+  c.fillStyle=body[1];c.fillRect(-34,-48,68,6);
+  c.fillStyle="rgba(255,255,255,.6)";for(const x of [-24,-8,8,24]){c.beginPath();c.arc(x,-18,1.8,0,7);c.fill()}}
+function rider(c){ // the player's avatar in a hard hat with a head lamp
+  c.font="34px system-ui";c.textAlign="center";c.textBaseline="middle";c.fillText(P.avatar||"🙂",2,-58);
+  c.fillStyle="#f2c230";c.strokeStyle="#b8901a";c.lineWidth=2;c.beginPath();c.arc(2,-66,17,Math.PI,0);c.closePath();c.fill();c.stroke();c.fillRect(-17,-67,38,4);
+  c.fillStyle="#fffbe0";c.beginPath();c.arc(14,-72,4,0,7);c.fill()}
+function drawCart(){const p=at(cs),a=Math.atan2(p.ty,p.tx),n=[p.ty,-p.tx];
+  // head lamp beam in the dark
+  if(!Z.sky){g.save();g.translate(p.x+n[0]*(h+70),p.y+n[1]*(h+70));g.rotate(a);const gr=g.createRadialGradient(0,0,4,0,0,260);gr.addColorStop(0,"rgba(255,245,200,.35)");gr.addColorStop(1,"rgba(255,245,200,0)");
+    g.fillStyle=gr;g.beginPath();g.moveTo(10,-4);g.lineTo(260,-90);g.lineTo(260,110);g.closePath();g.fill();g.restore()}
+  g.save();g.translate(p.x+n[0]*h,p.y+n[1]*h);g.rotate(a);rider(g);cartBody(g,save.cart,cs/9,v>420,rideGems);g.restore()}
+function drawBats(){g.fillStyle="#120a14";for(const b of bats){const fl=Math.sin(T*18+b.ph)*7;g.beginPath();g.moveTo(b.x,b.y);g.quadraticCurveTo(b.x-10,b.y-8-fl,b.x-18,b.y-fl);g.quadraticCurveTo(b.x-10,b.y-2,b.x,b.y+3);
+  g.quadraticCurveTo(b.x+10,b.y-2,b.x+18,b.y-fl);g.quadraticCurveTo(b.x+10,b.y-8-fl,b.x,b.y);g.fill()}}
+function draw(){g.setTransform(DPR*s,0,0,DPR*s,0,0);bg();drawBats();
+  g.setTransform(DPR*s,0,0,DPR*s,-camX*DPR*s,-camY*DPR*s);
+  stations.forEach(stationArt);track();gems.forEach(gem);drawCart();
+  for(const q of parts){g.globalAlpha=Math.max(0,q.t*2);g.fillStyle=q.c;g.beginPath();g.arc(q.x,q.y,q.r,0,7);g.fill()}g.globalAlpha=1;
+  if(Z.sky){ // near pine trees
+    g.setTransform(DPR*s,0,0,DPR*s,0,0);const f=1.25;g.fillStyle="rgba(30,70,40,.85)";for(let i=Math.floor(camX*f/110)-1;i<(camX*f+VW)/110+1;i++){if(hash(i,41)<.5)continue;const x=i*110-camX*f+hash(i,42)*50,y=VH+10,hh=70+hash(i,43)*60;
+      g.beginPath();g.moveTo(x,y-hh);g.lineTo(x+hh*.32,y);g.lineTo(x-hh*.32,y);g.fill()}}}
+
+let lt=0,raf=0;
+function frame(t){raf=requestAnimationFrame(frame);const dt=Math.min(.05,(t-(lt||t))/1000);lt=t;if(document.hidden)return;if(!window.__mineHold)step(dt);draw()}
+
+/* ---------- jobs at the stations ---------- */
+const mid=$("mid");let task=null;
+const lvl=k=>Math.max(0,Math.min(4,save.lv[k]||0));
+function learnt(k,first){save.st[k]=save.st[k]||[0,0];const st=save.st[k];if(first){st[0]++;st[1]=0;if(st[0]>=2){save.lv[k]=Math.min(4,lvl(k)+1);st[0]=0}}
+  else{st[1]++;st[0]=0;if(st[1]>=2){save.lv[k]=Math.max(0,lvl(k)-1);st[1]=0}}SV.save()}
+function card(html){mid.innerHTML=html?'<div class="mcard">'+html+"</div>":"";return mid.firstChild}
+const askHTML=(t)=>'<div class="mq"><button class="spk" type="button" aria-label="Hear it again">🔊</button><span>'+t+"</span></div>";
+function wireSpk(el,say){const b=el.querySelector(".spk");if(b)b.onclick=()=>TS.say(say)}
+const numHTML=n=>A<0?'<b>'+n+'</b> '+U.numdots(n):"<b>"+n+"</b>";
+
+function nextKind(){if(!save.bag||!save.bag.length){save.bag=U.shuffle(R,["coal","sort","grab",A<1?"more":"add","coal","sort"])}
+  let k=save.bag.shift();if(k==="grab"&&!(rideGems.length>=1&&rideGems.length<=(A<0?10:20))){k=save.bag.shift()||"coal";if(k==="grab")k="coal"}SV.save();return k}
+function arrive(st){mode="task";$("jump").hidden=true;bell();const k=window.__mineNext||nextKind();window.__mineNext=null;
+  task={kind:k,miss:0};({coal:tCoal,sort:tSort,grab:tGrab,more:tMore,add:tAdd})[k](task)}
+function done(){const t=task;learnt(t.kind,t.miss===0);legMiss+=t.miss;save.stations++;SV.save();TS.notes.addMath();
+  TS.report.log({t:"play",game:"mine",level:save.stations,result:"win",stars:legMiss===0?3:legMiss<=2?2:1,ms:Date.now()-legT0,oops:legMiss,hints:0});
+  TS.music.fx("win");const praise=U.pick(R,["Great job!","Super loading!","You did it!","Awesome miner!","Way to go!"]);
+  card("<h2>⭐ "+praise+"</h2><p>"+(save.stations%3===0?"There's a treasure room ahead!":"All aboard!")+"</p>");TS.say(praise+(save.stations%3===0?" There's a treasure room!":" All aboard!"));
+  setTimeout(()=>{if(task!==t)return;if(save.stations%3===0)treasure();else depart()},1700)}
+function oops(t,say,el){t.miss++;TS.music.fx("bad");TS.say(say);if(el){el.classList.remove("shake");void el.offsetWidth;el.classList.add("shake")}}
+
+/* load exactly N lumps of coal */
+function tCoal(t){const L=lvl("coal");let N,pre=0;
+  if(A<0)N=U.ri(R,1,[3,4,5,7,10][L]);else if(A===0)N=U.ri(R,[2,3,4,6,7][L],[5,7,10,10,10][L]);
+  else{const mx=[10,12,15,20,20][L];N=U.ri(R,6,mx);pre=U.ri(R,2,N-2)}
+  const cap=N>10?20:N<=5&&!pre?5:10,say=pre?"This cart has "+pre+" coal. Load more to make "+N+"!":"Load "+N+" coal into the cart!";
+  t.N=N;t.pre=pre;t.cnt=pre;t.say=say;
+  const frames=cap===20?2:1,per=cap===5?5:10;let slots="";for(let f=0;f<frames;f++){slots+='<div class="frame">';for(let i=0;i<per;i++){const k=f*per+i;slots+='<button type="button" class="slot'+(k<pre?" pre":"")+'" data-k="'+k+'" aria-label="slot">'+(k<pre?'<span class="lump"></span>':"")+"</button>"}slots+="</div>"}
+  const pile=Math.min(cap-pre,N-pre+3);let ph="";for(let i=0;i<pile;i++)ph+='<button type="button" aria-label="coal"><span class="lump"></span></button>';
+  const el=card(askHTML(pre?"The cart has <b>"+pre+"</b>. Make "+numHTML(N)+"!":"⛏️ Load "+numHTML(N)+" coal")+'<div class="mcart" id="mCart">'+slots+'</div><div class="pile" id="mPile">'+ph+'</div><button class="gobtn" id="mDone" type="button">✅ Done</button>');
+  wireSpk(el,say);TS.say(say);
+  const slotEls=[...el.querySelectorAll(".slot")],pileEls=[...el.querySelectorAll(".pile button")];
+  const put=()=>{if(t.cnt>=cap){oops(t,"The cart is full!",$("mCart"));t.miss--;return}const b=pileEls.find(x=>!x.hidden);if(!b)return;b.hidden=true;slotEls[t.cnt].innerHTML='<span class="lump"></span>';t.cnt++;clack(300);TS.say(String(t.cnt))};
+  const take=k=>{if(k<pre||k>=t.cnt)return;t.cnt--;slotEls[t.cnt].innerHTML="";const b=pileEls.find(x=>x.hidden);if(b)b.hidden=false;TS.say(String(t.cnt))};
+  pileEls.forEach(b=>b.onclick=put);slotEls.forEach(b=>b.onclick=()=>take(+b.dataset.k));
+  $("mDone").onclick=()=>{if(t.cnt===N){TS.music.fx("good");done()}else oops(t,"That's "+t.cnt+". We need "+N+". "+(t.cnt>N?"Take some out.":"Load some more."),$("mCart"))};
+  t.solve=()=>{while(t.cnt<N)put();while(t.cnt>N)take(t.cnt-1);$("mDone").click()};t.fail=()=>{if(t.cnt===N)put();$("mDone").click()}}
+
+/* sort gems by colour, or numbered rocks (older kids) */
+function tSort(t){const L=lvl("sort");let how="colour";if(A>=2&&R()<.5)how="evenodd";else if(A===1&&R()<.5)how="ten";
+  let bins,items,say;
+  if(how==="colour"){const k=A<0?[2,3,3,4,4][L]:[3,4,4,5,5][L],cols=U.sample(R,GEMC,k);bins=cols.map(c=>({key:c[0],col:c[1],label:c[0]}));
+    items=[];cols.forEach(c=>{for(let j=0;j<(A<0?2:2);j++)items.push({key:c[0],html:gemSVG(c[1],"big"),mini:gemSVG(c[1]),say:c[0]})});if(A>=0)items.push((c=>({key:c[0],html:gemSVG(c[1],"big"),mini:gemSVG(c[1]),say:c[0]}))(U.pick(R,cols)));
+    say="Sort the gems! Tap the cart that matches each gem."}
+  else if(how==="ten"){bins=[{key:"lo",col:"#3b6fd9",label:"less than 10"},{key:"hi",col:"#e2412e",label:"10 or more"}];items=U.sample(R,[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19],7).map(n=>({key:n<10?"lo":"hi",n,say:String(n)}));
+    say="Rocks less than 10 go in the blue cart. 10 or more go in the red cart."}
+  else{bins=[{key:"ev",col:"#43a047",label:"even"},{key:"od",col:"#8f5bd6",label:"odd"}];const mx=[20,20,30,50,99][L];items=[];while(items.length<7){const n=U.ri(R,1,mx);if(!items.some(x=>x.n===n))items.push({key:n%2?"od":"ev",n,say:String(n)})}
+    say="Even numbers go in the green cart. Odd numbers go in the purple cart."}
+  items=U.shuffle(R,items);t.items=items;t.i=0;t.say=say;
+  const el=card(askHTML(how==="colour"?"💎 Sort the gems":how==="ten"?"🪨 Less than <b>10</b>, or <b>10</b> or more?":"🪨 Even or odd?")+'<div class="chute" id="mChute"></div><div class="bins">'+
+    bins.map(b=>'<button type="button" class="bin" data-k="'+b.key+'" style="background:'+b.col+'"><span class="in"></span><span class="lbl">'+b.label+"</span></button>").join("")+"</div>");
+  wireSpk(el,say);TS.say(say);
+  const chute=$("mChute"),show=()=>{const it=items[t.i];chute.innerHTML=it.html||'<div class="rock">'+it.n+"</div>";if(it.html)chute.firstChild.style.cssText="width:84px;height:84px"};show();
+  const tap=b=>{const it=items[t.i];if(!it)return;if(b.dataset.k!==it.key){oops(t,how==="colour"?"That's a "+it.say+" gem. Find the "+it.say+" cart.":how==="ten"?it.n+(it.n<10?" is less than 10.":" is 10 or more."):it.n+(it.n%2?" is odd.":" is even."),b);return}
+    b.querySelector(".in").insertAdjacentHTML("beforeend","<i>"+(it.mini||'<b style="font:400 15px var(--font-sign)">'+it.n+"</b>")+"</i>");chime();t.i++;
+    if(t.i>=items.length){chute.innerHTML="";TS.music.fx("good");setTimeout(done,500)}else show()};
+  el.querySelectorAll(".bin").forEach(b=>b.onclick=()=>tap(b));
+  t.solve=()=>{while(t.i<items.length)tap(el.querySelector('.bin[data-k="'+items[t.i].key+'"]'))};
+  t.fail=()=>tap([...el.querySelectorAll(".bin")].find(b=>b.dataset.k!==items[t.i].key))}
+
+/* answer buttons used by the counting jobs */
+function options(t,el,opts,ans,sayWrong){const box=el.querySelector(".opts");box.innerHTML=opts.map(o=>'<button type="button" class="opt" data-v="'+o+'">'+o+"</button>").join("");
+  box.querySelectorAll(".opt").forEach(b=>b.onclick=()=>{if(+b.dataset.v===ans){TS.music.fx("good");done()}else{b.classList.add("no");oops(t,sayWrong(+b.dataset.v),null)}});
+  t.solve=()=>box.querySelector('.opt[data-v="'+ans+'"]').click();t.fail=()=>[...box.querySelectorAll(".opt")].find(b=>+b.dataset.v!==ans&&!b.classList.contains("no")).click()}
+function near(n,k,max){const s=new Set([n]);let g=0;while(s.size<k&&g++<200){const d=U.ri(R,-2,2),x=n+d;if(x>=1&&x<=max)s.add(x)}return U.shuffle(R,[...s]).sort((a,b)=>a-b)}
+
+/* count the gems you grabbed on the ride */
+function tGrab(t){const n=rideGems.length,say="How many gems did you grab?";t.say=say;
+  let gh="";for(let i=0;i<n;i+=5)gh+="<span>"+rideGems.slice(i,i+5).map(c=>gemSVG(c[1])).join("")+"</span>";
+  const el=card(askHTML("💎 How many gems did you grab?")+'<div class="gems">'+gh+'</div><div class="opts"></div>');wireSpk(el,say);TS.say(say);
+  options(t,el,near(n,3,A<0?10:20),n,v=>"Not "+v+". Let's count them again!")}
+
+/* which cart has the most (or fewest) coal? */
+function tMore(t){const L=lvl("more"),k=L>=2?3:2,few=A===0&&L>=2&&R()<.4,mx=A<0?[4,5,6,8,10][L]:[8,10,10,10,10][L],gap=L<2?2:1;
+  let ns=[];let g=0;while(ns.length<k&&g++<300){const n=U.ri(R,1,mx);if(ns.every(x=>Math.abs(x-n)>=gap))ns.push(n)}
+  const best=few?Math.min(...ns):Math.max(...ns),say=few?"Which cart has the fewest coal?":"Which cart has the most coal?";t.say=say;
+  const el=card(askHTML(few?"Which cart has the <b>fewest</b> coal?":"Which cart has the <b>most</b> coal?")+'<div class="opts">'+
+    ns.map((n,i)=>'<button type="button" class="opt cartopt" data-i="'+i+'"><div class="mini"><div class="mcart">'+'<span class="lump"></span>'.repeat(n)+"</div></div></button>").join("")+"</div>");
+  wireSpk(el,say);TS.say(say);const bs=[...el.querySelectorAll(".opt")];
+  bs.forEach(b=>b.onclick=()=>{const n=ns[+b.dataset.i];if(n===best){TS.music.fx("good");done()}else{b.classList.add("no");oops(t,"That cart has "+n+". Look again!",null)}});
+  t.solve=()=>bs[ns.indexOf(best)].click();t.fail=()=>bs.find((b,i)=>ns[i]!==best&&!b.classList.contains("no")).click()}
+
+/* two carts: how much coal altogether? */
+function tAdd(t){const L=lvl("add"),mx=A===1?[10,12,15,20,20][L]:[20,30,50,80,100][L],a=U.ri(R,2,Math.max(3,Math.floor(mx/2))),b=U.ri(R,1,mx-a),sum=a+b,say="How much coal in both carts together?";t.say=say;
+  const show=n=>n<=10?'<span class="lump"></span>'.repeat(n):'<span class="num">'+n+"</span>";
+  const el=card(askHTML("How much coal in <b>both</b> carts?")+'<div class="opts" style="align-items:center"><div class="mini"><div class="mcart">'+show(a)+'</div><b class="num">'+a+'</b></div><span class="num" style="font:400 40px var(--font-sign)">+</span><div class="mini"><div class="mcart">'+show(b)+'</div><b class="num">'+b+'</b></div></div><div class="opts" id="mOpts"></div>');
+  wireSpk(el,say);TS.say(say);const box=document.createElement("div");box.className="opts";el.querySelector("#mOpts").replaceWith(box);
+  const s2=new Set([sum]);let g=0;while(s2.size<3&&g++<100){const x=sum+U.pick(R,[-10,-2,-1,1,2,10]);if(x>0)s2.add(x)}
+  options(t,el,U.shuffle(R,[...s2]),sum,v=>"Not "+v+". "+a+" and "+b+" more. Try counting on from "+a+"!")}
+
+/* ---------- treasure room and carts ---------- */
+function treasure(){mode="treasure";const el=card('<h2>💰 Treasure room!</h2><p>Tap the chest!</p><button class="chest" id="mChest" type="button" aria-label="Open the chest">🧰</button>');
+  TS.say("A treasure room! Tap the chest!");
+  $("mChest").onclick=()=>{const nx=CARTS.find(c=>!save.carts.includes(c[0]));let msg;
+    if(nx){save.carts.push(nx[0]);save.cart=nx[0];msg="You found a new cart: the "+nx[1]+"!"}else{save.gems+=20;msg="Twenty bonus gems!"}save.gems+=10;SV.save();gemN();TS.music.fx("win");
+    for(let k=0;k<6;k++)setTimeout(chime,k*90);
+    card('<h2>🎉 '+msg+"</h2>"+(nx?'<canvas id="mNew" width="192" height="128" style="width:150px;height:100px"></canvas>':"<p>💎 +"+(nx?10:30)+"</p>")+'<p>💎 +10 gems</p><button class="gobtn bob" id="mRide" type="button">Ride on! 🛒</button>');
+    if(nx)preview($("mNew"),nx[0]);TS.say(msg);$("mRide").onclick=depart}}
+function preview(c,k){const x=c.getContext("2d");x.setTransform(2,0,0,2,0,0);x.translate(48,58);cartBody(x,k,0,false,[]);
+  x.strokeStyle="#9aa3ad";x.lineWidth=3;x.beginPath();x.moveTo(-44,1);x.lineTo(44,1);x.stroke()}
+$("cartBtn").onclick=()=>{if(mode==="task"||mode==="treasure")return;const was=mode;mode="pause";
+  const el=card("<h2>🛒 My carts</h2><div class=\"carts\">"+CARTS.map(c=>save.carts.includes(c[0])?'<button type="button" data-c="'+c[0]+'" class="'+(save.cart===c[0]?"on":"")+'"><canvas width="192" height="128"></canvas>'+c[1]+"</button>":'<button type="button" disabled style="opacity:.35"><canvas width="192" height="128"></canvas>???</button>').join("")+
+    '</div><p style="font-size:16px">Find more in the treasure rooms!</p><button class="gobtn" id="mBack" type="button">OK</button>');
+  el.querySelectorAll(".carts canvas").forEach((c,i)=>{preview(c,save.carts.includes(CARTS[i][0])?CARTS[i][0]:"wood");if(!save.carts.includes(CARTS[i][0]))c.style.filter="brightness(0) opacity(.5)"});
+  el.querySelectorAll(".carts button[data-c]").forEach(b=>b.onclick=()=>{save.cart=b.dataset.c;SV.save();el.querySelectorAll(".carts button").forEach(x=>x.classList.toggle("on",x===b));TS.say(b.textContent)});
+  $("mBack").onclick=()=>{card("");mode=was}};
+function gemN(){$("gemN").textContent="💎 "+save.gems}
+
+/* ---------- leaving a station ---------- */
+function depart(){task=null;if(stopAt)stopAt.done=true;card("");save.zone=(save.zone+1)%ZONES.length;Z=ZONES[save.zone];SV.save();rideGems=[];legMiss=0;legT0=Date.now();
+  bell();whoosh();mode="ride";v=220;$("jump").hidden=false;const zn=$("zone");zn.textContent="Into "+Z.name+"!";zn.classList.add("on");TS.say("Into "+Z.name+"!");setTimeout(()=>zn.classList.remove("on"),2200)}
+function start(){const el=card('<h2>⛏️ Mine Cart</h2><p>Hop in! Tap to jump and grab the gems.</p><button class="gobtn bob" id="mGo" type="button">Go! 🛒</button>');
+  $("mGo").onclick=()=>{ac();save.zone=(save.zone+ZONES.length-1)%ZONES.length;depart()}}
+
+resize();gemN();startTrack();genTo(3200);{const p=at(cs);camX=p.x-VW*.33;camY=p.y-VH*.56}
+start();raf=requestAnimationFrame(frame);
+window.__mine={get mode(){return mode},get task(){return task},get zone(){return Z.id},get cs(){return cs},get v(){return v},get h(){return h},save,gems:()=>gems,stations:()=>stations,rideGems:()=>rideGems,
+  jump,right(){task&&task.solve()},wrong(){task&&task.fail()},skip(){genTo(cs+9000);const st=stations.find(q=>!q.done&&q.s>cs);if(st&&st.s-cs>500){cs=st.s-500;idx=0}},step,lvl,pts:()=>pts};
+})();
+</script>
+</body>
+</html>
