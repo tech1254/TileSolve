@@ -17,6 +17,21 @@ body{overflow:hidden}
   background:radial-gradient(circle at 35% 30%,#ffd36b,#f08a24);border:3px solid rgba(255,255,255,.6);box-shadow:0 6px 0 #a3530e,0 10px 20px rgba(0,0,0,.4);cursor:pointer;touch-action:manipulation}
 .jump:active{transform:translateY(4px);box-shadow:0 2px 0 #a3530e}
 .jump[hidden]{display:none}
+.jump.cue{animation:mcue .5s ease-in-out infinite alternate}
+@keyframes mcue{to{transform:scale(1.15);box-shadow:0 6px 0 #a3530e,0 0 0 8px rgba(255,220,80,.6),0 0 30px 10px rgba(255,220,80,.7)}}
+.mag{position:absolute;left:max(14px,env(safe-area-inset-left,0px));bottom:14px;width:84px;height:84px;border-radius:50%;font:700 15px var(--font-kid);color:#fff;line-height:1.1;
+  background:radial-gradient(circle at 35% 30%,#8fb8ff,#3b6fd9);border:3px solid rgba(255,255,255,.6);box-shadow:0 6px 0 #234a99,0 10px 20px rgba(0,0,0,.4);cursor:pointer;touch-action:manipulation}
+.mag b{font-size:30px;display:block}
+.mag[hidden]{display:none}
+.mag.on{background:radial-gradient(circle at 35% 30%,#ffe27a,#f2b705);box-shadow:0 6px 0 #a37a00,0 0 26px 8px rgba(255,220,80,.8);animation:mbob 1s ease-in-out infinite}
+.mag.poor{filter:grayscale(.7);opacity:.7}
+.prog{position:absolute;left:0;right:0;top:8px;margin:0 auto;width:max-content;display:flex;align-items:center;gap:6px;padding:5px 12px;border-radius:16px;background:rgba(0,0,0,.45);color:#fff;font:700 15px var(--font-kid);pointer-events:none}
+.prog i{width:14px;height:14px;border-radius:50%;background:rgba(255,255,255,.25);display:inline-block}
+.prog i.d{background:#ffcf4a}
+.prog i.c{background:#fff;box-shadow:0 0 0 3px rgba(255,207,74,.7)}
+.prog .end{font-size:20px}
+.vault{font-size:clamp(110px,26vw,160px);line-height:1;background:none;border:0;cursor:pointer;animation:mbob 1s ease-in-out infinite;padding:0;filter:drop-shadow(0 0 24px rgba(255,210,60,.9))}
+.trophy{font-size:clamp(80px,20vw,120px);line-height:1;animation:mpop .6s}
 .zone{position:absolute;left:0;right:0;top:16%;text-align:center;font:400 clamp(28px,7vw,46px) var(--font-sign);color:#fff;text-shadow:0 3px 0 rgba(0,0,0,.5),0 0 20px rgba(0,0,0,.6);pointer-events:none;opacity:0;transition:opacity .6s}
 .zone.on{opacity:1}
 .mid{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none;padding:8px}
@@ -94,6 +109,8 @@ body{overflow:hidden}
     <canvas id="cv"></canvas>
     <div class="zone" id="zone"></div>
     <button class="jump" id="jump" type="button" aria-label="Jump" hidden>⬆<br>JUMP</button>
+    <button class="mag" id="mag" type="button" aria-label="Gem magnet" hidden><b>🧲</b>5 💎</button>
+    <div class="prog" id="prog"></div>
     <div class="mid" id="mid"></div>
   </div>
 </div>
@@ -106,12 +123,14 @@ body{overflow:hidden}
    Every third station is a treasure room with a new cart. The mine changes at every station (coal, crystal, ice, lava, gold, outside). */
 (()=>{
 const P=TS.requirePlayer(),GR=TS.players.gnum(P.grade),A=Math.max(-1,Math.min(3,GR-1)),U=TS_LEARN.util,R=Math.random;
-const SV=TS.gameSave("mine",{gems:0,stations:0,lv:{},st:{},bag:[],carts:["wood"],cart:"wood",zone:0}),save=SV.data;
+const SV=TS.gameSave("mine",{gems:0,stations:0,lv:{},st:{},bag:[],carts:["wood"],cart:"wood",zone:0,level:1,legs:0,trophies:0}),save=SV.data;
+const LEGS=6; // stations in a level: one through each part of the mine, then the treasure vault
+if(save.legs==null||save.legs>=LEGS)save.legs=0;if(!save.level)save.level=1;
 const $=id=>document.getElementById(id);
 TS.report.game="mine";
 $("kMusic").innerHTML=TS.MUSIC_SVG;TS.music.button($("kMusic"));
-const HOWTO=[["🛒","Ride the mine cart over hills, drops and loops!"],["⬆","Tap the screen or the Jump button to hop up and grab gems."],
-  ["⛏️","At each station, do the job: load the coal, sort the gems, count your treasure."],["💰","Every third station has a treasure room with a new cart!"]];
+const HOWTO=[["🛒","Ride the mine cart over hills, drops and loops!"],["⬆","Tap the screen or the Jump button to hop up and grab high gems. The Jump button glows when it's time!"],
+  ["⛏️","At each station, do the job: load the coal, sort the gems, count your treasure."],["🧲","Tap the magnet (5 gems) and every gem flies into your cart until the next station."],["🏆","Ride through all 6 stations to reach the treasure vault: a trophy, a big prize, and the next level!"]];
 $("kHelp").onclick=()=>TS.howto.show("mine","Mine Cart",HOWTO);
 
 /* ---------- sound ---------- */
@@ -146,7 +165,7 @@ const ZONES=[
   {id:"ice",name:"the Ice Cave",top:"#1c3d5a",bot:"#0b1c2d",rock:"#2e5c7d",rock2:"#4c82a6",glow:"#bff0ff",crys:["#e4faff","#9be7ff"],lamp:1},
   {id:"lava",name:"the Lava Cave",top:"#2d0f09",bot:"#140504",rock:"#3e1a12",rock2:"#58251a",glow:"#ff6a2a",crys:["#ffb03a","#ff5a1f"],lamp:1,lava:1},
   {id:"gold",name:"the Gold Mine",top:"#2b2310",bot:"#130f05",rock:"#3e3218",rock2:"#58472a",glow:"#ffd84a",crys:["#ffe066","#fff3a8"],lamp:1}];
-let Z=ZONES[save.zone%ZONES.length];
+let Z=ZONES[save.legs%ZONES.length];
 
 /* ---------- carts ---------- */
 const CARTS=[["wood","Wooden cart"],["red","Red racer"],["blue","Blue cart"],["green","Green machine"],["gold","Gold cart"],["rainbow","Rainbow cart"],["rocket","Rocket cart"],["dino","Dino cart"]];
@@ -165,7 +184,7 @@ function loop(){flat(50);const p=last(),x0=p.x,y0=p.y,Rr=86,dr=96,n=110;
   for(let i=1;i<=n;i++){const t=i/n;push(x0+Rr*Math.sin(2*Math.PI*t)+dr*t,y0-Rr+Rr*Math.cos(2*Math.PI*t),true)}flat(70)}
 function normalAt(i){const a=pts[Math.max(0,i-1)],b=pts[Math.min(pts.length-1,i+1)],l=Math.hypot(b.x-a.x,b.y-a.y)||1,tx=(b.x-a.x)/l,ty=(b.y-a.y)/l;return[ty,-tx]}
 function gemRow(i0,i1,h,k){if(i1<=i0)return;for(let j=0;j<k;j++){const i=Math.round(i0+(i1-i0)*(k===1?.5:j/(k-1))),p=pts[i];if(!p||p.loop)continue;const n=normalAt(i);
-  gems.push({x:p.x+n[0]*h,y:p.y+n[1]*h,s:p.s,c:GEMC[Math.floor(R()*GEMC.length)],got:0,ph:R()*6})}}
+  gems.push({x:p.x+n[0]*h,y:p.y+n[1]*h,s:p.s,c:GEMC[Math.floor(R()*GEMC.length)],got:0,ph:R()*6,hi:h>60})}}
 function seg(){segN++;const p=last();
   if(p.s-legFrom>legLen){ // a loading station
     flat(160);const q=last(),st={s:q.s+150,x:q.x+150,y:q.y,done:false,n:stations.length};flat(380);stations.push(st);
@@ -173,7 +192,7 @@ function seg(){segN++;const p=last();
   const sinceSt=p.s-legFrom,i0=pts.length;
   if(sinceSt<700){hill(300,140+R()*60);const i1=pts.length;gemRow(i1-30,i1-1,24,3);hill(260,-120);return} // a big first drop
   const r=R();
-  if(r<.17&&loopsThisLeg<2&&sinceSt>1200){loopsThisLeg++;loop();gemRow(pts.length-12,pts.length-2,26,2);return}
+  if(r<.17+Math.min(.12,(save.level-1)*.03)&&loopsThisLeg<Math.min(3,1+save.level)&&sinceSt>1200){loopsThisLeg++;loop();gemRow(pts.length-12,pts.length-2,26,2);return}
   if(r<.42){const L=260+R()*120;hill(L,140+R()*110);const i1=pts.length;gemRow(i1-40,i1-8,R()<.5?95:24,R()<.5?3:4);hill(240+R()*80,-(90+R()*90));return}
   if(r<.64){for(let k=0;k<3;k++){hill(100,-46);gemRow(pts.length-2,pts.length-1,26,1);hill(100,46)}return}
   if(r<.84){hill(320+R()*100,-(80+R()*90));const i1=pts.length;gemRow(i0+10,i1-10,R()<.6?95:26,3);return}
@@ -182,7 +201,7 @@ function genTo(sNeed){while(last().s<sNeed)seg()}
 function startTrack(){pts=[];gems=[];stations=[];push(0,0);flat(260);legFrom=last().s-120;legLen=3600+R()*800;loopsThisLeg=0}
 
 /* ---------- cart state ---------- */
-let cs=60,v=0,h=0,vh=0,idx=0,camX=0,camY=0,mode="start",T=0,lastClack=0,rideGems=[],legMiss=0,legT0=Date.now(),parts=[],bats=[],batT=6,stopAt=null;
+let magnet=false,cueOn=false,cs=60,v=0,h=0,vh=0,idx=0,camX=0,camY=0,mode="start",T=0,lastClack=0,rideGems=[],legMiss=0,legT0=Date.now(),parts=[],bats=[],batT=6,stopAt=null;
 function at(sv){while(idx<pts.length-2&&pts[idx+1].s<sv)idx++;while(idx>0&&pts[idx].s>sv)idx--;const a=pts[idx],b=pts[idx+1]||a,d=(b.s-a.s)||1,t=Math.max(0,Math.min(1,(sv-a.s)/d)),
   l=Math.hypot(b.x-a.x,b.y-a.y)||1;return{x:a.x+(b.x-a.x)*t,y:a.y+(b.y-a.y)*t,tx:(b.x-a.x)/l,ty:(b.y-a.y)/l,loop:a.loop}}
 function trim(){const k=pts.findIndex(p=>p.s>cs-1600);if(k>200){pts.splice(0,k);idx=Math.max(0,idx-k)}
@@ -207,8 +226,16 @@ function step(dt){T+=dt;if(comboT>0){comboT-=dt;if(comboT<=0)combo=0}
   if(h>0||vh>0){h+=vh*dt;vh-=1350*dt;if(h<=0){h=0;vh=0}}
   // gems
   const n=[p.ty,-p.tx],cx=p.x+n[0]*(h+24),cy=p.y+n[1]*(h+24);
-  for(const q of gems){if(q.got||Math.abs(q.s-cs)>120)continue;if(Math.hypot(q.x-cx,q.y-cy)<38){q.got=1;rideGems.push(q.c);save.gems++;gemN();chime();
-    for(let k=0;k<10;k++){const a=R()*6.28,sp=60+R()*120;parts.push({x:q.x,y:q.y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,t:.6,c:q.c[1],r:2.5,star:1})}}}
+  /* gems on the track are grabbed by riding through them; high ones need a jump (the Jump button glows when one is coming),
+     or the 🧲 magnet (5 gems, lasts until the next station) pulls in every gem */
+  let cue=false;
+  for(const q of gems){if(q.got)continue;const ds=q.s-cs;
+    if(magnet&&!q.fly&&ds<170&&ds>-400){q.fly=1;q.ft=0}
+    if(q.fly){q.ft+=dt;const k=Math.min(1,dt*(6+q.ft*14));q.x+=(cx-q.x)*k;q.y+=(cy-q.y)*k}
+    else{if(Math.abs(ds)>320)continue;if(q.hi&&ds>40&&ds<240&&(mode==="ride"||mode==="brake"))cue=true}
+    if(Math.hypot(q.x-cx,q.y-cy)<(q.fly?18:46)){q.got=1;rideGems.push(q.c);save.gems++;gemN();chime();
+      for(let k=0;k<10;k++){const a=R()*6.28,sp=60+R()*120;parts.push({x:q.x,y:q.y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,t:.6,c:q.c[1],r:2.5,star:1})}}}
+  if(cue!==cueOn){cueOn=cue;$("jump").classList.toggle("cue",cue)}
   for(const q of parts){q.x+=q.vx*dt;q.y+=q.vy*dt;q.vy+=300*dt;q.t-=dt}parts=parts.filter(q=>q.t>0);
   if(!Z.sky&&(mode==="ride"||mode==="brake")){batT-=dt;if(batT<0){batT=8+R()*10;const k=3+Math.floor(R()*4);for(let i=0;i<k;i++)bats.push({x:VW+40+i*30+R()*30,y:VH*(.12+R()*.25),v:140+R()*80,ph:R()*6})}}
   for(const b of bats)b.x-=b.v*dt;bats=bats.filter(b=>b.x>-60);
@@ -296,6 +323,7 @@ function drawCart(){const p=at(cs),a=Math.atan2(p.ty,p.tx),n=[p.ty,-p.tx];
   // head lamp beam in the dark
   if(!Z.sky){g.save();g.translate(p.x+n[0]*(h+70),p.y+n[1]*(h+70));g.rotate(a);const gr=g.createRadialGradient(0,0,4,0,0,260);gr.addColorStop(0,"rgba(255,245,200,.35)");gr.addColorStop(1,"rgba(255,245,200,0)");
     g.fillStyle=gr;g.beginPath();g.moveTo(10,-4);g.lineTo(260,-90);g.lineTo(260,110);g.closePath();g.fill();g.restore()}
+  if(magnet){g.save();g.strokeStyle="rgba(140,190,255,"+(.35+.25*Math.sin(T*8))+")";g.lineWidth=4;g.beginPath();g.arc(p.x+n[0]*(h+30),p.y+n[1]*(h+30),56+6*Math.sin(T*8),0,7);g.stroke();g.restore()}
   g.save();g.translate(p.x+n[0]*h,p.y+n[1]*h);g.rotate(a);rider(g);cartBody(g,save.cart,cs/9,v>420,rideGems);g.restore()}
 function drawBats(){g.fillStyle="#120a14";for(const b of bats){const fl=Math.sin(T*18+b.ph)*7;g.beginPath();g.moveTo(b.x,b.y);g.quadraticCurveTo(b.x-10,b.y-8-fl,b.x-18,b.y-fl);g.quadraticCurveTo(b.x-10,b.y-2,b.x,b.y+3);
   g.quadraticCurveTo(b.x+10,b.y-2,b.x+18,b.y-fl);g.quadraticCurveTo(b.x+10,b.y-8-fl,b.x,b.y);g.fill()}}
@@ -322,13 +350,14 @@ const numHTML=n=>A<0?'<b>'+n+'</b> '+U.numdots(n):"<b>"+n+"</b>";
 
 function nextKind(){if(!save.bag||!save.bag.length){save.bag=U.shuffle(R,["coal","sort","grab",A<1?"more":"add","coal","sort"])}
   let k=save.bag.shift();if(k==="grab"&&!(rideGems.length>=1&&rideGems.length<=(A<0?10:20))){k=save.bag.shift()||"coal";if(k==="grab")k="coal"}SV.save();return k}
-function arrive(st){mode="task";$("jump").hidden=true;bell();const k=window.__mineNext||nextKind();window.__mineNext=null;
+function arrive(st){mode="task";$("jump").hidden=true;$("mag").hidden=true;$("jump").classList.remove("cue");cueOn=false;bell();const k=window.__mineNext||nextKind();window.__mineNext=null;
   task={kind:k,miss:0};({coal:tCoal,sort:tSort,grab:tGrab,more:tMore,add:tAdd})[k](task)}
 function done(){const t=task;learnt(t.kind,t.miss===0);legMiss+=t.miss;save.stations++;SV.save();TS.notes.addMath();
   TS.report.log({t:"play",game:"mine",level:save.stations,result:"win",stars:legMiss===0?3:legMiss<=2?2:1,ms:Date.now()-legT0,oops:legMiss,hints:0});
   TS.music.fx("win");const praise=U.pick(R,["Great job!","Super loading!","You did it!","Awesome miner!","Way to go!"]);
-  card("<h2>⭐ "+praise+"</h2><p>"+(save.stations%3===0?"There's a treasure room ahead!":"All aboard!")+"</p>");TS.say(praise+(save.stations%3===0?" There's a treasure room!":" All aboard!"));
-  setTimeout(()=>{if(task!==t)return;if(save.stations%3===0)treasure();else depart()},1700)}
+  save.legs++;SV.save();prog();const end=save.legs>=LEGS,mid=save.legs===3;
+  card("<h2>⭐ "+praise+"</h2><p>"+(end?"You made it to the treasure vault!":mid?"There's a treasure room ahead!":"All aboard!")+"</p>");TS.say(praise+(end?" You made it to the treasure vault!":mid?" There's a treasure room!":" All aboard!"));
+  setTimeout(()=>{if(task!==t)return;if(end)vault();else if(mid)treasure();else depart()},1700)}
 function oops(t,say,el){t.miss++;TS.music.fx("bad");TS.say(say);if(el){el.classList.remove("shake");void el.offsetWidth;el.classList.add("shake")}}
 
 /* load exactly N lumps of coal */
@@ -346,7 +375,7 @@ function tCoal(t){const L=lvl("coal");let N,pre=0;
   const take=k=>{if(k<pre||k>=t.cnt)return;t.cnt--;slotEls[t.cnt].innerHTML="";const b=pileEls.find(x=>x.hidden);if(b)b.hidden=false;TS.say(String(t.cnt))};
   pileEls.forEach(b=>b.onclick=put);slotEls.forEach(b=>b.onclick=()=>take(+b.dataset.k));
   $("mDone").onclick=()=>{if(t.cnt===N){TS.music.fx("good");done()}else oops(t,"That's "+t.cnt+". We need "+N+". "+(t.cnt>N?"Take some out.":"Load some more."),$("mCart"))};
-  t.solve=()=>{while(t.cnt<N)put();while(t.cnt>N)take(t.cnt-1);$("mDone").click()};t.fail=()=>{if(t.cnt===N)put();$("mDone").click()}}
+  t.solve=()=>{while(t.cnt<N)put();while(t.cnt>N)take(t.cnt-1);$("mDone").click()};t.fail=()=>{if(t.cnt===N){if(t.cnt>pre)take(t.cnt-1);else put()}$("mDone").click()}}
 
 /* sort gems by colour, or numbered rocks (older kids) */
 function tSort(t){const L=lvl("sort");let how="colour";if(A>=2&&R()<.5)how="evenodd";else if(A===1&&R()<.5)how="ten";
@@ -412,21 +441,38 @@ function preview(c,k){const x=c.getContext("2d");x.setTransform(2,0,0,2,0,0);x.t
   x.strokeStyle="#9aa3ad";x.lineWidth=3;x.beginPath();x.moveTo(-44,1);x.lineTo(44,1);x.stroke()}
 $("cartBtn").onclick=()=>{if(mode==="task"||mode==="treasure")return;const was=mode;mode="pause";
   const el=card("<h2>🛒 My carts</h2><div class=\"carts\">"+CARTS.map(c=>save.carts.includes(c[0])?'<button type="button" data-c="'+c[0]+'" class="'+(save.cart===c[0]?"on":"")+'"><canvas width="192" height="128"></canvas>'+c[1]+"</button>":'<button type="button" disabled style="opacity:.35"><canvas width="192" height="128"></canvas>???</button>').join("")+
-    '</div><p style="font-size:16px">Find more in the treasure rooms!</p><button class="gobtn" id="mBack" type="button">OK</button>');
+    '</div><p style="font-size:16px">🏆 '+(save.trophies||0)+((save.trophies||0)===1?' trophy':' trophies')+' · Find more carts in the treasure rooms!</p><button class="gobtn" id="mBack" type="button">OK</button>');
   el.querySelectorAll(".carts canvas").forEach((c,i)=>{preview(c,save.carts.includes(CARTS[i][0])?CARTS[i][0]:"wood");if(!save.carts.includes(CARTS[i][0]))c.style.filter="brightness(0) opacity(.5)"});
   el.querySelectorAll(".carts button[data-c]").forEach(b=>b.onclick=()=>{save.cart=b.dataset.c;SV.save();el.querySelectorAll(".carts button").forEach(x=>x.classList.toggle("on",x===b));TS.say(b.textContent)});
   $("mBack").onclick=()=>{card("");mode=was}};
-function gemN(){$("gemN").textContent="💎 "+save.gems}
+function gemN(){$("gemN").textContent="💎 "+save.gems;if($("mag"))magBtn()}
 
 /* ---------- leaving a station ---------- */
-function depart(){task=null;if(stopAt)stopAt.done=true;card("");save.zone=(save.zone+1)%ZONES.length;Z=ZONES[save.zone];SV.save();rideGems=[];legMiss=0;legT0=Date.now();
+/* the end of a level: the treasure vault with a trophy and a big prize, then the next level */
+function vault(){mode="treasure";card('<h2>🏆 The treasure vault!</h2><p>You rode all the way through Level '+save.level+'! Tap the giant chest!</p><button class="vault" id="mVault" type="button" aria-label="Open the giant chest">🧰</button>');
+  TS.say("You made it through the whole mine! Level "+save.level+" done! Tap the giant treasure chest!");TS.music.fx("win");
+  $("mVault").onclick=()=>{const lv=save.level,nx=CARTS.find(c=>!save.carts.includes(c[0]));save.trophies=(save.trophies||0)+1;save.gems+=25;if(nx){save.carts.push(nx[0]);save.cart=nx[0]}
+    save.level++;save.legs=0;SV.save();gemN();prog();TS.notes.addMath();
+    for(let k=0;k<12;k++)setTimeout(chime,k*80);setTimeout(()=>TS.music.fx("win"),900);confetti();
+    card('<div class="trophy">🏆</div><h2>Level '+lv+' champion!</h2>'+(nx?'<p>Your prize: the '+nx[1]+'!</p><canvas id="mNew" width="192" height="128" style="width:150px;height:100px"></canvas>':"<p>Your prize: a mountain of gems!</p>")+
+      '<p>💎 +25 gems · 🏆 '+save.trophies+(save.trophies===1?' trophy':' trophies')+'</p><button class="gobtn bob" id="mRide" type="button">Level '+save.level+' ▶</button>');
+    if(nx)preview($("mNew"),nx[0]);TS.say("Level "+lv+" champion! "+(nx?"Your prize is the "+nx[1]+"! ":"")+"Ready for level "+save.level+"?");$("mRide").onclick=depart}}
+function confetti(){const p=at(cs),cols=["#e2412e","#f2c230","#43a047","#3b6fd9","#8f5bd6","#ff6fb5"];for(let k=0;k<120;k++){const a=-Math.PI/2+(R()-.5)*2.4,sp=200+R()*380;
+  parts.push({x:p.x,y:p.y-60,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,t:1.6+R(),c:cols[k%cols.length],r:3+R()*3})}}
+function prog(){let h="Level "+save.level+" ";for(let i=0;i<LEGS;i++)h+='<i class="'+(i<save.legs?"d":i===save.legs?"c":"")+'"></i>'+(i===2?"💰":"");$("prog").innerHTML=h+'<span class="end">🏆</span>'}
+const MAGNET=5;
+function magBtn(){const b=$("mag");b.classList.toggle("on",magnet);b.classList.toggle("poor",!magnet&&save.gems<MAGNET);b.innerHTML=magnet?"<b>🧲</b>ON":"<b>🧲</b>"+MAGNET+" 💎"}
+$("mag").onclick=()=>{ac();if(magnet||(mode!=="ride"&&mode!=="brake"))return;
+  if(save.gems<MAGNET){TS.say("The magnet costs "+MAGNET+" gems. Jump to grab more gems!");TS.music.fx("bad");return}
+  save.gems-=MAGNET;SV.save();gemN();magnet=true;magBtn();tone(300,.5,"sine",.12,900);TS.say("Magnet on! Every gem comes to you!")};
+function depart(){task=null;if(stopAt)stopAt.done=true;card("");Z=ZONES[save.legs%ZONES.length];magnet=false;magBtn();$("mag").hidden=false;prog();SV.save();rideGems=[];legMiss=0;legT0=Date.now();
   bell();whoosh();mode="ride";v=220;$("jump").hidden=false;const zn=$("zone");zn.textContent="Into "+Z.name+"!";zn.classList.add("on");TS.say("Into "+Z.name+"!");setTimeout(()=>zn.classList.remove("on"),2200)}
 function start(){const el=card('<h2>⛏️ Mine Cart</h2><p>Hop in! Tap to jump and grab the gems.</p><button class="gobtn bob" id="mGo" type="button">Go! 🛒</button>');
-  $("mGo").onclick=()=>{ac();save.zone=(save.zone+ZONES.length-1)%ZONES.length;depart()}}
+  $("mGo").onclick=()=>{ac();depart()}}
 
 resize();gemN();startTrack();genTo(3200);{const p=at(cs);camX=p.x-VW*.33;camY=p.y-VH*.56}
-start();raf=requestAnimationFrame(frame);
-window.__mine={get mode(){return mode},get task(){return task},get zone(){return Z.id},get cs(){return cs},get v(){return v},get h(){return h},save,gems:()=>gems,stations:()=>stations,rideGems:()=>rideGems,
+prog();start();raf=requestAnimationFrame(frame);
+window.__mine={get mode(){return mode},get task(){return task},get zone(){return Z.id},get cs(){return cs},get v(){return v},get h(){return h},save,magnet:()=>{magnet=true;magBtn()},get magnetOn(){return magnet},gems:()=>gems,stations:()=>stations,rideGems:()=>rideGems,
   jump,right(){task&&task.solve()},wrong(){task&&task.fail()},skip(){genTo(cs+9000);const st=stations.find(q=>!q.done&&q.s>cs);if(st&&st.s-cs>500){cs=st.s-500;idx=0}},step,lvl,pts:()=>pts};
 })();
 </script>
