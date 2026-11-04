@@ -191,7 +191,7 @@ function build(n){const r=K.rng(n),Z=zoneOf(n),ri=(a,b)=>a+Math.floor(r()*(b-a+1
   const sparkArc=(x0,x1,yy,k,hh)=>{for(let i=0;i<k;i++){const t=k===1?.5:i/(k-1);L.sparks.push({x:x0+(x1-x0)*t,y:yy-hh*Math.sin(Math.PI*t)})}};
   if(isBoss(n)){flat(1700);L.end=1700;L.boss={x:1250,y:380,vx:0,vy:0,st:"wait",t:1.2,hp:3+Math.min(2,Math.floor(zi(n)/2)),max:3+Math.min(2,Math.floor(zi(n)/2)),dir:-1,hit:0};
     sparkArc(300,700,300,6,60);sparkArc(900,1400,300,6,60);return L}
-  const len=3200+n*160;flat(600);sparkLine(260,330,5);
+  const len=10000+n*350;flat(600);sparkLine(260,330,5);
   let lastKind="";
   while(X()<len){const kinds=["hills","pit","enemy","spring","pad","plats","ramp"].concat(d>=1?["spikes"]:[]).concat(d>=2?["pit","enemy"]:[]),k=kinds[Math.floor(r()*kinds.length)];
     if(k===lastKind&&k!=="hills")continue;lastKind=k;const x0=X();
@@ -209,7 +209,7 @@ function build(n){const r=K.rng(n),Z=zoneOf(n),ri=(a,b)=>a+Math.floor(r()*(b-a+1
   flat(200);
   // checkpoints on solid ground at a third and two thirds
   const runway=x=>{for(let d=-60;d<=320;d+=SEG)if(!solidAt(L,x+d))return false;return true};
-  for(const f of [1/3,2/3]){let x=Math.floor(len*f/SEG)*SEG;while(!runway(x)&&x<len)x+=SEG;L.flags.push({x,y:gAt(L,x),on:0})}
+  for(const f of [1/4,1/2,3/4]){let x=Math.floor(len*f/SEG)*SEG;while(!runway(x)&&x<len)x+=SEG;L.flags.push({x,y:gAt(L,x),on:0})}
   L.end=X()+120;flat(700);
   // keep foes and sparks off pits
   L.sparks=L.sparks.filter(s=>s.y<gAtOr(L,s.x,999)-12||!solidAt(L,s.x));return L}
