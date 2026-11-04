@@ -20,7 +20,7 @@ export async function events(req, env) {
         .bind(S(e.id, 40), ts, ...who, S(e.game, 24), I(e.level, 0, 1000), ["win", "fail", "quit"].includes(e.result) ? e.result : "quit", I(e.stars, 0, 3), I(e.ms, 0, 36e5), I(e.oops, 0, 999), I(e.hints, 0, 99)));
     else if (e.t === "math")
       stmts.push(env.DB.prepare("INSERT OR IGNORE INTO maths (eid,ts,app,device,player,avatar,grade,game,kind,mlevel,q,correct,tries,ms) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
-        .bind(S(e.id, 40), ts, ...who, S(e.game, 24), e.kind === "check" ? "check" : "hint", I(e.mlevel, -1, 9), S(e.q, 40), e.correct ? 1 : 0, I(e.tries, 0, 9), I(e.ms, 0, 36e5)));
+        .bind(S(e.id, 40), ts, ...who, S(e.game, 24), ["check", "mission"].includes(e.kind) ? e.kind : "hint", I(e.mlevel, -1, 9), S(e.q, 40), e.correct ? 1 : 0, I(e.tries, 0, 9), I(e.ms, 0, 36e5)));
   }
   if (stmts.length) await env.DB.batch(stmts);
   return json({ ok: true, saved: stmts.length });

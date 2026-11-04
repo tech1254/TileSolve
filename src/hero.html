@@ -175,14 +175,14 @@ function build(n){const r=K.rng(n),Z=zoneOf(n),ri=(a,b)=>a+Math.floor(r()*(b-a+1
   const sparkArc=(x0,x1,yy,k,hh)=>{for(let i=0;i<k;i++){const t=k===1?.5:i/(k-1);L.sparks.push({x:x0+(x1-x0)*t,y:yy-hh*Math.sin(Math.PI*t)})}};
   if(isBoss(n)){flat(1700);L.end=1700;L.boss={x:1250,y:380,vx:0,vy:0,st:"wait",t:1.2,hp:3+Math.min(2,Math.floor(zi(n)/2)),max:3+Math.min(2,Math.floor(zi(n)/2)),dir:-1,hit:0};
     sparkArc(300,700,300,6,60);sparkArc(900,1400,300,6,60);return L}
-  const len=10000+n*350;flat(600);sparkLine(260,330,5);
+  const len=Math.round(15500-(n-1)*170);flat(600);sparkLine(260,330,5);
   let lastKind="";
   while(X()<len){const kinds=["hills","pit","enemy","spring","pad","plats","ramp"].concat(d>=1?["spikes"]:[]).concat(d>=2?["pit","enemy"]:[]),k=kinds[Math.floor(r()*kinds.length)];
     if(k===lastKind&&k!=="hills")continue;lastKind=k;const x0=X();
     if(k==="hills"){const amp=ri(30,70)*(r()<.5?-1:1),ny=Math.max(300,Math.min(440,y+amp));slope(ri(10,16)*SEG,ny-y);sparkLine(x0+60,y-50,4);slope(ri(10,16)*SEG,Math.max(300,Math.min(440,y-amp*.7))-y)}
     else if(k==="pit"){flat(120);const w=Math.min(9,ri(4,5)+Math.floor(d/2)),px=X();for(let i=0;i<w;i++)L.gy.push(null);sparkArc(px-20,px+w*SEG+20,y-40,5,90);flat(480)}
     else if(k==="enemy"){flat(ri(22,30)*SEG);const t=d>=2&&r()<.4?"beetle":d>=1&&r()<.35?"bird":"slime";L.foes.push({t,x:x0+260,x0:x0+120,x1:x0+X()-x0-80,y,dir:-1,alive:1,ph:r()*6});
-      if(d>=3&&r()<.5)L.foes.push({t:"slime",x:x0+420,x0:x0+120,x1:X()-80,y,dir:1,alive:1,ph:0});sparkLine(x0+120,y-60,3)}
+      if(d>=3&&r()<.5)L.foes.push({t:"slime",x:x0+420,x0:x0+120,x1:X()-80,y,dir:1,alive:1,ph:0});sparkLine(x0+120,y-60,3);flat(360)}
     else if(k==="spring"){flat(80);L.springs.push({x:X()-40,y,c:0});flat(100);const py=y-ri(170,230);L.plats.push({x:X()-20,y:py,w:260});sparkLine(X()-50,y-90,1);sparkLine(X()-50,y-170,1);
       sparkLine(X()+10,py-40,5,50);flat(320)}
     else if(k==="pad"){flat(100);L.pads.push({x:X()-60,y});flat(260);if(r()<.75||zi(n)===0){const lx=X()+60;L.loops.push({x:lx,y,r:95});sparkArc(lx-80,lx+80,y-95,6,95);flat(460)}
@@ -517,11 +517,12 @@ function mission(n,done){const w=zi(n),part=isBoss(n)?3:(n-1)%4,P=PARTS[part],en
     drawHero(x,HERO,{run:t*3,speed:0,t});engineArt(ec,w,shown,t);requestAnimationFrame(anim)})();
   TS.say((n===1?"Professor Muddle has scrambled the Number Engines! ":"")+(part===0?WORLD[w].intro:"")+" "+P[1]+"!");
   const dots=()=>{$m("msDots").innerHTML=Array.from({length:need},(_,i)=>'<i class="'+(i<got?"d":i===got?"c":"")+'"></i>').join("")};
-  const next=()=>{q=mathQ(age,w,rr);entry="";lock=false;$m("msOut").textContent="";$m("msOut").className="";$m("msQ").innerHTML=q.text+'<span class="eq">'+q.eq+"</span>";dots();setTimeout(()=>{if(alive)TS.say(q.text)},got||miss?400:2600)};
+  const next=()=>{q=mathQ(age,w,rr);q.t0=Date.now();entry="";lock=false;$m("msOut").textContent="";$m("msOut").className="";$m("msQ").innerHTML=q.text+'<span class="eq">'+q.eq+"</span>";dots();setTimeout(()=>{if(alive)TS.say(q.text)},got||miss?400:2600)};
   const submit=()=>{if(lock||entry==="")return;const o=$m("msOut");
-    if(+entry===q.ans){lock=true;got++;o.className="good";SND.flag();$m("msHelp").textContent=U8(["Yes!","Correct!","Brilliant!","You got it!","Super smart!"]);dots();
+    const logM=ok=>{try{TS.report.log({t:"math",game:"hero",kind:"mission",mlevel:w,q:q.eq.slice(0,40),correct:ok?1:0,tries:1,ms:Date.now()-q.t0})}catch(e){}};
+    if(+entry===q.ans){logM(true);lock=true;got++;o.className="good";SND.flag();$m("msHelp").textContent=U8(["Yes!","Correct!","Brilliant!","You got it!","Super smart!"]);dots();
       if(got>=need){setTimeout(()=>finishMission(),700)}else setTimeout(next,900)}
-    else{miss++;o.className="bad";SND.hurt();const how=q.how;$m("msHelp").textContent="Not quite: the answer is "+q.ans+". "+how+" Try a new one!";TS.say("Not quite. The answer is "+q.ans+". "+how);lock=true;setTimeout(()=>{if(alive){next();$m("msHelp").textContent="Here's a new one. You can do it!"}},3800)}};
+    else{logM(false);miss++;o.className="bad";SND.hurt();const how=q.how;$m("msHelp").textContent="Not quite: the answer is "+q.ans+". "+how+" Try a new one!";TS.say("Not quite. The answer is "+q.ans+". "+how);lock=true;setTimeout(()=>{if(alive){next();$m("msHelp").textContent="Here's a new one. You can do it!"}},3800)}};
   const finishMission=()=>{eng[w]=Math.max(have,part+1);K.persist();shown=eng[w];const saved=part===3;
     $m("msQ").innerHTML=saved?"🎉 <b>"+ZONES[w].name+" is saved!</b> The Number Engine is running again"+(w===5?" and Professor Muddle's scrambler is broken. "+HERO.name+" saved all six worlds!":"! Next stop: "+ZONES[w+1].name+"."):
       "⚡ <b>"+P[1]+": done!</b> The engine is "+(part+1)+"/4 fixed.";
