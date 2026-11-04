@@ -254,7 +254,7 @@ function step(dt){if(!S||S.paused)return;const L=S.L;S.t+=dt;if(S.msgT>0)S.msgT-
   if(S.loop){const lp=S.loop;lp.t+=dt*Math.max(S.vx,LOOPV)/(2*Math.PI*lp.r*1.05);const t=Math.min(1,lp.t);S.x=lp.x+lp.r*Math.sin(2*Math.PI*t)*.98+2*t;S.y=lp.y-lp.r+lp.r*Math.cos(2*Math.PI*t);S.rot=-2*Math.PI*t;
     if(t>=1){S.loop=null;S.rot=0;S.x=lp.x+4;S.y=lp.y;S.vx=Math.max(S.vx,620);S.on=1}IN.jp=0;collect(dt);foes(dt);camera(dt);S.run+=dt*20;return}
   const dir=IN.r-IN.l;if(dir)S.face=dir;
-  const ice=S.Z.ice?.35:1;
+  const ice=S.Z.ice&&!S.boss?.35:1;
   if(dir)S.vx+=dir*(S.on?RUNACC:AIRACC)*dt*(Math.sign(S.vx)===-dir?(S.on?2.2:1.8):1);
   else if(S.on){const f=1500*ice*dt;S.vx=Math.abs(S.vx)<=f?0:S.vx-Math.sign(S.vx)*f}
   const cap=S.dash>0?1100:S.padT>0?PADV:RUNMAX;if(S.padT>0)S.padT-=dt;
@@ -305,7 +305,7 @@ function boss(dt){const B=S.boss,Z=S.Z,L=S.L,lvl=zi(S.n);if(B.hp<=0){B.dead=(B.d
   B.t-=dt;if(B.hit>0)B.hit-=dt;
   if(B.st==="wait"&&B.t<=0){B.st="hop";const tx=Math.max(330,Math.min(L.end-330,S.x+(Math.random()-.5)*120));const air=2*(820+lvl*40)/GRAV;B.vy=-(820+lvl*40);B.vx=(tx-B.x)/air;B.dir=Math.sign(B.vx)||-1;B.tx=tx}
   if(B.st==="hop"){B.x+=B.vx*dt;B.y+=B.vy*dt;B.vy+=GRAV*dt;if(B.y>=380&&B.vy>0){B.y=380;B.vy=0;B.st="dizzy";B.t=Math.max(1.4,1.8-lvl*.08);S.shake=.25;SND.boss();burst(B.x,380,"#c9b28a",18);
-    if(lvl>=3)S.waves=[{x:B.x,d:-1},{x:B.x,d:1}]}}
+    if(lvl>=4)S.waves=[{x:B.x,d:-1},{x:B.x,d:1}]}}
   else if(B.st==="dizzy"&&B.t<=0){B.st="wait";B.t=.35}
   else if(B.st==="ouch"&&B.t<=0){B.st="wait";B.t=.2}
   if(S.waves){for(const w of S.waves){w.x+=w.d*380*dt;if(S.on&&Math.abs(S.x-w.x)<18)hurt("wave")}S.waves=S.waves.filter(w=>w.x>0&&w.x<L.end)}
@@ -503,7 +503,7 @@ function engineArt(c,w,parts,t){const x=c.getContext("2d"),W=c.width;x.setTransf
   x.strokeStyle="#9aa3c7";x.lineWidth=6;x.beginPath();x.arc(0,0,64,0,7);x.stroke();x.fillStyle="#121733";x.beginPath();x.arc(0,0,20,0,7);x.fill();
   x.fillStyle=on?"#ffd23f":"#9aa3c7";x.font="bold 18px system-ui";x.textAlign="center";x.textBaseline="middle";x.fillText(on?"ON":parts+"/4",0,1)}
 function mission(n,done){const w=zi(n),part=isBoss(n)?3:(n-1)%4,P=PARTS[part],eng=(K.save.eng=K.save.eng||{}),have=eng[w]||0,need=3;let got=0,miss=0,q=null,entry="",lock=false;
-  const rr=Math.random,me=S,age=Math.min(5,K.age);
+  const rr=Math.random,me=S,age=Math.max(0,Math.min(5,K.age-1));
   if(!ms){ms=document.createElement("div");ms.className="ms";document.body.appendChild(ms)}
   const story=(n===1?"Professor Muddle has scrambled the Number Engines that keep the six worlds running! Only a hero who is fast AND smart can fix them. ":"")+
     (part===0?WORLD[w].intro+" ":"")+(part===3?"You beat "+ZONES[w].boss+"! Now restart the engine to save "+ZONES[w].name+"!":"Solve "+need+" problems to "+P[1].toLowerCase()+".");

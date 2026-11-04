@@ -73,6 +73,8 @@ with sync_playwright() as p:
     pg = watch_errors(ctx.new_page(), errors); pg.goto(URL("hero")); pg.wait_for_function("window.__game&&__game.S", timeout=10000); pg.wait_for_timeout(300)
     check(not pg.is_visible(".hm"), "a saved hero skips the maker")
     pg.evaluate("window.__heroNoMission=true")
+    r = pg.evaluate("""()=>{const G=__game;G.K.load(16);const S=G.S;window.__heroHold=true;let waves=0;for(let i=0;i<120*20;i++){G.step(1/120);if(S.waves&&S.waves.length)waves++}window.__heroHold=false;return{waves,ice:S.Z.ice}}""")
+    check(r["waves"] == 0, f"Snow Brute sends no shockwaves ({r})")
     loops = 0; results = {}
     for n in range(1, 25):
         r = pg.evaluate(BOT + f"({n},150)"); results[n] = r
@@ -93,6 +95,9 @@ with sync_playwright() as p:
         bad = pg.evaluate("""()=>{const out=[];for(let age=0;age<=5;age++)for(let w=0;w<6;w++)for(let i=0;i<150;i++){const q=__game.mathQ(age,w,Math.random);
           if(!(Number.isInteger(q.ans)&&q.ans>=0&&q.ans<100000&&q.eq.includes('?')&&q.text&&q.how))out.push([age,w,q])}return out.slice(0,3)}""")
         if grade == 1: check(not bad, f"5400 maths problems for every grade and world have whole-number answers and a how-to {bad}")
+        if grade == 3:
+            nodiv = pg.evaluate("(()=>{let d=0;for(let w=0;w<6;w++)for(let i=0;i<300;i++){const q=__game.mathQ(Math.max(0,__game.K.age-1),w,Math.random);if(/[÷×]/.test(q.eq))d++}return d})()")
+            check(nodiv == 0, f"a grade 3 player gets grade 2 maths: no division or times tables yet ({nodiv})")
         pg.evaluate("(()=>{const S=__game.S;S.x=S.L.end+2;S.on=1;S.y=S.L.gy[Math.floor(S.x/20)]})()"); pg.wait_for_timeout(2000)
         check(pg.is_visible(".ms") and "Professor Muddle" in pg.text_content(".ms-story") and not pg.is_visible("#kSheetWin"), f"grade {grade}: winning level 1 opens the first story mission before the next level")
         if OUT: pg.screenshot(path=str(OUT / f"hero_mission_g{grade}.png"))
