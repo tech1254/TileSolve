@@ -77,6 +77,23 @@ with sync_playwright() as p:
     pg.evaluate("__chess.tapSq(59)"); pg.evaluate("__chess.tapSq(31)"); pg.wait_for_timeout(300)
     check(pg.is_visible("#chAsk button") and "sure" in pg.text_content("#chSay"), "the warning asks 'are you sure?' with Move anyway / Think again")
     pg.screenshot(path=str(OUT / "chess-warn.png"))
+    # saving: a match in progress saves after every move; reopening offers Continue or New game
+    pg.evaluate("window.__chessFast=true"); go(pg, 7); wait_idle(pg)
+    if pg.is_visible("#chAsk button"): pg.click("#chAsk button:first-child"); wait_idle(pg)
+    for k in range(3):
+        pg.evaluate("(()=>{const C=__chess,G=C.G;G.coachOn=false;C.tryMove(C.bestMove(G.s,1))})()"); pg.wait_for_timeout(400); wait_idle(pg)
+    saved = pg.evaluate("__chess.K.save.game"); pos = pg.evaluate("__chess.G.s.b.join(',')")
+    check(saved and saved["n"] == 7 and saved["s"]["turn"] == "w" and ",".join(x or "" for x in saved["s"]["b"]) == pos.replace("null",""), "a match saves itself after each move (white to move)")
+    pg.reload(); pg.wait_for_function("window.__chess && __chess.G", timeout=10000); go(pg, 7); pg.wait_for_timeout(300)
+    check(pg.is_visible("#chAsk button") and "saved game" in pg.text_content("#chSay"), f"reopening the match offers the saved game ({pg.text_content('#chSay')[:60]})")
+    pg.screenshot(path=str(OUT / "chess-saved.png"))
+    pg.click("#chAsk button.go"); pg.wait_for_timeout(300)
+    check(pg.evaluate("__chess.G.s.b.join(',')") == pos and not pg.evaluate("__chess.G.busy") and "Welcome back" in pg.text_content("#chSay"), "Continue puts every piece back where it was")
+    pg.evaluate("(()=>{const C=__chess,G=C.G;C.tryMove(C.bestMove(G.s,1))})()"); pg.wait_for_timeout(500); wait_idle(pg)
+    check(pg.evaluate("__chess.G.s.b.join(',')") != pos, "and the game carries on")
+    pg.evaluate("__chess.K.load(7)"); pg.wait_for_timeout(300); pg.click("#chAsk button:first-child"); pg.wait_for_timeout(300)
+    check(pg.evaluate("__chess.G.hist.length") == 0 and not pg.evaluate("__chess.K.save.game"), "New game starts fresh and clears the save")
+    pg.evaluate("window.__chessFast=false")
     ctx.close()
     # phone layout
     ctx = b.new_context(viewport={"width": 390, "height": 844}); ctx.add_init_script(player(3, "c3"))

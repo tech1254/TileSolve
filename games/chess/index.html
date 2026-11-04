@@ -357,17 +357,30 @@ function good(t){G.busy=true;TS.music.fx("good");coach("✅ "+t);later(()=>{G.ro
 function bad(t){G.busy=true;TS.music.fx("bad");coach("❌ "+t);later(()=>{G.s=G.start;G.caps={w:[],b:[]};G.last=null;G.busy=false},2200)}
 
 /* ---------- matches ---------- */
-function startMatch(n){const m=matchNo(n),lost=(K.save.lost||{})[n]||0;G.skill=Math.max(0,skillFor(m)-Math.floor(lost/2));G.bot=BOTS[G.skill];
+/* ---------- saving a match ----------
+   A match in progress is saved (for this player) every time it's his move, so closing the app or a flat battery loses nothing.
+   Opening that match again offers Continue or New game; finishing the game (win, loss or draw) clears the save. */
+function saveGame(){if(G.mode!=="match"||G.ended||G.s.turn!=="w")return;
+  K.save.game={n:G.n,s:G.s,caps:G.caps,last:G.last,reps:G.reps,hist:G.hist.slice(-20),skill:G.skill,m:G.m,coachLvl:G.coachLvl,takebacks:G.takebacks,helps:G.helps,moves:(G.ply||0),t:Date.now()};K.persist()}
+function clearGame(){if(K.save.game){delete K.save.game;K.persist()}}
+function startMatch(n){const g=K.save.game;
+  if(!(g&&g.n===n&&g.s&&g.s.turn==="w"))return freshMatch(n);
+  resumeGame(g,true);const when=Math.round((Date.now()-g.t)/60000),ago=when<2?"just now":when<60?when+" minutes ago":when<1440?Math.round(when/60)+" hours ago":Math.round(when/1440)+" days ago";
+  G.busy=true;coach("💾 You have a saved game against "+G.bot[1]+" "+G.bot[0]+" (saved "+ago+"). Want to keep playing it?",true,
+    [["New game",()=>{clearGame();G.busy=false;start(n)}],["▶ Continue",()=>{G.busy=false;resumeGame(g,false)}]])}
+function resumeGame(g,preview){G.s=g.s;G.caps=g.caps||{w:[],b:[]};G.last=g.last||null;G.reps=g.reps||{};G.hist=g.hist||[];G.skill=g.skill;G.bot=BOTS[g.skill];G.m=g.m;G.coachLvl=g.coachLvl;
+  G.takebacks=g.takebacks||0;G.helps=g.helps||0;G.ply=g.moves||0;if(!preview)coach("Welcome back! It's your move against "+G.bot[0]+". "+(inCheck(G.s,"w")?"<b>Careful: you're in check!</b>":"Take your time."))}
+function freshMatch(n){const m=matchNo(n),lost=(K.save.lost||{})[n]||0;G.skill=Math.max(0,skillFor(m)-Math.floor(lost/2));G.bot=BOTS[G.skill];
   let s=fromFEN(START);const noQueen=m<=2||lost>=3;if(noQueen){s.b[3]=null}G.s=s;G.reps={};G.reps[key(s)]=1;G.m=m;
   G.coachLvl=m<=6?2:m<=14?1:0;
   coach("<b>Match "+m+"</b> against "+G.bot[1]+" "+G.bot[0]+(noQueen?" (it's playing without its queen)":"")+". You're white, so you go first. "+
     (m<=3?"Tip: move a centre pawn two squares, then bring out your knights and bishops. Tap a piece to see where it can go.":G.skill>=4?"This bot thinks ahead. Protect your pieces!":"Remember: get your pieces out, castle, and look for free pieces to smash!"))}
 function takeBack(){if(G.mode!=="match"||G.busy||G.anim||!G.hist.length)return;let h;do h=G.hist.pop();while(G.hist.length&&h.s.turn!=="w");
-  G.s=h.s;G.caps=h.caps;G.last=h.last;G.reps=h.reps;G.sel=null;G.moves=[];G.hl=[];G.arrow=null;G.takebacks++;coach("Taken back. Have another think!")}
+  G.s=h.s;G.caps=h.caps;G.last=h.last;G.reps=h.reps;G.sel=null;G.moves=[];G.hl=[];G.arrow=null;G.takebacks++;coach("Taken back. Have another think!");saveGame()}
 function matchPlayed(m){const n=G.s,st=status(n),k2=key(n);G.reps[k2]=(G.reps[k2]||0)+1;if(endCheck(st,G.reps[k2]))return;
   G.busy=true;coach(G.bot[1]+" is thinking…",false);later(()=>{const bm=botMove(G.s,G.skill);if(!bm){G.busy=false;return}
-    play(bm,()=>{const n2=G.s,st2=status(n2),k3=key(n2);G.reps[k3]=(G.reps[k3]||0)+1;if(endCheck(st2,G.reps[k3]))return;G.busy=false;afterBot(bm)})},window.__chessFast?0:500+R()*400)}
-function endCheck(st,rep){if(!st&&rep<3)return false;G.busy=true;const won=st==="mate"&&G.s.turn==="b";
+    play(bm,()=>{const n2=G.s,st2=status(n2),k3=key(n2);G.reps[k3]=(G.reps[k3]||0)+1;if(endCheck(st2,G.reps[k3]))return;G.busy=false;G.ply=(G.ply||0)+1;afterBot(bm);saveGame()})},window.__chessFast?0:500+R()*400)}
+function endCheck(st,rep){if(!st&&rep<3)return false;G.busy=true;G.ended=true;clearGame();const won=st==="mate"&&G.s.turn==="b";
   if(won){TS.music.fx("win");const st3=G.takebacks+G.helps===0?3:G.takebacks+G.helps<=2?2:1;coach("<b>Checkmate! You win!</b> 🎉",true);later(()=>K.win({stars:st3,text:"You beat "+G.bot[0]+"!"+(G.takebacks?" ("+G.takebacks+" take-back"+(G.takebacks>1?"s":"")+")":"")}),1600);return true}
   const L=K.save.lost||(K.save.lost={});L[G.n]=(L[G.n]||0)+1;K.persist();
   const why=st==="mate"?"Checkmate: the bot trapped your king.":st==="stalemate"?(G.s.turn==="b"?"Stalemate! The bot's king had no safe move but wasn't in check, so it's a draw. When you're winning, always leave the king a square, or give check.":"Stalemate: a draw."):
@@ -433,9 +446,9 @@ function hint(){if(!G||G.busy)return;G.helps++;let m=null;
 
 K=TS_KIT({id:"chess",name:"Smash Chess",levels:40,start,hint,
   howto:[["♟️","Real chess, but when a piece is captured it gets SMASHED!"],["🧙","The coach teaches you each piece first. Smash the stars!"],
-    ["👆","Tap a piece to see where it can go, then tap a square."],["🤖","Then play matches against bots that start gentle and get smarter. The coach warns you before a mistake."]],
+    ["👆","Tap a piece to see where it can go, then tap a square."],["🤖","Then play matches against bots that start gentle and get smarter. The coach warns you before a mistake."],["💾","Your match saves itself after every move. Come back any time and tap Continue!"]],
   point:()=>document.getElementById("chCv"),label:n=>PLAN[n-1]==="M"?"Match "+matchNo(n):LABEL[PLAN[n-1]]});
-window.__chess={breaks,get G(){return G},K,fromFEN,legal,pseudo,make,status,botMove,bestMove,hanging,solveStars,PLAN,START,isMate,inCheck,tryMove,tapSq,warnFor,mateIn1};
+window.__chess={saveGame,breaks,get G(){return G},K,fromFEN,legal,pseudo,make,status,botMove,bestMove,hanging,solveStars,PLAN,START,isMate,inCheck,tryMove,tapSq,warnFor,mateIn1};
 K.start();
 })();
 </script>
