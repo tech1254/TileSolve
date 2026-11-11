@@ -292,8 +292,12 @@ const talk=(()=>{let unlocked=false,pending=null,voice=null;
     sayMoney=t=>t.replace(/\$(\d+)\.(\d\d)\b/g,(m,d,c)=>{d=+d;c=+c;const D=d?d+(d===1?" dollar":" dollars"):"",C=c?c+(c===1?" cent":" cents"):"";return D&&C?D+" and "+C:D||C||"0 dollars"})
       .replace(/\$(\d+)\b/g,(m,d)=>d+(+d===1?" dollar":" dollars")).replace(/(\d+)\s?¢/g,(m,c)=>c+(+c===1?" cent":" cents"))
       .replace(/\b(\d{1,2}):00\b/g,"$1 o'clock").replace(/\b(\d{1,2}):0(\d)\b/g,"$1 oh $2"),
+    /* maths read aloud: "3/5" -> "3 fifths", "1/2" -> "one half", "×" -> "times", "÷" -> "divided by", "−" -> "minus", "=" -> "equals", "4 + ? = 9" -> "4 plus what equals 9" */
+    PARTS={2:["half","halves"],3:["third","thirds"],4:["quarter","quarters"],5:["fifth","fifths"],6:["sixth","sixths"],7:["seventh","sevenths"],8:["eighth","eighths"],9:["ninth","ninths"],10:["tenth","tenths"],12:["twelfth","twelfths"],100:["hundredth","hundredths"]},
+    sayMaths=t=>t.replace(/(^|[^\d/:])(\d{1,3})\s*\/\s*(\d{1,3})(?![\d/])/g,(m,pre,n,d)=>{const w=PARTS[+d];return pre+(w?(+n===1?"one "+w[0]:n+" "+w[1]):n+" over "+d)})
+      .replace(/([+\-−×÷=])\s*\?/g,"$1 what").replace(/×/g," times ").replace(/÷/g," divided by ").replace(/(\d|\s)[−–](\s|\d)/g,"$1 minus $2").replace(/\s=\s/g," equals ").replace(/\s\+\s/g," plus ").replace(/\s{2,}/g," "),
     sayPlurals=t=>t.replace(/\b(\d{1,4})'?s\b/g,(m,d)=>+d===100?"hundreds":+d===1000?"thousands":plural(words(+d)));
-  const clean=t=>sayPlurals(sayMoney(String(t).replace(/<[^>]*>/g,""))).replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\u{1F1E6}-\u{1F1FF}\u{2190}-\u{21FF}\u{2300}-\u{23FF}\u{FE0F}\u{200D}\u{20E3}\u{E0020}-\u{E007F}]/gu,"").replace(/\s+([.,!?])/g,"$1").replace(/\s{2,}/g," ").trim();
+  const clean=t=>sayPlurals(sayMaths(sayMoney(String(t).replace(/<[^>]*>/g,"")))).replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\u{1F1E6}-\u{1F1FF}\u{2190}-\u{21FF}\u{2300}-\u{23FF}\u{FE0F}\u{200D}\u{20E3}\u{E0020}-\u{E007F}]/gu,"").replace(/\s+([.,!?])/g,"$1").replace(/\s{2,}/g," ").trim();
   /* The voice: by default lines are spoken by the cloud voice (MeloTTS via /api/tts in worker.js). Clips are kept on the device
      (Cache Storage, plus the last 80 decoded in memory), so repeats are instant and work offline once heard. If a clip can't be
      fetched within 4 seconds (offline, daily limit, error) that line uses the device voice, and after 3 misses in a row the cloud
