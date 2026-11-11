@@ -1,3 +1,4 @@
+import os
 """Shared helpers for the Tile Solve browser tests."""
 import json, re, pathlib, http.server, threading, functools
 
@@ -59,7 +60,12 @@ def unlock_all(pg, game, reload=False):
 def go_level(pg, n):
     pg.click("#kLevels"); pg.click(f"#kLevelGrid button:nth-child({n})"); pg.wait_for_timeout(200)
 
+SAYLOG = os.environ.get("SAYLOG")
+SAY_HOOK = "setInterval(()=>{if(window.TS&&TS.say&&!TS.say.__w){const o=TS.say;TS.say=function(t){try{console.log('SAY:'+t)}catch(e){}return o.apply(this,arguments)};TS.say.__w=1}},5)"
 def watch_errors(pg, errors):
+    if SAYLOG:  # record every spoken line (for checking what the voice reads)
+        pg.add_init_script(SAY_HOOK)
+        pg.on("console", lambda m: m.text.startswith("SAY:") and open(SAYLOG, "a").write(m.text[4:].replace("\n", " ") + "\n"))
     pg.on("pageerror", lambda e: errors.append(str(e)))
     pg.on("console", lambda m: m.type == "error" and "Failed to load resource" not in m.text and errors.append(m.text))
     return pg

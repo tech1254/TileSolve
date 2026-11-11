@@ -288,8 +288,12 @@ const talk=(()=>{let unlocked=false,pending=null,voice=null;
     TENS=["","","twenty","thirty","forty","fifty","sixty","seventy","eighty","ninety"],
     words=n=>n<20?ONES[n]:n<100?TENS[Math.floor(n/10)]+(n%10?"-"+ONES[n%10]:""):n<1000?ONES[Math.floor(n/100)]+" hundred"+(n%100?" "+words(n%100):""):words(Math.floor(n/1000))+" thousand"+(n%1000?" "+words(n%1000):""),
     plural=w=>/y$/.test(w)?w.slice(0,-1)+"ies":/(x|s)$/.test(w)?w+"es":w+"s",
+    /* money and clock times, said the same way on every device: "$1.05" -> "1 dollar and 5 cents", "75¢" -> "75 cents", "5:00" -> "5 o'clock", "3:05" -> "3 oh 5" */
+    sayMoney=t=>t.replace(/\$(\d+)\.(\d\d)\b/g,(m,d,c)=>{d=+d;c=+c;const D=d?d+(d===1?" dollar":" dollars"):"",C=c?c+(c===1?" cent":" cents"):"";return D&&C?D+" and "+C:D||C||"0 dollars"})
+      .replace(/\$(\d+)\b/g,(m,d)=>d+(+d===1?" dollar":" dollars")).replace(/(\d+)\s?¢/g,(m,c)=>c+(+c===1?" cent":" cents"))
+      .replace(/\b(\d{1,2}):00\b/g,"$1 o'clock").replace(/\b(\d{1,2}):0(\d)\b/g,"$1 oh $2"),
     sayPlurals=t=>t.replace(/\b(\d{1,4})'?s\b/g,(m,d)=>+d===100?"hundreds":+d===1000?"thousands":plural(words(+d)));
-  const clean=t=>sayPlurals(String(t).replace(/<[^>]*>/g,"")).replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\u{1F1E6}-\u{1F1FF}\u{2190}-\u{21FF}\u{2300}-\u{23FF}\u{FE0F}\u{200D}\u{20E3}\u{E0020}-\u{E007F}]/gu,"").replace(/\s+([.,!?])/g,"$1").replace(/\s{2,}/g," ").trim();
+  const clean=t=>sayPlurals(sayMoney(String(t).replace(/<[^>]*>/g,""))).replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\u{1F1E6}-\u{1F1FF}\u{2190}-\u{21FF}\u{2300}-\u{23FF}\u{FE0F}\u{200D}\u{20E3}\u{E0020}-\u{E007F}]/gu,"").replace(/\s+([.,!?])/g,"$1").replace(/\s{2,}/g," ").trim();
   function speak(t){t=clean(t);if(!t)return;try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t),v=pickVoice();if(v){u.voice=v;u.lang=v.lang}else u.lang="en-CA";
     u.rate=.92;u.pitch=1;speechSynthesis.speak(u)}catch(e){}}
   const api={clean,get on(){return data.talk!==false},

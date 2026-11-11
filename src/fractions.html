@@ -7,6 +7,7 @@
 <!--KIT-->
 <!--LEARN-->
 <script>
+const PART={2:"half",3:"third",4:"quarter",5:"fifth",6:"sixth",8:"eighth",10:"tenth",12:"twelfth"};
 (()=>{const U=TS_LEARN.util;
 TS_LEARN({id:"fractions",name:"Fraction Pizza",howto:[["🍕", "Pizzas are cut into equal slices."], ["👀", "Look at how many slices there are, and how many are coloured."], ["👆", "Tap the right fraction or pizza."], ["🔊", "Tap the speaker to hear it again."]],
 make(n,i,r,a){const F=(x,y)=>U.frac(x,y),key=(x,y)=>x+"/"+y;
@@ -23,7 +24,7 @@ make(n,i,r,a){const F=(x,y)=>U.frac(x,y),key=(x,y)=>x+"/"+y;
   if(a===3){ // grade 3: fractions as unit fractions put together, denominators up to 12
     const N=U.pick(r,[2,3,4,5,6,8,10,12]),K=U.ri(r,1,N-1);
     if(i%3===2){const d1=U.pick(r,[2,3,4,5,6,8]),d2=U.pick(r,[2,3,4,5,6,8].filter(d=>d!==d1)),big=Math.min(d1,d2);
-      return{type:"pick",cols:2,say:"Which is bigger: one "+d1+"th or one "+d2+"th? Look at the slices!",prompt:'<span class="ask">Which is bigger?</span>',
+      return{type:"pick",cols:2,say:"Which is bigger: one "+PART[d1]+" or one "+PART[d2]+"? Look at the slices!",prompt:'<span class="ask">Which is bigger?</span>',
         options:[{key:key(1,d1),html:U.pizza(d1,1)+F(1,d1)},{key:key(1,d2),html:U.pizza(d2,1)+F(1,d2)}],answer:key(1,big)}}
     const o=new Map([[key(K,N),F(K,N)]]);for(const[x,y]of U.shuffle(r,[[N-K,N],[K,N+1],[K+1,N],[1,N],[K,N*2]]))if(o.size<4&&x>0&&x<y&&!o.has(key(x,y)))o.set(key(x,y),F(x,y));
     return{type:"pick",say:"What fraction of the pizza is coloured?",prompt:'<span class="ask">What fraction is coloured?</span>'+U.pizza(N,K),
