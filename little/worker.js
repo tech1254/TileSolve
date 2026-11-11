@@ -1,6 +1,9 @@
 /* Tile Solve / Little Learners backend: the static pages are served as before (env.ASSETS); this Worker only adds
      POST /api/events   a batch of play and maths records from a device (queued on the device, sent in batches)
      GET  /api/report   totals for the /report page, to tune difficulty
+     GET  /api/tts?t=   the games' voice: text to speech with Workers AI (MeloTTS), cached at the edge and on the device.
+                        New clips are capped per day (TTS_CAP) so this never uses much of the account's shared AI allowance;
+                        over the cap (or on any error) the games fall back to the device's own voice.
    Data goes into the D1 database "tilesolve-reports" (tables in tools/schema.sql). No names are stored:
    a player is a random id plus their buddy emoji and grade. If a REPORT_KEY variable is set, /api/report needs ?key=. */
 const S = (v, n) => (v == null ? null : String(v).slice(0, n));
@@ -26,6 +29,33 @@ export async function events(req, env) {
   return json({ ok: true, saved: stmts.length });
 }
 
+const TTS_MODEL = "@cf/myshell-ai/melotts", TTS_CAP = 2000; // new clips per day, both apps together (~15-20% of the free allowance)
+let ttsTable = false;
+export async function tts(url, env, ctx) {
+  const t = (url.searchParams.get("t") || "").replace(/\s+/g, " ").trim().slice(0, 300);
+  if (!t) return json({ ok: false, error: "no text" }, 400);
+  if (!env.AI) return json({ ok: false, error: "no AI binding" }, 503);
+  const key = new Request(url.origin + "/api/tts?v=1&t=" + encodeURIComponent(t)), cache = caches.default;
+  const hit = await cache.match(key);
+  if (hit) return hit;
+  const day = new Date().toISOString().slice(0, 10);
+  if (env.DB) {
+    if (!ttsTable) { await env.DB.prepare("CREATE TABLE IF NOT EXISTS tts_usage (day TEXT PRIMARY KEY, n INTEGER NOT NULL DEFAULT 0, chars INTEGER NOT NULL DEFAULT 0)").run(); ttsTable = true; }
+    const r = await env.DB.prepare("SELECT n FROM tts_usage WHERE day=?").bind(day).first();
+    if (r && r.n >= TTS_CAP) return json({ ok: false, error: "daily voice limit reached" }, 429);
+  }
+  const out = await env.AI.run(TTS_MODEL, { prompt: t, lang: "en" });
+  let body;
+  if (out && typeof out === "object" && typeof out.audio === "string") body = Uint8Array.from(atob(out.audio), (c) => c.charCodeAt(0));
+  else if (out instanceof ReadableStream) body = await new Response(out).arrayBuffer();
+  else if (out instanceof ArrayBuffer || ArrayBuffer.isView(out)) body = out;
+  else return json({ ok: false, error: "unexpected voice output" }, 502);
+  const res = new Response(body, { headers: { "content-type": "audio/mpeg", "cache-control": "public, max-age=31536000, immutable" } });
+  ctx.waitUntil(cache.put(key, res.clone()));
+  if (env.DB) ctx.waitUntil(env.DB.prepare("INSERT INTO tts_usage (day,n,chars) VALUES (?,1,?) ON CONFLICT(day) DO UPDATE SET n=n+1, chars=chars+excluded.chars").bind(day, t.length).run());
+  return res;
+}
+
 export async function report(url, env) {
   if (env.REPORT_KEY && url.searchParams.get("key") !== env.REPORT_KEY) return json({ ok: false, error: "key needed" }, 403);
   const days = I(url.searchParams.get("days") || 30, 1, 3650), since = Date.now() - days * 864e5;
@@ -48,11 +78,13 @@ export async function report(url, env) {
 }
 
 export default {
-  async fetch(req, env) {
+  async fetch(req, env, ctx) {
     const url = new URL(req.url);
+    if (url.pathname.startsWith("/little/api/")) url.pathname = url.pathname.slice(7); // the Little Learners pages inside Tile Solve use /little/api/...
     try {
       if (url.pathname === "/api/events" && req.method === "POST") return await events(req, env);
       if (url.pathname === "/api/report") return await report(url, env);
+      if (url.pathname === "/api/tts" && req.method === "GET") return await tts(url, env, ctx);
     } catch (e) { return json({ ok: false, error: String(e && e.message || e) }, 500); }
     if (url.pathname === "/report") return Response.redirect(url.origin + "/report/", 302);
     return env.ASSETS.fetch(req);

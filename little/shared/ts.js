@@ -294,16 +294,37 @@ const talk=(()=>{let unlocked=false,pending=null,voice=null;
       .replace(/\b(\d{1,2}):00\b/g,"$1 o'clock").replace(/\b(\d{1,2}):0(\d)\b/g,"$1 oh $2"),
     sayPlurals=t=>t.replace(/\b(\d{1,4})'?s\b/g,(m,d)=>+d===100?"hundreds":+d===1000?"thousands":plural(words(+d)));
   const clean=t=>sayPlurals(sayMoney(String(t).replace(/<[^>]*>/g,""))).replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\u{1F1E6}-\u{1F1FF}\u{2190}-\u{21FF}\u{2300}-\u{23FF}\u{FE0F}\u{200D}\u{20E3}\u{E0020}-\u{E007F}]/gu,"").replace(/\s+([.,!?])/g,"$1").replace(/\s{2,}/g," ").trim();
-  function speak(t){t=clean(t);if(!t)return;try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t),v=pickVoice();if(v){u.voice=v;u.lang=v.lang}else u.lang="en-CA";
+  /* The voice: by default lines are spoken by the cloud voice (MeloTTS via /api/tts in worker.js). Clips are kept on the device
+     (Cache Storage, plus the last 80 decoded in memory), so repeats are instant and work offline once heard. If a clip can't be
+     fetched within 4 seconds (offline, daily limit, error) that line uses the device voice, and after 3 misses in a row the cloud
+     voice rests for 5 minutes. A parent can pick a device voice instead in the Levels menu. */
+  const cloudOn=()=>!data.voice||data.voice==="cloud";
+  const base=()=>/\/little\//.test(location.pathname)&&!/^littlelearners\./.test(location.hostname)?location.pathname.slice(0,location.pathname.indexOf("/little/")+7):"";
+  let actx=null,src=null,seq=0,miss=0,restUntil=0;const mem=new Map();
+  function actxGet(){try{if(!actx){const C=window.AudioContext||window.webkitAudioContext;if(!C)return null;actx=new C()}if(actx.state==="suspended")actx.resume()}catch(e){return null}return actx}
+  async function clip(t){if(mem.has(t))return mem.get(t);const url=base()+"/api/tts?v=1&t="+encodeURIComponent(t);let buf;
+    try{const cs=window.caches?await caches.open("ts-voice-v1"):null;let r=cs?await cs.match(url):null;
+      if(!r){const ctl=new AbortController(),tm=setTimeout(()=>ctl.abort(),4000);r=await fetch(url,{signal:ctl.signal});clearTimeout(tm);
+        if(!r.ok||!/audio/.test(r.headers.get("content-type")||""))throw new Error("no clip");if(cs)try{await cs.put(url,r.clone())}catch(e){}}
+      buf=await r.arrayBuffer()}catch(e){return null}
+    const c=actxGet();if(!c)return null;
+    try{const ab=await new Promise((ok,no)=>{const p=c.decodeAudioData(buf,ok,no);if(p&&p.then)p.then(ok,no)});if(mem.size>=80)mem.delete(mem.keys().next().value);mem.set(t,ab);return ab}catch(e){return null}}
+  function hush(){seq++;try{if(src)src.stop()}catch(e){}src=null;try{if(ok())speechSynthesis.cancel()}catch(e){}}
+  async function cloudSpeak(t){hush();const my=seq;const ab=Date.now()<restUntil?null:await clip(t);if(my!==seq)return; // a newer line has started
+    if(!ab){if(Date.now()>=restUntil&&++miss>=3){restUntil=Date.now()+3e5;miss=0}return deviceSpeak(t)}
+    miss=0;const c=actxGet();try{const s=c.createBufferSource();s.buffer=ab;s.connect(c.destination);s.start();src=s}catch(e){deviceSpeak(t)}}
+  function speak(t){t=clean(t);if(!t)return;if(cloudOn())return void cloudSpeak(t);deviceSpeak(t)}
+  function deviceSpeak(t){if(!ok())return;try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t),v=pickVoice();if(v){u.voice=v;u.lang=v.lang}else u.lang="en-CA";
     u.rate=.92;u.pitch=1;speechSynthesis.speak(u)}catch(e){}}
   const api={clean,get on(){return data.talk!==false},
-    set(on){data.talk=!!on;persist();if(!on)try{speechSynthesis.cancel()}catch(e){}},
-    say(t){api.last=t;if(!t||!api.on||!ok()||music.muted)return;if(!unlocked){pending=t;return}speak(t)},last:"",
-    voices:()=>list().map(v=>({uri:v.voiceURI,name:v.name,lang:v.lang})),
-    get voice(){const v=pickVoice();return v?v.voiceURI:""},
-    setVoice(uri){data.voice=uri||null;persist();voice=null},
+    set(on){data.talk=!!on;persist();if(!on)hush()},
+    say(t){api.last=t;if(!t||!api.on||music.muted||(!ok()&&!cloudOn()))return;if(!unlocked){pending=t;return}speak(t)},last:"",hush,
+    voices:()=>[{uri:"cloud",name:"Tile Solve voice",lang:"cloud"}].concat(list().map(v=>({uri:v.voiceURI,name:v.name,lang:v.lang}))),
+    get voice(){if(cloudOn())return"cloud";const v=pickVoice();return v?v.voiceURI:""},
+    setVoice(uri){data.voice=uri&&uri!=="cloud"?uri:null;persist();voice=null},
     test(){unlocked=true;speak("Hi! I'll read the questions to you. Let's play!")}};
-  const unlock=()=>{if(unlocked)return;unlocked=true;if(pending){const t=pending;pending=null;if(api.on&&ok())speak(t)}};
+  const unlock=()=>{actxGet();if(unlocked)return;unlocked=true;try{const c=actxGet();if(c){const b=c.createBuffer(1,1,22050),s=c.createBufferSource();s.buffer=b;s.connect(c.destination);s.start()}}catch(e){} // wakes iPad audio
+    if(pending){const t=pending;pending=null;if(api.on)speak(t)}};
   addEventListener("pointerup",unlock,true);addEventListener("keydown",unlock,true);
   return api})();
 
