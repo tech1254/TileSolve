@@ -517,11 +517,11 @@ function mission(n,done){const w=zi(n),part=isBoss(n)?3:(n-1)%4,P=PARTS[part],en
     drawHero(x,HERO,{run:t*3,speed:0,t});engineArt(ec,w,shown,t);requestAnimationFrame(anim)})();
   TS.say((n===1?"Professor Muddle has scrambled the Number Engines! ":"")+(part===0?WORLD[w].intro:"")+" "+P[1]+"!");
   const dots=()=>{$m("msDots").innerHTML=Array.from({length:need},(_,i)=>'<i class="'+(i<got?"d":i===got?"c":"")+'"></i>').join("")};
-  const next=()=>{q=mathQ(age,w,rr);q.t0=Date.now();entry="";lock=false;$m("msOut").textContent="";$m("msOut").className="";$m("msQ").innerHTML=q.text+'<span class="eq">'+q.eq+"</span>";dots();setTimeout(()=>{if(alive)TS.say(q.text)},got||miss?400:2600)};
+  const next=()=>{q=mathQ(age,w,rr);q.t0=Date.now();entry="";lock=false;$m("msOut").textContent="";$m("msOut").className="";$m("msQ").innerHTML=q.text+'<span class="eq">'+q.eq+"</span>";dots();if(alive)TS.sayNext(q.text)};
   const submit=()=>{if(lock||entry==="")return;const o=$m("msOut");
     const logM=ok=>{try{TS.report.log({t:"math",game:"hero",kind:"mission",mlevel:w,q:q.eq.slice(0,40),correct:ok?1:0,tries:1,ms:Date.now()-q.t0})}catch(e){}};
     if(+entry===q.ans){logM(true);lock=true;got++;o.className="good";SND.flag();$m("msHelp").textContent=U8(["Yes!","Correct!","Brilliant!","You got it!","Super smart!"]);dots();
-      if(got>=need){setTimeout(()=>finishMission(),700)}else setTimeout(next,900)}
+      if(got>=need){setTimeout(()=>finishMission(),700)}else setTimeout(()=>{TS.talk.hush();next()},900)}
     else{logM(false);miss++;o.className="bad";SND.hurt();const how=q.how;$m("msHelp").textContent="Not quite: the answer is "+q.ans+". "+how+" Try a new one!";TS.say("Not quite. The answer is "+q.ans+". "+how);lock=true;setTimeout(()=>{if(alive){next();$m("msHelp").textContent="Here's a new one. You can do it!"}},3800)}};
   const finishMission=()=>{eng[w]=Math.max(have,part+1);K.persist();shown=eng[w];const saved=part===3;
     $m("msQ").innerHTML=saved?"🎉 <b>"+ZONES[w].name+" is saved!</b> The Number Engine is running again"+(w===5?" and Professor Muddle's scrambler is broken. "+HERO.name+" saved all six worlds!":"! Next stop: "+ZONES[w+1].name+"."):

@@ -32,7 +32,7 @@ export async function events(req, env) {
 const TTS_MODEL = "@cf/myshell-ai/melotts", TTS_CAP = 2000; // new clips per day, both apps together (~15-20% of the free allowance)
 let ttsTable = false;
 export async function tts(url, env, ctx) {
-  const t = (url.searchParams.get("t") || "").replace(/\s+/g, " ").trim().slice(0, 300);
+  const t = (url.searchParams.get("t") || "").replace(/\s+/g, " ").trim().slice(0, 600);
   if (!t) return json({ ok: false, error: "no text" }, 400);
   if (!env.AI) return json({ ok: false, error: "no AI binding" }, 503);
   const key = new Request(url.origin + "/api/tts?v=1&t=" + encodeURIComponent(t)), cache = caches.default;

@@ -29,6 +29,13 @@ with sync_playwright() as p:
     pg.reload(); pg.wait_for_function("window.__learn && __learn.R", timeout=10000); pg.mouse.click(5, 5); pg.wait_for_timeout(800); REQ.clear()
     pg.evaluate("TS.say('Count by 2s and pay $1.05!')"); pg.wait_for_timeout(800)
     check(len(REQ) == 0, "after a reload the clip comes from the device's clip cache")
+    # a story, then its question: sayNext waits for the line before it to finish (the clip here is about 1.8 s)
+    p0 = pg.evaluate("__plays"); pg.evaluate("TS.say('The engine is broken. Muddle scrambled it!');TS.sayNext('What is 4 plus 5?')"); pg.wait_for_timeout(900)
+    check(pg.evaluate("__plays") - p0 == 1, "sayNext waits: only the story is playing at first")
+    pg.wait_for_timeout(2600)
+    check(pg.evaluate("__plays") - p0 == 2, "then the question plays after the story ends")
+    p0 = pg.evaluate("__plays"); pg.evaluate("TS.say('Story again');TS.sayNext('Queued question')"); pg.wait_for_timeout(400); pg.evaluate("TS.say('Tap!')"); pg.wait_for_timeout(3000)
+    check(pg.evaluate("__plays") - p0 == 2, f"a new say() interrupts and clears anything queued ({pg.evaluate('__plays') - p0})")
     MODE["v"] = "limit"
     pg.evaluate("TS.say('A brand new line')"); pg.wait_for_timeout(1000)
     check(pg.evaluate("__dev") == ["A brand new line"], f"when the cloud can't help (daily limit), the device voice says it ({pg.evaluate('__dev')})")
