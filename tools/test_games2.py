@@ -35,7 +35,7 @@ with sync_playwright() as p:
     bx = pg.evaluate(f"(()=>{{const r=__game.S.pieces.find(p=>p.id==={ids[0]}).el.querySelector('i').getBoundingClientRect();return[r.left+r.width/2,r.top+r.height/2]}})()")
     pg.mouse.click(bx[0], bx[1]); pg.wait_for_timeout(200)
     check(pg.evaluate(f"!__game.S.pieces.find(p=>p.id==={ids[0]}).at"), "tapping a placed block sends it back")
-    pg.click("#kHint"); solve_math(pg)
+    pg.click("#kHint"); solve_math(pg); pg.wait_for_timeout(1200)
     check(pg.evaluate("__game.S.pieces.filter(p=>p.at).length") == 1, "maths hint places a block")
     for pid in pg.evaluate("__game.S.pieces.filter(p=>!p.at).map(p=>p.id)"):
         pt = piece_points(pg, pid); mouse_drag(pg, pt["x0"], pt["y0"], pt["x1"], pt["y1"])
