@@ -131,12 +131,43 @@ document.addEventListener("pointerdown",e=>{if(S&&(e.target.closest("#bw")||e.ta
 document.addEventListener("pointermove",move);document.addEventListener("pointerup",up);document.addEventListener("pointercancel",up);
 function check(){if(!done())return;const st=S.oops<=1?3:S.oops<=4?2:1;
   K.win({stars:st,text:S.pieces.length+" blocks · "+(S.oops?S.oops+" oops":"no oops")+(st===3?" · perfect fit!":"")})}
-/* Hint: put one block exactly where it goes, moving any block that's in the way back to the tray. */
-function hint(){if(!S||K.busy)return;const wrong=S.pieces.filter(p=>!(p.at&&p.rot===0&&p.at[0]===p.sol[0]&&p.at[1]===p.sol[1]));if(!wrong.length)return;
-  const p=wrong[0],{w}=S.sp,cells=new Set(p.cells.map(([r,c])=>(p.sol[0]+r)*w+p.sol[1]+c)),occ=occupied(p);
-  cells.forEach(i=>{const q=occ.get(i);if(q)q.at=null});p.rot=0;p.at=p.sol.slice();layout();stats();p.el.classList.add("flash");K.tip("That block goes there!");check()}
+/* Hint: solve the puzzle from where the player is. Keep every block already placed if the rest can still be fitted around them,
+   and slide one block from the tray to a spot that works (turning it if needed). If a placed block makes the puzzle impossible,
+   it goes back to the tray instead, with a note saying so. */
+function solveFrom(keep){const{w,h}=S.sp,occ=new Map();
+  for(const p of keep)for(const[r,c]of shape(p))occ.set((p.at[0]+r)*w+p.at[1]+c,p);
+  const rest=S.pieces.filter(p=>!keep.includes(p)),cells=[...S.inside].sort((a,b)=>a-b),used=new Set(),out=[];let nodes=0;
+  const rots=p=>{if(!S.sp.rotate)return[[p.rot,shape(p)]];const seen=new Set(),o=[];for(let k=0;k<4;k++){const cs=rotN(p.cells,k),key=JSON.stringify(cs);if(!seen.has(key)){seen.add(key);o.push([k,cs])}}return o};
+  const R=new Map(rest.map(p=>[p,rots(p)]));
+  function go(){if(++nodes>200000)return false;const f=cells.find(i=>!occ.has(i));if(f===undefined)return true;const fr=(f/w)|0,fc=f%w;
+    for(const p of rest){if(used.has(p))continue;
+      for(const[k,cs]of R.get(p)){const r0=fr-cs[0][0],c0=fc-cs[0][1];
+        if(!cs.every(([r,c])=>{const rr=r0+r,cc=c0+c;return rr>=0&&cc>=0&&rr<h&&cc<w&&S.inside.has(rr*w+cc)&&!occ.has(rr*w+cc)}))continue;
+        cs.forEach(([r,c])=>occ.set((r0+r)*w+c0+c,p));used.add(p);out.push({p,rot:k,at:[r0,c0]});
+        if(go())return true;
+        out.pop();used.delete(p);cs.forEach(([r,c])=>occ.delete((r0+r)*w+c0+c))}}
+    return false}
+  return go()?out:null}
+let hinting=false;
+function hint(){if(!S||K.busy||hinting||done())return;const placed=S.pieces.filter(p=>p.at);
+  let plan=solveFrom(placed);
+  if(!plan){ // something placed blocks the answer: find the block to take out
+    const bad=[...placed].reverse().find(q=>solveFrom(placed.filter(x=>x!==q)));
+    const off=bad?[bad]:placed.filter(q=>{const all=solveFrom([]);return !all||!all.some(m=>m.p===q&&m.rot===q.rot&&m.at[0]===q.at[0]&&m.at[1]===q.at[1])});
+    off.forEach(q=>q.at=null);layout();stats();off.forEach(q=>q.el&&q.el.classList.add("flash"));
+    K.tip(off.length===1?"That block was in a spot that won't work, so it's back in the tray. Tap Hint again for where a block goes!":"Some blocks were in spots that won't work, so they're back in the tray. Tap Hint again!");
+    TS.say("That block can't go there. It's back in the tray.");return}
+  const m=plan[0];if(!m)return;hinting=true;const p=m.p,from=p.el&&p.el.getBoundingClientRect();
+  p.rot=m.rot;const b=S.bw.getBoundingClientRect(),{w}=S.sp,fly=pieceEl(p,S.cs);fly.classList.add("fly","hintfly");document.body.appendChild(fly);
+  if(p.el)p.el.style.visibility="hidden";
+  shape(p).forEach(([r,c])=>{const sl=S.bw.querySelector('.bslot[data-i="'+((m.at[0]+r)*w+m.at[1]+c)+'"]');if(sl)sl.classList.add("ok")});
+  const x0=from?from.left:b.left,y0=from?from.top+from.height:b.bottom+20,x1=b.left+m.at[1]*S.cs,y1=b.top+m.at[0]*S.cs;
+  fly.style.transform="translate("+x0+"px,"+y0+"px) scale(.6)";void fly.offsetWidth;fly.style.transition="transform .9s cubic-bezier(.3,.8,.3,1)";
+  requestAnimationFrame(()=>{fly.style.transform="translate("+x1+"px,"+y1+"px)"});
+  K.tip("Watch! This block goes here.");TS.say("Watch! This block goes here.");
+  setTimeout(()=>{fly.remove();hinting=false;if(!S||!S.pieces.includes(p))return;p.at=m.at.slice();layout();stats();p.el.classList.add("flash");TS.music.fx("tap");check()},950)}
 K=TS_KIT({id:"blocks",howto:[["🟦", "The blocks are in the tray below the outline."], ["👆", "Drag each block into the outline."], ["✅", "Fill every square, with no gaps."], ["🔄", "Tap a block in the tray to turn it. Tap a placed block to take it back."]],point:()=>document.querySelector("#tray .pz i"),name:"Block Fit",levels:40,start,hint,label:n=>{const s=spec(n);return s.w+"×"+s.h}});
-window.__game={get S(){return S},K,spec,shape,fits};// for tools/test_games2.py
+window.__game={get S(){return S},K,spec,shape,fits,solveFrom,hint};// for tools/test_games2.py
 K.start();
 })();
 </script>
