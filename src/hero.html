@@ -485,13 +485,13 @@ function mathQ(age,w,rr){const ri=(a,b)=>a+Math.floor(rr()*(b-a+1)),pk=a=>a[Math
     const a=ri(120,hard?700:450),b=ri(30,hard?280:150),add=rr()<.5;return add?Q("The engine used "+a+" "+t+" on Monday and "+b+" on Tuesday. How many in total?",a+" + "+b+" = ?",a+b,"Add hundreds, tens and ones: line up the places."):
       Q("Muddle had "+(a+b)+" "+t+". He dropped "+b+". How many does he have now?",(a+b)+" − "+b+" = ?",a,"Subtract ones, tens, then hundreds. Check by adding back.")}
   if(age===4){const k=pk(["mul2","div","frac","area"]);
-    if(k==="mul2"){const a=ri(12,hard?99:45),b=ri(3,9);return Q("Each engine wheel has "+a+" "+t+". There are "+b+" wheels. How many "+t+"?",a+" × "+b+" = ?",a*b,"Split it: "+Math.floor(a/10)*10+" × "+b+" + "+(a%10)+" × "+b+".")}
+    if(k==="mul2"){const a=ri(12,hard?50:30),b=ri(3,hard?9:6);return Q("Each engine wheel has "+a+" "+t+". There are "+b+" wheels. How many "+t+"?",a+" × "+b+" = ?",a*b,"Split it: "+Math.floor(a/10)*10+" × "+b+" + "+(a%10)+" × "+b+".")}
     if(k==="div"){const b=ri(3,9),q=ri(11,hard?40:20);return Q("Pack "+(b*q)+" "+t+" into "+b+" equal boxes. How many in each box?",(b*q)+" ÷ "+b+" = ?",q,"Think: "+b+" × ? = "+(b*q)+". Try "+b+" × 10 first.")}
     if(k==="frac"){const d=pk([2,3,4,5,10]),n=ri(1,d-1),tot=d*ri(2,hard?12:6);return Q("Muddle stole "+n+"/"+d+" of the "+tot+" "+t+". How many did he steal?",n+"/"+d+" of "+tot+" = ?",tot/d*n,"1/"+d+" of "+tot+" is "+(tot/d)+", so "+n+"/"+d+" is "+n+" × "+(tot/d)+".")}
     const a=ri(3,hard?15:9),b=ri(3,hard?12:8);return Q("A rectangle-shaped engine panel is "+a+" squares long and "+b+" squares wide. How many squares cover it?",a+" × "+b+" = ?",a*b,"Area = length × width.")}
   const k=pk(["mul22","div2","frac","order"]);
-  if(k==="mul22"){const a=ri(12,hard?60:30),b=ri(11,hard?40:20);return Q("The Sky Engine has "+a+" gears, each with "+b+" teeth. How many teeth?",a+" × "+b+" = ?",a*b,a+" × "+Math.floor(b/10)*10+" + "+a+" × "+(b%10)+".")}
-  if(k==="div2"){const b=ri(11,25),q=ri(6,hard?40:20);return Q("Share "+(b*q)+" "+t+" between "+b+" robots. How many each?",(b*q)+" ÷ "+b+" = ?",q,"Estimate: "+b+" × 10 = "+(b*10)+", then adjust.")}
+  if(k==="mul22"){const a=ri(12,hard?40:25),b=pk(hard?[10,20,30,11]:[10,20,11]);return Q("The Sky Engine has "+a+" gears, each with "+b+" teeth. How many teeth?",a+" × "+b+" = ?",a*b,b===11?a+" × 10 + "+a+".":a+" × "+(b/10)+", then add a zero.")}
+  if(k==="div2"){const b=pk([10,20,25,50]),q=ri(2,hard?20:12);return Q("Share "+(b*q)+" "+t+" between "+b+" robots. How many each?",(b*q)+" ÷ "+b+" = ?",q,"Think: "+b+" × ? = "+(b*q)+".")}
   if(k==="frac"){const d=pk([3,4,5,6,8,10]),n=ri(2,d-1),tot=d*ri(4,15);return Q("The engine needs "+n+"/"+d+" of the "+tot+" "+t+". How many is that?",n+"/"+d+" of "+tot+" = ?",tot/d*n,tot+" ÷ "+d+" = "+(tot/d)+", then × "+n+".")}
   const a=ri(2,9),b=ri(2,9),c=ri(2,12);return Q("Crack Muddle's code: do the multiplying first!",c+" + "+a+" × "+b+" = ?",c+a*b,"Multiply first: "+a+" × "+b+" = "+(a*b)+", then add "+c+".")}
 const first=n=>!(((K.save.grades[K.age]||{}).stars||{})[n]);

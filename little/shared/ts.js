@@ -172,11 +172,13 @@ function problem(level,easy){const ri=(a,b)=>a+Math.floor(Math.random()*(b-a+1))
        ()=>{const a=ri(25,99);return sub(a,ri(10,a-5))},()=>{const a=ri(3,9);return miss(a,ri(a+3,a+9))},()=>{const a=10*ri(1,7);return miss(a,10*ri(a/10+1,9))}],
     3:[()=>mul(ri(2,10),ri(2,10)),()=>div(ri(2,10),ri(2,10)),()=>{const a=ri(100,800);return add(a,ri(10,999-a))},()=>{const a=ri(200,999);return sub(a,ri(10,a-50))},
        ()=>{const a=10*ri(2,40);return miss(a,a+10*ri(5,50))}],
-    4:[()=>mul(ri(2,12),ri(2,12)),()=>div(ri(2,12),ri(2,12)),()=>mul(ri(100,999),ri(2,9)),()=>{const a=ri(1000,8999);return add(a,ri(100,9999-a))},
-       ()=>{const a=ri(2000,9999);return sub(a,ri(500,a-100))},()=>mul(ri(11,99),pick([10,100]))],
-    5:[()=>mul(ri(100,999),ri(11,99)),()=>div(ri(12,199),ri(2,9)),()=>mul(ri(12,99),ri(3,9)),()=>{const a=ri(10000,899999);return add(a,ri(1000,999999-a))},
-       ()=>mul(ri(2,12),ri(2,12))],
-    6:[()=>mul(ri(100,999),ri(11,99)),()=>div(ri(11,99),ri(11,40)),()=>pct(pick([10,20,25,50,75]),20*ri(1,20)),()=>{const a=ri(20000,999999);return sub(a,ri(1000,a-1000))}]};
+    // Grades 5-7 (levels 4-6): still the grade's ideas, but numbers you can do in your head in a few seconds (no 764 × 15)
+    4:[()=>mul(ri(2,12),ri(2,12)),()=>div(ri(2,12),ri(2,12)),()=>mul(ri(11,25),ri(2,5)),()=>mul(ri(11,99),pick([10,100])),
+       ()=>{const a=100*ri(10,80);return add(a,100*ri(1,15))},()=>{const a=100*ri(20,90);return sub(a,100*ri(1,15))},()=>{const a=ri(11,49);return add(a,a)}],
+    5:[()=>mul(ri(2,12),ri(2,12)),()=>div(ri(2,12),ri(2,12)),()=>mul(10*ri(2,9),ri(2,9)),()=>mul(ri(12,25),ri(2,6)),()=>mul(ri(2,99),pick([10,100,1000])),
+       ()=>div(10*ri(2,9),ri(2,9)),()=>{const a=ri(15,85);return add(a,ri(11,99-a))}],
+    6:[()=>mul(10*ri(2,9),10*ri(2,9)),()=>div(10*ri(2,12),ri(2,9)),()=>pct(pick([10,25,50]),pick([20,40,60,80,100,120,200,400])),()=>pct(10,10*ri(2,30)),
+       ()=>{const a=ri(2,12);return mul(a,a)},()=>mul(ri(11,25),4),()=>{const a=ri(100,900);return sub(a,pick([99,199,299].filter(x=>x<a)))}]};
   const E={ // a little easier than the hint questions at the same level
     0:[()=>{const a=ri(1,4);return add(a,ri(1,5-a))},()=>{const a=ri(2,5);return sub(a,ri(1,a-1))},()=>{const a=ri(1,9);return add(a,1)}],
     1:[()=>{const a=ri(1,9);return add(a,ri(1,10-a))},()=>{const a=ri(3,10);return sub(a,ri(1,a-1))},()=>{const a=ri(1,5);return miss(a,ri(a+1,10))},()=>add(10,ri(1,10))],

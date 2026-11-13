@@ -199,6 +199,22 @@ with sync_playwright() as p:
     early = sp.evaluate("(()=>{const S=__game.S,h=S.hearts,g=__game.group();S.running=true;S.waiting=false;S.pos=g[0].b-S.bps*.6;__game.hitLane(g[0].lane);return[h,S.hearts]})()")
     check(early[1]==early[0]-1, f"on Pro a tap much too early is a slip ({early})")
     sp.screenshot(path=str(OUT / "tunes-pro.png"))
+    # a song that ends on a hold note: the song waits for the hold, it isn't cut short ("Let go too soon")
+    for let_go_early in (False, True):
+        sp.evaluate("__game.K.load(11)"); sp.wait_for_timeout(300)
+        if sp.is_visible(".prob"): solve_math(sp)
+        sp.evaluate("""(()=>{const S=__game.S,L=S.notes.length-1,n=S.notes[L];n.hold=true;n.d=Math.max(n.d,2);S.next=L;while(S.next>0&&S.notes[S.next-1].b===n.b)S.next--;
+          S.notes.slice(0,S.next).forEach(x=>x.hit=.01);S.running=true;S.waiting=false;S.pos=n.b;S.pid=1;__game.group().forEach(x=>__game.hitLane(x.lane))})()""")
+        sp.wait_for_timeout(150)
+        mid = sp.evaluate("(()=>{const S=__game.S;return{done:S.done,holding:!!S.hold,win:!document.getElementById('kSheetWin').hidden}})()")
+        check(not mid["done"] and mid["holding"] and not mid["win"], f"the last note is a hold: the song waits while it's held ({mid})")
+        if let_go_early:
+            sp.evaluate("__game.letGo()"); sp.wait_for_timeout(2200)
+            check(sp.is_visible("#kSheetWin"), "letting go of the last hold early still ends the song")
+        else:
+            sp.wait_for_timeout(3500)
+            r = sp.evaluate("(()=>{const S=__game.S;return{done:S.done,judge:S.judge&&S.judge.txt}})()")
+            check(r["done"] and sp.is_visible("#kSheetWin") and (r["judge"] or "").startswith("Hold"), f"held to the end: 'Hold!' and then the song ends ({r})")
     sctx.close()
     check(not errors, "no JavaScript errors" + ("" if not errors else ": " + "; ".join(errors[:3])))
     b.close()
