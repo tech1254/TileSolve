@@ -41,6 +41,34 @@ with sync_playwright() as p:
                 hint(pg)
             check(pg.is_visible("#kSheetWin"), f"grade {grade} level {n}: pressing Hint over and over finishes the puzzle")
         ctx.close()
+    # turning blocks: easy to discover
+    ctx = b.new_context(viewport={"width": 820, "height": 1180}, has_touch=True); ctx.add_init_script(player(3, "turn"))
+    pg = watch_errors(ctx.new_page(), errors); pg.goto(URL("blocks")); pg.wait_for_function("window.__game&&__game.S", timeout=10000)
+    pg.evaluate("__game.K.load(10)"); pg.wait_for_timeout(300)
+    check(pg.locator("#tray.turn").count() == 0, "before blocks come turned, there's no ↻ badge")
+    pg.evaluate("__game.K.load(11)"); pg.wait_for_timeout(1000)
+    check(pg.locator("#tray.turn").count() == 1 and "New!" in pg.text_content("#kTip") and pg.locator("#tray .pz.spin").count() == 1,
+          "the first level with turned blocks shows ↻ badges, says it's new, and spins a block to show how")
+    if OUT: pg.screenshot(path=str(OUT / "blocks_turn.png"))
+    pt = pg.evaluate("(()=>{const r=document.querySelector('#tray .pz i').getBoundingClientRect();return[r.left+r.width/2,r.top+r.height/2]})()")
+    r0 = pg.evaluate("+document.querySelector('#tray .pz').dataset.id")
+    before = pg.evaluate(f"__game.S.pieces.find(p=>p.id==={r0}).rot"); pg.touchscreen.tap(pt[0], pt[1]); pg.wait_for_timeout(300)
+    check(pg.evaluate(f"__game.S.pieces.find(p=>p.id==={r0}).rot") == (before + 1) % 4, "tapping a block in the tray (by touch) turns it")
+    pg.evaluate("__game.K.load(12)"); pg.wait_for_timeout(500)
+    check("New!" not in pg.text_content("#kTip"), "the 'New!' note only shows once")
+    # dropping a block where it would fit if it were turned: "So close! Turn it first"
+    m = pg.evaluate("""()=>{const G=__game,S=G.S;S.pieces.forEach(p=>p.at=null);const {w,h}=S.sp;
+      for(const p of S.pieces){const keep=p.rot;for(let r0=0;r0<h;r0++)for(let c0=0;c0<w;c0++){if(G.fits(p,r0,c0))continue;
+        for(let k=1;k<4;k++){p.rot=(keep+k)%4;const f=G.fits(p,r0,c0);p.rot=keep;if(f){const cs=G.shape(p),ci=cs[0];return{id:p.id,r0,c0,ci}}}}}return null}""")
+    if m:
+        pg.evaluate("__game.K.load(12)"); pg.wait_for_timeout(300)
+        pg.evaluate("__game.S.pieces.forEach(p=>p.at=null)")
+        src = pg.evaluate(f"""(()=>{{const p=__game.S.pieces.find(p=>p.id==={m['id']}),r=p.el.querySelector('i').getBoundingClientRect(),c=__game.shape(p)[0],t=__game.S.tc;return[r.left+t/2,r.top+t/2,c[0],c[1]]}})()""")
+        dst = pg.evaluate(f"""(()=>{{const b=document.getElementById('bw').getBoundingClientRect(),cs=__game.S.cs;return[b.left+({m['c0']}+{src[3]}+.5)*cs,b.top+({m['r0']}+{src[2]}+.5)*cs]}})()""")
+        pg.mouse.move(src[0], src[1]); pg.mouse.down(); pg.mouse.move(src[0] + 20, src[1] - 20, steps=4); pg.mouse.move(dst[0], dst[1], steps=12); pg.mouse.up(); pg.wait_for_timeout(300)
+        tip = pg.text_content("#kTip")
+        check("So close" in tip or pg.evaluate(f"!!__game.S.pieces.find(p=>p.id==={m['id']}).at"), f"a block that would fit if turned gets 'So close! Turn it first' ({tip[:50]})")
+    ctx.close()
     b.close()
 check(not errors, f"no page errors {errors[:3]}")
 check.finish()

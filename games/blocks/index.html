@@ -34,7 +34,13 @@
 .pz.fly.home{transition:transform .22s ease}
 .btray{width:100%;max-width:640px;min-height:120px;box-sizing:border-box;display:flex;flex-wrap:wrap;gap:16px;justify-content:center;align-items:center;align-content:center;
   padding:14px;background:var(--panel);border:1px solid var(--lane);border-radius:16px;touch-action:none}
-@media (prefers-reduced-motion:reduce){.pz.fly.home{transition:none}.pz.flash i::before{animation:none}}
+/* turnable blocks: a ↻ badge in the tray, and a spin to show it the first time */
+.btray.turn .pz{margin:6px 8px 0 0}
+.btray.turn .pz::after{content:"↻";position:absolute;right:-12px;top:-12px;width:22px;height:22px;border-radius:50%;background:var(--paint);color:#1d2230;
+  font:700 15px/22px var(--font-body);text-align:center;box-shadow:0 2px 4px rgba(0,0,0,.4);pointer-events:none}
+.pz.spin{animation:bspin 1.4s ease-in-out 2}
+@keyframes bspin{0%,20%{transform:rotate(0)}60%,100%{transform:rotate(90deg)}}
+@media (prefers-reduced-motion:reduce){.pz.fly.home{transition:none}.pz.flash i::before{animation:none}.pz.spin{animation:none}}
 </style>
 </head>
 <body>
@@ -84,7 +90,10 @@ function start(n){const sp=spec(n),r=K.rng(n),pz=make(sp,r);
   // shuffle tray order
   for(let k=S.pieces.length-1;k>0;k--){const j=Math.floor(r()*(k+1));[S.pieces[k],S.pieces[j]]=[S.pieces[j],S.pieces[k]]}
   layout();stats();
-  K.tip(sp.rotate?"Tap a block to turn it. Drag blocks into the outline to fill every square.":"Drag the blocks into the outline. Fill every square!")}
+  K.tip(sp.rotate?"Tap a block in the tray to turn it ↻. Drag blocks into the outline to fill every square.":"Drag the blocks into the outline. Fill every square!");
+  if(sp.rotate&&!K.save.turnSeen){K.save.turnSeen=1;K.persist();K.tip("✨ New! These blocks are turned. Tap a block in the tray to spin it ↻, then drag it in.");
+    TS.say("New! Some blocks are turned the wrong way. Tap a block in the tray to spin it!");const me=S;
+    setTimeout(()=>{if(S!==me)return;const el=S.tray.querySelector(".pz");if(el){el.classList.add("spin");setTimeout(()=>el.classList.remove("spin"),3000)}},700)}}
 const shape=p=>rotN(p.cells,p.rot);
 function sizes(){const st=K.stage.getBoundingClientRect(),{w,h}=S.sp,trayH=Math.max(130,st.height*.32);
   const cs=Math.floor(Math.max(30,Math.min((st.width-40)/w,(st.height-trayH-60)/h,80)));return{cs,tc:Math.max(18,Math.min(Math.round(cs*.55),34))}}
@@ -95,7 +104,7 @@ function pieceEl(p,s){const el=document.createElement("div");el.className="pz";e
 function layout(){const{cs,tc}=sizes(),{w,h}=S.sp;S.cs=cs;S.tc=tc;const bw=S.bw;bw.innerHTML="";bw.style.width=w*cs+"px";bw.style.height=h*cs+"px";
   S.inside.forEach(i=>{const d=document.createElement("div");d.className="bslot";d.dataset.i=i;d.style.left=(i%w)*cs+2+"px";d.style.top=((i/w)|0)*cs+2+"px";
     d.style.width=d.style.height=cs-4+"px";bw.appendChild(d)});
-  S.tray.innerHTML="";
+  S.tray.innerHTML="";S.tray.classList.toggle("turn",!!S.sp.rotate);
   S.pieces.forEach(p=>{if(p.at){const el=pieceEl(p,cs);el.classList.add("on");el.style.left=p.at[1]*cs+"px";el.style.top=p.at[0]*cs+"px";bw.appendChild(el);p.el=el}
     else{const el=pieceEl(p,tc);S.tray.appendChild(el);p.el=el}})}
 addEventListener("resize",()=>{if(S)layout()});
@@ -124,7 +133,9 @@ function up(e){if(!D||e.pointerId!==D.id)return;const d=D;D=null;
   D=d;const[r0,c0]=target();D=null;S.bw.querySelectorAll(".bslot").forEach(s=>s.classList.remove("ok","no"));
   const b=S.bw.getBoundingClientRect(),over=d.fx+S.cs/2>b.left&&d.fx<b.right&&d.fy+S.cs/2>b.top&&d.fy<b.bottom;
   if(fits(d.p,r0,c0)){d.p.at=[r0,c0];d.fly.remove();TS.music.fx("tap");layout();stats();check();return}
-  if(over){S.oops++;TS.music.fx("bad");K.tip("That block doesn't fit there. Try another spot"+(S.sp.rotate?" or turn it.":"."))}
+  if(over){S.oops++;TS.music.fx("bad");const keep=d.p.rot,turnFits=S.sp.rotate&&[1,2,3].some(k=>{d.p.rot=(keep+k)%4;const f=fits(d.p,r0,c0);return f});d.p.rot=keep;
+    if(turnFits){K.tip("So close! Turn it first: tap the block in the tray ↻, then drag it here.");TS.say("So close! Tap the block in the tray to turn it, then try again.")}
+    else K.tip("That block doesn't fit there. Try another spot"+(S.sp.rotate?" or turn it ↻.":"."))}
   if(d.p.at&&!over)d.p.at=null;
   d.fly.remove();layout();stats()}
 document.addEventListener("pointerdown",e=>{if(S&&(e.target.closest("#bw")||e.target.closest("#tray")))down(e)});
@@ -166,7 +177,7 @@ function hint(){if(!S||K.busy||hinting||done())return;const placed=S.pieces.filt
   requestAnimationFrame(()=>{fly.style.transform="translate("+x1+"px,"+y1+"px)"});
   K.tip("Watch! This block goes here.");TS.say("Watch! This block goes here.");
   setTimeout(()=>{fly.remove();hinting=false;if(!S||!S.pieces.includes(p))return;p.at=m.at.slice();layout();stats();p.el.classList.add("flash");TS.music.fx("tap");check()},950)}
-K=TS_KIT({id:"blocks",howto:[["🟦", "The blocks are in the tray below the outline."], ["👆", "Drag each block into the outline."], ["✅", "Fill every square, with no gaps."], ["🔄", "Tap a block in the tray to turn it. Tap a placed block to take it back."]],point:()=>document.querySelector("#tray .pz i"),name:"Block Fit",levels:40,start,hint,label:n=>{const s=spec(n);return s.w+"×"+s.h}});
+K=TS_KIT({id:"blocks",howto:[["🟦", "The blocks are in the tray below the outline."], ["👆", "Drag each block into the outline."], ["✅", "Fill every square, with no gaps."], ["🔄", "Later, some blocks come turned the wrong way: tap a block in the tray to spin it ↻. Tap a placed block to take it back."]],point:()=>document.querySelector("#tray .pz i"),name:"Block Fit",levels:40,start,hint,label:n=>{const s=spec(n);return s.w+"×"+s.h}});
 window.__game={get S(){return S},K,spec,shape,fits,solveFrom,hint};// for tools/test_games2.py
 K.start();
 })();
