@@ -40,6 +40,15 @@ console.log(total,'puzzles;',Object.keys(bank).map(p=>p+':'+bank[p].length).join
 const crypto=require('crypto'),h=crypto.createHash('sha1');
 for(const f of fs.readdirSync(path.join(ROOT,'shared')).sort())h.update(fs.readFileSync(path.join(ROOT,'shared',f)));
 const V=h.digest('hex').slice(0,8);
+// BUILD: a version for the whole site (sources, shared files and this script). Pages carry it in <meta name="ts-build">,
+// version.json holds the latest one, and TS.update compares them to offer an update to pages left open on the iPad.
+const hb=crypto.createHash('sha1');hb.update(V);hb.update(fs.readFileSync(__filename));
+for(const f of fs.readdirSync(path.join(ROOT,'src')).sort())hb.update(fs.readFileSync(path.join(ROOT,'src',f)));
+const BUILD=hb.digest('hex').slice(0,10);
+const VERSION=JSON.stringify({v:BUILD})+'\n';
+// Cache rules for Cloudflare's static assets: pages and version.json are checked every time (cheap 304s when unchanged);
+// shared files are versioned with ?v=, so they can be kept for a week.
+const HEADERS=`/*\n  Cache-Control: no-cache\n/shared/*\n  Cache-Control: public, max-age=604800\n/version.json\n  Cache-Control: no-store\n`;
 // Pages built with the game kit: every src/<game>.html that isn't listed above becomes games/<game>/index.html.
 const PAGES=[['src/home.html','index.html'],['src/car.html','games/car/index.html'],['src/picture.html','games/picture/index.html'],['src/tunes.html','games/carols/index.html']];
 for(const f of fs.readdirSync(path.join(ROOT,'src')).sort()){const g=f.replace(/\.html$/,'');
@@ -71,6 +80,7 @@ for(const[src,out]of PAGES){
   let html=fs.readFileSync(path.join(ROOT,src),'utf8').replace(/<!--HEAD:([^>]*)-->/,(_,t)=>HEAD(t)).replace('<!--KIT-->',KIT).replace('<!--LEARN-->',LEARN)
     .replace(/__V__/g,V).replace('"__BANK__"','"'+b64+'"')
     .replace('__BOXBANK__',()=>fs.existsSync(path.join(__dirname,'box-bank.json'))?fs.readFileSync(path.join(__dirname,'box-bank.json'),'utf8'):'[]');
+  html=html.replace('</head>','<meta name="ts-build" content="'+BUILD+'">\n</head>');
   fs.mkdirSync(path.dirname(path.join(ROOT,out)),{recursive:true});fs.writeFileSync(path.join(ROOT,out),html);
   console.log(out,(html.length/1024).toFixed(1)+'KB','v='+V)}
 
@@ -94,4 +104,6 @@ for(const[src,out]of PAGES){
   fs.copyFileSync(path.join(ROOT,'worker.js'),path.join(LROOT,'worker.js'));
   fs.cpSync(path.join(ROOT,'report'),path.join(LROOT,'report'),{recursive:true});
   fs.writeFileSync(path.join(LROOT,'.assetsignore'),'worker.js\nwrangler.jsonc\n.assetsignore\n');
+  fs.writeFileSync(path.join(LROOT,'version.json'),VERSION);fs.writeFileSync(path.join(LROOT,'_headers'),HEADERS);
   console.log('little/ ('+ids.length+' games)')}
+fs.writeFileSync(path.join(ROOT,'version.json'),VERSION);fs.writeFileSync(path.join(ROOT,'_headers'),HEADERS);console.log('version',BUILD);

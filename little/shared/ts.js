@@ -40,6 +40,7 @@ const players={
   remove(id){data.list=data.list.filter(p=>p.id!==id);if(data.current===id)data.current=null;
     try{for(let k=localStorage.length-1;k>=0;k--){const key=localStorage.key(k);if(key&&key.startsWith("tilesolve:p:"+id+":"))localStorage.removeItem(key)}}catch(e){}
     persist()},
+  reload(){const d=store.get(PKEY,{});data.list=Array.isArray(d.list)?d.list:[];if(!data.list.some(p=>p.id===data.current))data.current=null}, // after a cloud sync
   AVATARS,COLORS,gradeName,gnum,FAVS,fav:()=>favOf()};
 
 // Before players existed, Unblock the Car kept one save. Turn it into "Player 1" so nobody loses progress.
@@ -364,6 +365,96 @@ addEventListener("resize",unpoint);
 /* ---------- the train horn: a real recording (a wooden train whistle), shared/horn.mp3, for the train games ----------
    horn.load() fetches it early; horn.play() returns false if it isn't ready (or sound is off) so a game can fall back. */
 const HORN_URL=new URL("horn.mp3",document.currentScript.src).href;
+
+/* ---------- updates ----------
+   Every build stamps its pages (<meta name="ts-build">) and writes version.json. A page left open on the iPad (home-screen apps can
+   stay open for days) checks version.json when it opens, when it comes back to the front, and every 5 minutes. On the home screen a
+   new version loads straight away; in a game a note offers it ("tap to update"), so nobody loses their place mid-level. */
+const update=(()=>{const mine=(document.querySelector('meta[name="ts-build"]')||{}).content||"",url=new URL("../version.json",document.currentScript.src).href;
+  const home=()=>!/\/games\//.test(location.pathname);let shown=false,last=0;
+  async function check(){if(!mine||Date.now()-last<5000)return;last=Date.now();
+    try{const r=await fetch(url+"?t="+Date.now(),{cache:"no-store"});if(!r.ok)return;const j=await r.json();if(j&&j.v&&j.v!==mine)ready(j.v)}catch(e){}}
+  async function go(){try{await sync.flush()}catch(e){}location.reload()}
+  function ready(v){let tried=0;try{tried=+sessionStorage.getItem("ts-upd:"+v)||0}catch(e){}
+    if(home()&&Date.now()-tried>120000){try{sessionStorage.setItem("ts-upd:"+v,Date.now())}catch(e){}return go()} // (once: never a reload loop)
+    if(shown)return;shown=true;const b=document.createElement("button");b.type="button";b.className="ts-update";
+    b.textContent="✨ New version ready: tap to update";b.onclick=go;document.body.appendChild(b)}
+  if(mine){setTimeout(check,2500);setInterval(()=>{if(!document.hidden)check()},300000);document.addEventListener("visibilitychange",()=>{if(!document.hidden)check()})}
+  return{check,build:mine}})();
+
+/* ---------- cloud sync ----------
+   Turn it on with a family code (made on one device, typed into the others; see the home screen's ☁️ button). Every change to a
+   "tilesolve:" save is noted with its time and sent to /api/sync a few seconds later; other devices pull every 90 seconds and when the
+   app comes to the front. For each save, the newer change wins. Which player is using this device (and music on/off) stays per device. */
+const sync=(()=>{const SK="tilesolve:sync",own=k=>typeof k==="string"&&k.startsWith("tilesolve:")&&k!==SK;
+  const rawSet=Storage.prototype.setItem,rawDel=Storage.prototype.removeItem;
+  let st;try{st=JSON.parse(localStorage.getItem(SK))||{}}catch(e){st={}}st.meta=st.meta||{};st.dirty=st.dirty||[];
+  const keep=()=>{try{rawSet.call(localStorage,SK,JSON.stringify(st))}catch(e){}};
+  const base=()=>/\/little\//.test(location.pathname)&&!/^littlelearners\./.test(location.hostname)?location.pathname.slice(0,location.pathname.indexOf("/little/")+7):"";
+  const plist=v=>{try{return JSON.stringify((JSON.parse(v)||{}).list||[])}catch(e){return""}};
+  let applying=false,timer=null,busy=false;const subs=[];
+  /* Keep the best of both when two devices both changed a player's game save: numbers keep the higher value (stars, levels, gems,
+     sticker counts), objects merge key by key, lists of things earned (carts, owned, ...) join together; anything else (text, a chess
+     game in progress, other lists) comes from the newer copy. */
+  const SETS=new Set(["carts","owned","seen","unlocked","done","trophies"]),WHOLE=new Set(["game","hist","bag","spBag","wxBag","cars","S"]);
+  function best(a,b,key){ // a: newer, b: older
+    if(a==null)return b;if(b==null)return a;
+    if(typeof a==="number"&&typeof b==="number")return Math.max(a,b);
+    if(Array.isArray(a)||Array.isArray(b)){if(Array.isArray(a)&&Array.isArray(b)&&SETS.has(key)&&a.concat(b).every(x=>typeof x!=="object"))return[...new Set(a.concat(b))];return a}
+    if(typeof a==="object"&&typeof b==="object"&&!WHOLE.has(key)){const o={...b};for(const k in a)o[k]=best(a[k],b[k],k);return o}
+    return a}
+  const mergeable=k=>/^tilesolve:p:[^:]+:/.test(k);
+  function combine(k,remoteV,remoteT,localV,localT){if(!mergeable(k)||localV==null||remoteV==null||localV===remoteV)return null;
+    try{const r=JSON.parse(remoteV),l=JSON.parse(localV);const m=remoteT>=localT?best(r,l,""):best(l,r,"");return JSON.stringify(m)}catch(e){return null}}
+  function mark(k){if(k===PKEY){const pl=plist(localStorage.getItem(k));if(pl===st.pl)return;st.pl=pl} // switching player isn't a change to share
+    st.meta[k]=Date.now();if(!st.dirty.includes(k))st.dirty.push(k);keep();if(st.fam){clearTimeout(timer);timer=setTimeout(push,3000)}}
+  Storage.prototype.setItem=function(k,v){rawSet.call(this,k,v);if(this===localStorage&&!applying&&own(k))mark(k)};
+  Storage.prototype.removeItem=function(k){rawDel.call(this,k);if(this===localStorage&&!applying&&own(k))mark(k)};
+  function apply(items,force){const changed=[];applying=true;
+    try{for(const k in items){if(!own(k))continue;const it=items[k],t=+it.t||0;if(!force&&t<=(st.meta[k]||0))continue;
+      if(k===PKEY&&it.v!=null){let r={},l={};try{r=JSON.parse(it.v)||{}}catch(e){}try{l=JSON.parse(localStorage.getItem(k))||{}}catch(e){}
+        const list=Array.isArray(r.list)?r.list:[];rawSet.call(localStorage,k,JSON.stringify({list,current:list.some(p=>p.id===l.current)?l.current:null,music:l.music!==false}));st.pl=JSON.stringify(list)}
+      else if(it.v==null)rawDel.call(localStorage,k);
+      else{const lv=localStorage.getItem(k),m=combine(k,it.v,t,lv,st.meta[k]||0);
+        if(m!=null&&m!==it.v){rawSet.call(localStorage,k,m);st.meta[k]=Date.now();if(!st.dirty.includes(k))st.dirty.push(k);changed.push(k);continue} // merged: send the combined copy back
+        rawSet.call(localStorage,k,it.v)}
+      st.meta[k]=t;st.dirty=st.dirty.filter(x=>x!==k);changed.push(k)}}finally{applying=false}
+    if(changed.length){if(changed.includes(PKEY))players.reload();keep();subs.forEach(f=>{try{f(changed)}catch(e){}})}
+    return changed}
+  async function push(){if(!st.fam||busy)return false;busy=true;clearTimeout(timer);const sent=st.dirty.slice(),items={};
+    for(const k of sent)items[k]={v:localStorage.getItem(k),t:st.meta[k]||Date.now()};
+    try{const r=await fetch(base()+"/api/sync",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({fam:st.fam,since:st.since||0,items})});
+      const j=await r.json();if(!j.ok)throw new Error(j.error||"sync failed");st.dirty=st.dirty.filter(k=>!sent.includes(k)||st.meta[k]>(items[k].t||0));
+      apply(j.items||{});st.since=j.now-5000;st.last=Date.now();st.err="";keep();return true}
+    catch(e){st.err=String(e.message||e);keep();return false}finally{busy=false;if(st.dirty.length&&st.fam)timer=setTimeout(push,15000)}}
+  const allKeys=()=>{const o=[];for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(own(k))o.push(k)}return o};
+  const ALPHA="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  const api={get code(){return st.fam||""},get last(){return st.last||0},get pending(){return st.dirty.length},get error(){return st.err||""},
+    on(f){subs.push(f)},push,flush:push,
+    /* first device: make a code and upload everything */
+    async start(){const a=new Uint32Array(10);crypto.getRandomValues(a);st.fam=[...a].map(x=>ALPHA[x%32]).join("");st.since=0;
+      const now=Date.now();for(const k of allKeys()){st.meta[k]=st.meta[k]||now;if(!st.dirty.includes(k))st.dirty.push(k)}st.pl=plist(localStorage.getItem(PKEY));keep();return push()},
+    /* another device: take what's in the cloud, and add this device's saves that the cloud doesn't have */
+    async join(code){code=String(code||"").toUpperCase().replace(/[^A-Z0-9]/g,"");if(code.length!==10)return false;
+      const before={...st};st.fam=code;st.since=0;st.meta={};st.dirty=[];keep();
+      try{const r=await fetch(base()+"/api/sync?fam="+code+"&since=0",{cache:"no-store"});const j=await r.json();if(!j.ok)throw new Error(j.error);
+        const items=j.items||{},rp=items[PKEY]&&items[PKEY].v?(()=>{try{return JSON.parse(items[PKEY].v)}catch(e){return null}})():null;
+        if(rp&&Array.isArray(rp.list)){let lp={};try{lp=JSON.parse(localStorage.getItem(PKEY))||{}}catch(e){}const list=rp.list.slice();applying=true;
+          try{for(const p of lp.list||[]){const same=list.find(q=>q.id===p.id)||list.find(q=>String(q.name).trim().toLowerCase()===String(p.name).trim().toLowerCase());
+            if(!same){list.push(p);continue}
+            if(same.id!==p.id){const pre="tilesolve:p:"+p.id+":";for(const k of allKeys())if(k.startsWith(pre)){rawSet.call(localStorage,"tilesolve:p:"+same.id+":"+k.slice(pre.length),localStorage.getItem(k));rawDel.call(localStorage,k)}
+              if(lp.current===p.id)lp.current=same.id}}
+            rawSet.call(localStorage,PKEY,JSON.stringify({...lp,list}))}finally{applying=false}
+          items[PKEY]={v:JSON.stringify({...rp,list}),t:Date.now()}}
+        const got=apply(items,true),now=Date.now();if(rp)players.reload();for(const k of allKeys())if(!items[k]||(st.dirty.includes(k))){st.meta[k]=st.meta[k]||now;if(!st.dirty.includes(k))st.dirty.push(k)}
+        if(!st.dirty.includes(PKEY)){st.meta[PKEY]=now;st.dirty.push(PKEY)}
+        st.since=j.now-5000;keep();await push();return true}
+      catch(e){Object.assign(st,before);keep();return false}},
+    stop(){delete st.fam;st.dirty=[];keep()}};
+  if(st.fam){setTimeout(push,1200);setInterval(()=>{if(!document.hidden)push()},90000)}
+  document.addEventListener("visibilitychange",()=>{if(st.fam)push()});
+  addEventListener("pagehide",()=>{if(st.fam&&st.dirty.length)push()});
+  return api})();
 const horn=(()=>{let ctx=null,buf=null,loading=null;
   const wake=()=>{if(ctx&&ctx.state==="suspended")ctx.resume()};
   function load(){if(loading)return loading;const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return loading=Promise.resolve(null);
@@ -382,4 +473,4 @@ const notes={
       if(/^(tunes|carols|tunes-options|notes|seen)$/.test(g))continue;const d=store.get(k,null);
       if(d&&d.grades)for(const a in d.grades){const st=d.grades[a]&&d.grades[a].stars;if(st)n+=Object.keys(st).length}}}catch(e){}
     return n}};
-return{HOME,rngFrom,store,players,requirePlayer,gameSave,music,horn,notes,report,MUSIC_SVG,math,problem,gate,howto,point,talk,say:t=>talk.say(t),sayNext:t=>talk.sayNext(t)}})();
+return{HOME,rngFrom,store,sync,update,players,requirePlayer,gameSave,music,horn,notes,report,MUSIC_SVG,math,problem,gate,howto,point,talk,say:t=>talk.say(t),sayNext:t=>talk.sayNext(t)}})();

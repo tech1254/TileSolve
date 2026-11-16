@@ -1,0 +1,6 @@
+/*
+  Cache-Control: no-cache
+/shared/*
+  Cache-Control: public, max-age=604800
+/version.json
+  Cache-Control: no-store

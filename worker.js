@@ -1,6 +1,8 @@
 /* Tile Solve / Little Learners backend: the static pages are served as before (env.ASSETS); this Worker only adds
      POST /api/events   a batch of play and maths records from a device (queued on the device, sent in batches)
      GET  /api/report   totals for the /report page, to tune difficulty
+     GET  /api/sync?fam=CODE         all of a family's saved progress (cloud sync between devices)
+     POST /api/sync {fam, items}     merge changed saves: for each key the newer time wins; returns everything newer than "since"
      GET  /api/tts?t=   the games' voice: text to speech with Workers AI (MeloTTS), cached at the edge and on the device.
                         New clips are capped per day (TTS_CAP) so this never uses much of the account's shared AI allowance;
                         over the cap (or on any error) the games fall back to the device's own voice.
@@ -56,6 +58,55 @@ export async function tts(url, env, ctx) {
   return res;
 }
 
+/* ---------- cloud sync ----------
+   A family's saves live in the sync table, one row per localStorage key ("tilesolve:..."), with the time it was last changed
+   on a device. The family code is the only key: 10 letters/digits (about 50 bits), made on a device and typed into the others.
+   Deleted saves are kept as v=null so deletions reach the other devices. */
+const FAM = /^[A-HJ-NP-Z2-9]{10}$/, MAXV = 300000, MAXKEYS = 3000;
+let syncTable = false;
+async function syncDB(env) {
+  if (!syncTable) {
+    await env.DB.prepare("CREATE TABLE IF NOT EXISTS sync (fam TEXT NOT NULL, k TEXT NOT NULL, v TEXT, t INTEGER NOT NULL, up INTEGER NOT NULL, PRIMARY KEY (fam, k))").run();
+    syncTable = true;
+  }
+}
+export async function sync(req, url, env) {
+  if (!env.DB) return json({ ok: false, error: "no database" }, 503);
+  await syncDB(env);
+  let fam, items = {}, since = 0;
+  if (req.method === "POST") {
+    const body = await req.json().catch(() => null);
+    if (!body) return json({ ok: false, error: "bad json" }, 400);
+    fam = String(body.fam || ""); items = body.items && typeof body.items === "object" ? body.items : {}; since = Number(body.since) || 0;
+  } else { fam = url.searchParams.get("fam") || ""; since = Number(url.searchParams.get("since")) || 0; }
+  fam = fam.toUpperCase().replace(/[^A-Z0-9]/g, "");
+  if (!FAM.test(fam)) return json({ ok: false, error: "bad family code" }, 400);
+  const now = Date.now(), keys = Object.keys(items).filter((k) => k.startsWith("tilesolve:") && k.length < 200).slice(0, MAXKEYS);
+  if (keys.length) {
+    const have = await env.DB.prepare("SELECT COUNT(*) n FROM sync WHERE fam=?").bind(fam).first();
+    if ((have?.n || 0) + keys.length > MAXKEYS * 2) return json({ ok: false, error: "too many saves" }, 413);
+    const st = [];
+    for (const k of keys) {
+      const it = items[k] || {}, v = it.v == null ? null : String(it.v), t = Math.min(Number(it.t) || 0, now + 60000);
+      if (v && v.length > MAXV) continue;
+      // newer time wins; "up" is when the server got it, so other devices can ask for "everything since my last sync"
+      st.push(env.DB.prepare("INSERT INTO sync (fam,k,v,t,up) VALUES (?,?,?,?,?) ON CONFLICT(fam,k) DO UPDATE SET v=excluded.v, t=excluded.t, up=excluded.up WHERE excluded.t > sync.t")
+        .bind(fam, k, v, t, now));
+    }
+    for (let i = 0; i < st.length; i += 50) await env.DB.batch(st.slice(i, i + 50));
+  }
+  const rows = (await env.DB.prepare("SELECT k, v, t FROM sync WHERE fam=? AND up>=?").bind(fam, since).all()).results || [];
+  // and the server's copy of every key just sent, in case the server already had a newer one
+  for (let i = 0; i < keys.length; i += 90) {
+    const part = keys.slice(i, i + 90);
+    const r2 = await env.DB.prepare("SELECT k, v, t FROM sync WHERE fam=? AND k IN (" + part.map(() => "?").join(",") + ")").bind(fam, ...part).all();
+    rows.push(...(r2.results || []));
+  }
+  const out = {};
+  for (const r of rows) out[r.k] = { v: r.v, t: r.t };
+  return json({ ok: true, now, items: out });
+}
+
 export async function report(url, env) {
   if (env.REPORT_KEY && url.searchParams.get("key") !== env.REPORT_KEY) return json({ ok: false, error: "key needed" }, 403);
   const days = I(url.searchParams.get("days") || 30, 1, 3650), since = Date.now() - days * 864e5;
@@ -85,6 +136,7 @@ export default {
       if (url.pathname === "/api/events" && req.method === "POST") return await events(req, env);
       if (url.pathname === "/api/report") return await report(url, env);
       if (url.pathname === "/api/tts" && req.method === "GET") return await tts(url, env, ctx);
+      if (url.pathname === "/api/sync") return await sync(req, url, env);
     } catch (e) { return json({ ok: false, error: String(e && e.message || e) }, 500); }
     if (url.pathname === "/report") return Response.redirect(url.origin + "/report/", 302);
     return env.ASSETS.fetch(req);

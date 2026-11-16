@@ -7,7 +7,16 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#161b21">
-<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box;height:100%}body{margin:0}[hidden]{display:none!important}</style>
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box;height:100%}body{margin:0}[hidden]{display:none!important}/* cloud sync sheet */
+#btnSync.on{box-shadow:0 0 0 2px var(--good,#43a047)}
+.sy p{margin:0;color:var(--muted);line-height:1.45}
+.sy .code{font:400 34px var(--font-sign);letter-spacing:.12em;color:var(--paint);text-align:center;background:rgba(255,255,255,.06);border-radius:14px;padding:10px;user-select:all}
+.sy input{font:400 28px var(--font-sign);letter-spacing:.1em;text-transform:uppercase;text-align:center;border-radius:12px;border:2px solid var(--lane);padding:10px;width:100%;box-sizing:border-box;background:#fff;color:#1d2230}
+.sy .btns{display:flex;gap:10px;flex-wrap:wrap}
+.sy .btns button{flex:1 1 160px;border:0;border-radius:14px;padding:12px;font:700 16px var(--font-body);cursor:pointer;background:var(--lane);color:var(--text)}
+.sy .btns button.go{background:var(--paint);color:#1d2230}
+.sy .st{font-size:14px}
+</style>
 <title>Little Learners</title>
 <meta name="apple-mobile-web-app-title" content="Little Learners">
 <link rel="apple-touch-icon" href="icon-180.png">
@@ -15,7 +24,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Barlow:wght@400;600;700&display=swap">
-<link rel="stylesheet" href="shared/ts.css?v=80e10375">
+<link rel="stylesheet" href="shared/ts.css?v=eb3538b7">
 <style>
 body{overflow-y:auto}
 .app{min-height:100%;max-width:760px;margin:0 auto;box-sizing:border-box;display:flex;flex-direction:column;gap:22px;
@@ -78,6 +87,7 @@ h1{font-family:var(--font-sign);font-weight:400;font-size:clamp(26px,6vw,36px);m
 .danger{background:none;border:1px solid #6b2a24;color:#ff8a78;border-radius:12px;padding:12px;font-weight:700;cursor:pointer}
 @media (max-width:420px){.avatars{grid-template-columns:repeat(8,1fr);gap:4px}.avatars button{font-size:22px}.grades button b{font-size:18px}}
 </style>
+<meta name="ts-build" content="df1db61e37">
 </head>
 <body>
 <div class="app">
@@ -85,6 +95,7 @@ h1{font-family:var(--font-sign);font-weight:400;font-size:clamp(26px,6vw,36px);m
     <p class="brand">LITTLE<span>LEARNERS</span></p>
     <div class="tools">
       <button class="me" id="btnMe" type="button" hidden><i id="meFace"></i><span id="meName"></span></button>
+      <button class="chip icon" id="btnSync" type="button" aria-label="Cloud sync">☁️</button>
       <button class="chip icon" id="btnMusic" type="button"></button>
     </div>
   </header>
@@ -114,6 +125,7 @@ h1{font-family:var(--font-sign);font-weight:400;font-size:clamp(26px,6vw,36px);m
 <div class="sheet" id="sheetPlayer" hidden>
   <form class="card" id="playerForm" autocomplete="off">
     <div class="row"><h2 id="formTitle">New player</h2><button class="close" id="closeForm" type="button">Cancel</button></div>
+    <button class="linkbtn" id="formJoin" type="button" hidden>☁️ Already playing on another iPad? Join with your family code</button>
     <div class="field"><label for="fName">Name</label><input class="name" id="fName" maxlength="16" placeholder="Your name" enterkeyhint="done"></div>
     <div class="field"><span class="lbl">Pick a buddy</span><div class="avatars" id="fAvatars"></div></div>
     <div class="field"><span class="lbl">Colour</span><div class="colors" id="fColors"></div></div>
@@ -124,7 +136,7 @@ h1{font-family:var(--font-sign);font-weight:400;font-size:clamp(26px,6vw,36px);m
   </form>
 </div>
 
-<script src="shared/ts.js?v=80e10375"></script>
+<script src="shared/ts.js?v=eb3538b7"></script>
 <script>
 (()=>{
 const{players,music}=TS,$=id=>document.getElementById(id);
@@ -206,6 +218,33 @@ const GAMES=[
 
 let editing=false,prev=null; // prev: the player whose games we came from, for the Back button
 music.button($("btnMusic"));
+/* ☁️ Cloud sync: the family code links this device to the others (see TS.sync in shared/ts.js) */
+const sync=TS.sync;
+function syncState(){$("btnSync").classList.toggle("on",!!sync.code)}
+function syncSheet(){let el=document.getElementById("sySheet");if(!el){el=document.createElement("div");el.id="sySheet";el.className="sheet";document.body.appendChild(el)}
+  const ago=t=>{if(!t)return"not yet";const m=Math.round((Date.now()-t)/60000);return m<1?"just now":m<60?m+" min ago":Math.round(m/60)+" h ago"};
+  const fmt=c=>c.slice(0,5)+" "+c.slice(5);
+  el.innerHTML=sync.code?'<div class="card sy"><div class="row"><h2>☁️ Cloud sync is on</h2><button class="close" type="button" id="syX">Done</button></div>'+
+      '<p>Everyone\'s progress on this device is saved to the cloud. On another iPad or computer, tap ☁️ and enter this family code:</p><div class="code" id="syCode">'+fmt(sync.code)+'</div>'+
+      '<p class="st" id="sySt">Last synced: '+ago(sync.last)+(sync.pending?" · "+sync.pending+" change"+(sync.pending>1?"s":"")+" waiting":"")+(sync.error?" · ⚠️ "+sync.error:"")+'</p>'+
+      '<div class="btns"><button type="button" class="go" id="syNow">Sync now</button><button type="button" id="syStop">Stop syncing this device</button></div>'+
+      '<p class="st">Tile Solve and Little Learners are separate apps: enter the same code in both to share progress between them too.</p></div>'
+    :'<div class="card sy"><div class="row"><h2>☁️ Cloud sync</h2><button class="close" type="button" id="syX">Not now</button></div>'+
+      '<p>Keep the kids\' progress safe in the cloud, and the same on every iPad and computer.</p>'+
+      '<div class="btns"><button type="button" class="go" id="syStart">Start: make a family code</button></div>'+
+      '<p><b>Already have a code?</b> Enter it to join. This device\'s progress and the cloud\'s are combined: every level keeps its best stars, and a kid with the same name on both becomes one.</p>'+
+      '<input id="syIn" maxlength="11" placeholder="ABCDE 12345" autocomplete="off" autocapitalize="characters" spellcheck="false">'+
+      '<div class="btns"><button type="button" id="syJoin">Join with this code</button></div><p class="st" id="sySt"></p></div>';
+  el.hidden=false;const close=()=>{el.hidden=true};el.querySelector("#syX").onclick=close;el.onclick=e=>{if(e.target===el)close()};
+  const msg=t=>{el.querySelector("#sySt").textContent=t};
+  if(sync.code){el.querySelector("#syNow").onclick=async()=>{msg("Syncing…");await sync.push();syncSheet()};
+    el.querySelector("#syStop").onclick=()=>{if(confirm("Stop syncing this device? Its progress stays here, and in the cloud."))(sync.stop(),syncState(),syncSheet())}}
+  else{el.querySelector("#syStart").onclick=async()=>{msg("Making your code…");const ok=await sync.start();syncState();if(!ok&&!sync.code)msg("Couldn't reach the cloud. Check the Wi-Fi and try again.");else syncSheet()};
+    el.querySelector("#syJoin").onclick=async()=>{const c=el.querySelector("#syIn").value;if(c.replace(/[^a-z0-9]/gi,"").length!==10)return msg("The code has 10 letters and numbers.");
+      msg("Joining…");const ok=await sync.join(c);syncState();if(ok){players.reload&&players.reload();show();syncSheet()}else msg("That code didn't work. Check it and try again.")}}}
+$("btnSync").onclick=syncSheet;syncState();
+$("formJoin").onclick=()=>{closeForm();syncSheet()};
+sync.on(()=>{if(!document.getElementById("sySheet")||document.getElementById("sySheet").hidden)show()}); // progress from another device: redraw
 
 function show(){const cur=players.current();
   $("viewPlayers").hidden=!!cur;$("viewGames").hidden=!cur;$("btnMe").hidden=!cur;
@@ -255,7 +294,7 @@ let form=null,delArmed=0;
 function openForm(p){form=p?{id:p.id,name:p.name,avatar:p.avatar,color:p.color,grade:p.grade,fav:p.fav||""}
     :{id:null,name:"",avatar:players.AVATARS[players.list().length%players.AVATARS.length],color:players.COLORS[players.list().length%players.COLORS.length],grade:APP==="little"?0:3,fav:""};
   $("formTitle").textContent=p?"Edit "+p.name:"New player";$("fName").value=form.name;$("btnDelete").hidden=!p;
-  $("btnDelete").textContent="Delete player";delArmed=0;drawForm();$("sheetPlayer").hidden=false;
+  $("btnDelete").textContent="Delete player";delArmed=0;drawForm();$("sheetPlayer").hidden=false;$("formJoin").hidden=!!p||!!TS.sync.code;
   if(!p)setTimeout(()=>$("fName").focus(),50)}
 function drawForm(){
   const av=$("fAvatars");av.innerHTML="";players.AVATARS.forEach(x=>{const b=document.createElement("button");b.type="button";b.textContent=x;
