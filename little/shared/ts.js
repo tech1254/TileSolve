@@ -371,16 +371,20 @@ const HORN_URL=new URL("horn.mp3",document.currentScript.src).href;
    stay open for days) checks version.json when it opens, when it comes back to the front, and every 5 minutes. On the home screen a
    new version loads straight away; in a game a note offers it ("tap to update"), so nobody loses their place mid-level. */
 const update=(()=>{const mine=(document.querySelector('meta[name="ts-build"]')||{}).content||"",url=new URL("../version.json",document.currentScript.src).href;
-  const home=()=>!/\/games\//.test(location.pathname);let shown=false,last=0;
+  const home=()=>!/\/games\//.test(location.pathname);let shown=false,last=0,quiet=true;
+  /* only reload by itself when nobody is in the middle of using it: right as the app opens, or as it comes back to the front */
+  setTimeout(()=>{quiet=false},4000);document.addEventListener("visibilitychange",()=>{if(!document.hidden){quiet=true;setTimeout(()=>{quiet=false},4000)}});
   async function check(){if(!mine||Date.now()-last<5000)return;last=Date.now();
     try{const r=await fetch(url+"?t="+Date.now(),{cache:"no-store"});if(!r.ok)return;const j=await r.json();if(j&&j.v&&j.v!==mine)ready(j.v)}catch(e){}}
   async function go(){try{await sync.flush()}catch(e){}location.reload()}
   function ready(v){let tried=0;try{tried=+sessionStorage.getItem("ts-upd:"+v)||0}catch(e){}
-    if(home()&&Date.now()-tried>120000){try{sessionStorage.setItem("ts-upd:"+v,Date.now())}catch(e){}return go()} // (once: never a reload loop)
+    if(home()&&quiet&&Date.now()-tried>120000){try{sessionStorage.setItem("ts-upd:"+v,Date.now())}catch(e){}return go()} // (once: never a reload loop)
     if(shown)return;shown=true;const b=document.createElement("button");b.type="button";b.className="ts-update";
     b.textContent="✨ New version ready: tap to update";b.onclick=go;document.body.appendChild(b)}
-  if(mine){setTimeout(check,2500);setInterval(()=>{if(!document.hidden)check()},300000);document.addEventListener("visibilitychange",()=>{if(!document.hidden)check()})}
+  if(mine){setTimeout(check,1200);setInterval(()=>{if(!document.hidden)check()},300000);document.addEventListener("visibilitychange",()=>{if(!document.hidden)check()})}
   return{check,build:mine}})();
+
+try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persisted().then(p=>{if(!p)navigator.storage.persist()}).catch(()=>{})}catch(e){}
 
 /* ---------- cloud sync ----------
    Turn it on with a family code (made on one device, typed into the others; see the home screen's ☁️ button). Every change to a

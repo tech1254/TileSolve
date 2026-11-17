@@ -86,6 +86,10 @@ try:
         pu.goto(B + "/index.html"); pu.wait_for_timeout(500); n0 = pu.evaluate("window.__loads"); pu.wait_for_timeout(4500)
         n1 = pu.evaluate("window.__loads"); pu.wait_for_timeout(5000)
         check(n1 == n0 + 1 and pu.evaluate("window.__loads") == n1, f"on the home screen a new version loads by itself, once (never a reload loop) ({n0}->{n1}->{pu.evaluate('window.__loads')})")
+        # someone using the home screen: a new version shows the note instead of reloading under them
+        state["new"] = False; pu.goto(B + "/index.html"); pu.wait_for_timeout(6800); n0 = pu.evaluate("window.__loads")
+        state["new"] = True; pu.evaluate("TS.update.check()"); pu.wait_for_timeout(1200)
+        check(pu.evaluate("window.__loads") == n0 and pu.locator(".ts-update").count() == 1, "while the home screen is in use, a new version waits for a tap (no surprise reload)")
         b.close()
 finally:
     srv.terminate()
