@@ -76,15 +76,15 @@ with sync_playwright() as p:
     r = pg.evaluate("""()=>{const G=__game;G.K.load(16);const S=G.S;window.__heroHold=true;let waves=0;for(let i=0;i<120*20;i++){G.step(1/120);if(S.waves&&S.waves.length)waves++}window.__heroHold=false;return{waves,ice:S.Z.ice}}""")
     check(r["waves"] == 0, f"Snow Brute sends no shockwaves ({r})")
     loops = 0; results = {}
-    for n in range(1, 25):
+    for n in range(1, 101):
         r = pg.evaluate(BOT + f"({n},150)"); results[n] = r
         loops += len(pg.evaluate("__game.S.L.loops"))
-        if n in (2, 4, 10, 15, 22) and OUT:
+        if n in (2, 4, 26, 30, 34, 38, 42, 46, 61, 100) and OUT:
             pg.evaluate(f"__game.K.load({n})"); pg.wait_for_timeout(200)
             pg.evaluate("(()=>{const S=__game.S;window.__heroHold=true;const lp=S.L.loops[0];if(lp){S.x=lp.x-260;S.y=lp.y}else if(S.boss){S.x=900}for(let i=0;i<60;i++)__game.step(1/120);window.__heroHold=false})()")
             pg.wait_for_timeout(250); pg.screenshot(path=str(OUT / f"hero_l{n}.png"))
     bad = {n: r for n, r in results.items() if r["res"] != "win"}
-    check(not bad, f"a simple button-pressing bot finishes all 24 levels {bad}")
+    check(not bad, f"a simple button-pressing bot finishes all 100 levels {bad}")
     check(loops >= 8, f"there are loop-the-loops to zoom round ({loops})")
     print("  bot:", {n: (r["t"], r["lost"], f"{r['got']}/{r['total']}") for n, r in results.items()})
     ctx.close()

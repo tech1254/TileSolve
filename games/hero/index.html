@@ -77,7 +77,7 @@
 .ms-btn{justify-self:start;font:400 26px var(--font-sign);background:#43a047;color:#fff;border:0;border-radius:16px;padding:10px 30px;cursor:pointer}
 .ms-eng{font:700 14px var(--font-body);color:#9fb4ff;text-align:center}
 </style>
-<meta name="ts-build" content="df1db61e37">
+<meta name="ts-build" content="eb973020dd">
 </head>
 <body>
 <script src="../../shared/ts.js?v=eb3538b7"></script>
@@ -90,14 +90,41 @@
    6 worlds x 4 acts; act 4 of each world is a boss: wait for it to land and get dizzy, then jump on its head.
    3 hearts per act, checkpoint flags along the way. Levels are generated from the level's seed, so each one is the same every time. */
 let K,S=null;
-const LEVELS=24,GRAV=1900,JUMP=780,RUNACC=1150,AIRACC=1000,RUNMAX=540,PADV=1000,LOOPV=430;
-const ZONES=[
-  {name:"Meadow Run",sky:["#6ec3ff","#d9f2ff"],far:"#9bd78f",mid:"#5fb55c",ground:"#7a5230",top:"#4caf50",accent:"#ff6fb5",boss:"Big Gloop",bc:"#5ccf5c"},
-  {name:"Canyon Rush",sky:["#ffa75e","#ffe3bd"],far:"#e09a63",mid:"#c46e3e",ground:"#8a4b2a",top:"#dd8a40",accent:"#ffd166",boss:"Boulder Buddy",bc:"#a39684"},
-  {name:"Neon City",sky:["#120a2b","#3d2170"],far:"#2b2058",mid:"#40307e",ground:"#221d38",top:"#00e5ff",accent:"#ff4fd8",boss:"Glitch Cube",bc:"#ff4fd8",night:1},
-  {name:"Frosty Peaks",sky:["#94d2ff","#eef9ff"],far:"#d2e7f6",mid:"#a8cbe4",ground:"#6c8ca6",top:"#f6fcff",accent:"#7fd4ff",boss:"Snow Brute",bc:"#eaf5ff",ice:1},
-  {name:"Volcano Dash",sky:["#2e0b07","#a3321a"],far:"#5c1d12",mid:"#7c2b17",ground:"#3a1d14",top:"#6a3020",accent:"#ff8a1f",boss:"Magma Blob",bc:"#ff6a2a",lava:1,night:1},
-  {name:"Sky Castle",sky:["#5aa9ff","#ffffff"],far:"#ffffff",mid:"#e3eeff",ground:"#b9a27a",top:"#ffe08a",accent:"#ffd84a",boss:"Storm Cloud",bc:"#7d8aa8",cloud:1}];
+const LEVELS=100,GRAV=1900,JUMP=780,RUNACC=1150,AIRACC=1000,RUNMAX=540,PADV=1000,LOOPV=430;
+/* 12 themes; 25 worlds of 4 acts (act 4 is a boss) = 100 levels. Worlds 1-12 are the themes in order, 13-24 are their
+   "Midnight"/"Mega" return trips (harder, tougher bosses), 25 is Professor Muddle's Fortress. Levels are generated from their
+   number, so raising LEVELS (and adding worlds) is all it takes to make more. style picks the scenery, bs the boss's shape. */
+const THEMES=[
+  {name:"Meadow Run",short:"Meadow",style:"meadow",sky:["#6ec3ff","#d9f2ff"],far:"#9bd78f",mid:"#5fb55c",ground:"#7a5230",top:"#4caf50",accent:"#ff6fb5",boss:"Big Gloop",bc:"#5ccf5c",bs:0,
+    thing:["flowers","bees","sunflowers","seeds"],intro:"The Meadow Number Engine waters every flower. Professor Muddle scrambled it, and the meadow is wilting!"},
+  {name:"Canyon Rush",short:"Canyon",style:"canyon",sky:["#ffa75e","#ffe3bd"],far:"#e09a63",mid:"#c46e3e",ground:"#8a4b2a",top:"#dd8a40",accent:"#ffd166",boss:"Boulder Buddy",bc:"#a39684",bs:1,
+    thing:["planks","rocks","cactus flowers","bridge bolts"],intro:"The Canyon Number Engine holds up all the rope bridges. Muddle scrambled it, and the bridges are wobbling!"},
+  {name:"Neon City",short:"Neon",style:"city",sky:["#120a2b","#3d2170"],far:"#2b2058",mid:"#40307e",ground:"#221d38",top:"#00e5ff",accent:"#ff4fd8",boss:"Glitch Cube",bc:"#ff4fd8",bs:2,night:1,
+    thing:["lights","robots","neon signs","batteries"],intro:"The Neon Number Engine lights up the whole city. Muddle scrambled it, and the lights are flickering out!"},
+  {name:"Frosty Peaks",short:"Frosty",style:"peaks",sky:["#94d2ff","#eef9ff"],far:"#d2e7f6",mid:"#a8cbe4",ground:"#6c8ca6",top:"#f6fcff",accent:"#7fd4ff",boss:"Snow Brute",bc:"#eaf5ff",bs:3,ice:1,
+    thing:["snowballs","penguins","icicles","snowflakes"],intro:"The Frost Number Engine keeps the mountains safe from avalanches. Muddle scrambled it, and the snow is rumbling!"},
+  {name:"Volcano Dash",short:"Volcano",style:"volcano",sky:["#2e0b07","#a3321a"],far:"#5c1d12",mid:"#7c2b17",ground:"#3a1d14",top:"#6a3020",accent:"#ff8a1f",boss:"Magma Blob",bc:"#ff6a2a",bs:4,lava:1,night:1,
+    thing:["lava rocks","fire crystals","steam vents","volcano gems"],intro:"The Volcano Number Engine keeps the lava calm. Muddle scrambled it, and the volcano is about to blow!"},
+  {name:"Sky Castle",short:"Sky",style:"sky",sky:["#5aa9ff","#ffffff"],far:"#ffffff",mid:"#e3eeff",ground:"#b9a27a",top:"#ffe08a",accent:"#ffd84a",boss:"Storm Cloud",bc:"#7d8aa8",bs:5,cloud:1,
+    thing:["clouds","sky keys","castle gears","star lanterns"],intro:"Professor Muddle's hideout! The Sky Number Engine holds all the other engines together. Fix it and stop Muddle!"},
+  {name:"Candy Coast",short:"Candy",style:"candy",sky:["#ffb0d6","#fff0f7"],far:"#ffc9e6",mid:"#ff8fc7",ground:"#9a5a3a",top:"#ff7eb6",accent:"#7fd4ff",boss:"Taffy Titan",bc:"#ff7eb6",bs:0,
+    thing:["lollipops","gumdrops","candy canes","cupcakes"],intro:"The Candy Number Engine keeps the sweets from melting. Muddle scrambled it, and the gumdrops are going gooey!"},
+  {name:"Jungle Ruins",short:"Jungle",style:"jungle",sky:["#7fd6a0","#e6ffe9"],far:"#3f8f5a",mid:"#2d6e43",ground:"#5a3d22",top:"#3da35a",accent:"#ffcf4a",boss:"Stone Idol",bc:"#8a8f7a",bs:1,
+    thing:["vines","parrots","bananas","temple stones"],intro:"The Jungle Number Engine is hidden in an old temple. Muddle scrambled it, and the ruins are crumbling!"},
+  {name:"Dune Desert",short:"Dunes",style:"desert",sky:["#ffcf7a","#fff4d6"],far:"#eac27c",mid:"#d9a75a",ground:"#b5813f",top:"#f0c870",accent:"#2a9d8f",boss:"Dust Devil",bc:"#c9a46a",bs:5,
+    thing:["camels","cacti","sand dollars","water jugs"],intro:"The Desert Number Engine finds water for the oasis. Muddle scrambled it, and the oasis is drying up!"},
+  {name:"Coral Reef",short:"Reef",style:"reef",sky:["#1590b8","#8fe3f2"],far:"#2b7fa0",mid:"#ff8a7a",ground:"#d6bd8a",top:"#f2dca5",accent:"#ffd23f",boss:"Captain Clam",bc:"#e2412e",bs:1,
+    thing:["fish","seashells","starfish","bubbles"],intro:"The Reef Number Engine keeps the ocean clean and bright. Muddle scrambled it, and the coral is turning grey!"},
+  {name:"Star Station",short:"Station",style:"space",sky:["#05061a","#1d1f4f"],far:"#3b3f7a",mid:"#5a5f9a",ground:"#3a3d55",top:"#9aa3c7",accent:"#7fd4ff",boss:"Robo Rocket",bc:"#9aa3c7",bs:2,night:1,
+    thing:["rockets","satellites","moon rocks","space suits"],intro:"The Star Number Engine keeps the space station in orbit. Muddle scrambled it, and the station is drifting away!"},
+  {name:"Crystal Caverns",short:"Crystal",style:"crystal",sky:["#1d1240","#4b2a7a"],far:"#3a2770",mid:"#6b4ac2",ground:"#2a1f45",top:"#b48cff",accent:"#7fffd4",boss:"Gem Golem",bc:"#b48cff",bs:1,night:1,
+    thing:["crystals","gems","glow worms","lanterns"],intro:"The Crystal Number Engine makes the caves glow. Muddle scrambled it, and the lights are going out underground!"}];
+const darken=(c,t)=>{const v=[1,3,5].map(i=>parseInt(c.slice(i,i+2),16)),d=[10,14,40];return"#"+v.map((x,i)=>Math.round(x+(d[i]-x)*t).toString(16).padStart(2,"0")).join("")};
+const ZONES=THEMES.concat(THEMES.map(T=>({...T,name:(T.night?"Mega ":"Midnight ")+T.name,short:(T.night?"Mega ":"Night ")+T.short,boss:"Mega "+T.boss,hard:1,night:1,
+    sky:T.night?T.sky:[darken(T.sky[0],.75),darken(T.sky[1],.6)],far:T.night?T.far:darken(T.far,.5),mid:T.night?T.mid:darken(T.mid,.45),
+    intro:"Professor Muddle is back, and it's the middle of the night! He scrambled the "+T.name+" Number Engine again, even harder this time!"}))).concat([
+  {name:"Muddle's Fortress",short:"Fortress",style:"fortress",sky:["#160404","#5a1414"],far:"#3a1010",mid:"#5a1a1a",ground:"#2a1a1a",top:"#8a2a2a",accent:"#ffd23f",boss:"Muddle's Mega Bot",bc:"#9aa3c7",bs:2,night:1,hard:1,
+    thing:["gears","levers","circuits","bolts"],intro:"This is it: Professor Muddle's Fortress! Fix the Master Number Engine and stop him once and for all!"}]);
 const zi=n=>Math.floor((n-1)/4),zoneOf=n=>ZONES[zi(n)],isBoss=n=>n%4===0;
 
 /* ---------- the hero ---------- */
@@ -183,16 +210,16 @@ const SND={jump:()=>tone(330,.18,"square",.05,660),spark:()=>{sparkN=(sparkN+1)%
 
 /* ---------- level building ---------- */
 const SEG=20;
-function build(n){const r=K.rng(n),Z=zoneOf(n),ri=(a,b)=>a+Math.floor(r()*(b-a+1)),d=(n-1)%4+zi(n)*.6;
+function build(n){const r=K.rng(n),Z=zoneOf(n),ri=(a,b)=>a+Math.floor(r()*(b-a+1)),d=Math.min(6,(n-1)%4+zi(n)*.6);
   const L={gy:[],plats:[],springs:[],pads:[],loops:[],sparks:[],foes:[],spikes:[],flags:[],end:0,Z,boss:null};let y=380;
   const flat=(len)=>{for(let k=0;k<len/SEG;k++)L.gy.push(y)};
   const slope=(len,dy)=>{const n0=len/SEG,y0=y;for(let k=1;k<=n0;k++){L.gy.push(y0+dy*(1-Math.cos(Math.PI*k/n0))/2)}y=y0+dy};
   const X=()=>L.gy.length*SEG;
   const sparkLine=(x0,yy,k,dx)=>{for(let i=0;i<k;i++)L.sparks.push({x:x0+i*(dx||40),y:yy})};
   const sparkArc=(x0,x1,yy,k,hh)=>{for(let i=0;i<k;i++){const t=k===1?.5:i/(k-1);L.sparks.push({x:x0+(x1-x0)*t,y:yy-hh*Math.sin(Math.PI*t)})}};
-  if(isBoss(n)){flat(1700);L.end=1700;L.boss={x:1250,y:380,vx:0,vy:0,st:"wait",t:1.2,hp:3+Math.min(2,Math.floor(zi(n)/2)),max:3+Math.min(2,Math.floor(zi(n)/2)),dir:-1,hit:0};
+  if(isBoss(n)){flat(1700);L.end=1700;L.boss={x:1250,y:380,vx:0,vy:0,st:"wait",t:1.2,hp:3+Math.min(3,Math.floor(zi(n)/3)),max:3+Math.min(3,Math.floor(zi(n)/3)),dir:-1,hit:0};
     sparkArc(300,700,300,6,60);sparkArc(900,1400,300,6,60);return L}
-  const len=Math.round(15500-(n-1)*170);flat(600);sparkLine(260,330,5);
+  const len=Math.max(11500,Math.round(15500-(n-1)*170));flat(600);sparkLine(260,330,5);
   let lastKind="";
   while(X()<len){const kinds=["hills","pit","enemy","spring","pad","plats","ramp"].concat(d>=1?["spikes"]:[]).concat(d>=2?["pit","enemy"]:[]),k=kinds[Math.floor(r()*kinds.length)];
     if(k===lastKind&&k!=="hills")continue;lastKind=k;const x0=X();
@@ -318,7 +345,7 @@ function foes(dt){const L=S.L;for(const f of L.foes){if(!f.alive){f.dead=(f.dead
   if(S.dash>0||S.loop){f.alive=0;SND.bop();burst(f.x,fy-12,"#fff",12);continue}
   if(S.vy>60&&S.y-S.vy/60<top+14&&f.t!=="beetle"){f.alive=0;S.vy=-560;S.on=0;SND.bop();burst(f.x,fy-12,"#fff",12);S.dbl=HERO.power==="double"?1:0;continue}
   hurt("foe:"+f.t)}}
-function boss(dt){const B=S.boss,Z=S.Z,L=S.L,lvl=zi(S.n);if(B.hp<=0){B.dead=(B.dead||0)+dt;if(B.dead>.9)finish();return}
+function boss(dt){const B=S.boss,Z=S.Z,L=S.L,lvl=Math.min(6,zi(S.n));if(B.hp<=0){B.dead=(B.dead||0)+dt;if(B.dead>.9)finish();return}
   B.t-=dt;if(B.hit>0)B.hit-=dt;
   if(B.st==="wait"&&B.t<=0){B.st="hop";const tx=Math.max(330,Math.min(L.end-330,S.x+(Math.random()-.5)*120));const air=2*(820+lvl*40)/GRAV;B.vy=-(820+lvl*40);B.vx=(tx-B.x)/air;B.dir=Math.sign(B.vx)||-1;B.tx=tx}
   if(B.st==="hop"){B.x+=B.vx*dt;B.y+=B.vy*dt;B.vy+=GRAV*dt;if(B.y>=380&&B.vy>0){B.y=380;B.vy=0;B.st="dizzy";B.t=Math.max(1.4,1.8-lvl*.08);S.shake=.25;SND.boss();burst(B.x,380,"#c9b28a",18);
@@ -343,25 +370,50 @@ function backdrop(){const Z=S.Z,c=g,cx=S.camX,cy=S.camY;
   const gr=c.createLinearGradient(0,0,0,VH);gr.addColorStop(0,Z.sky[0]);gr.addColorStop(1,Z.sky[1]);c.fillStyle=gr;c.fillRect(0,0,VW,VH);
   if(Z.night){c.fillStyle="rgba(255,255,255,.8)";for(let i=0;i<60;i++){const x=(hash(i,1)*VW*2-cx*.05)%(VW+20),y=hash(i,2)*VH*.5;c.fillRect((x+VW+20)%(VW+20),y,2,2)}}
   else{c.fillStyle="rgba(255,255,255,.85)";for(let i=Math.floor(cx*.1/320)-1;i<(cx*.1+VW)/320+1;i++){const x=i*320-cx*.1+hash(i,3)*140,y=50+hash(i,4)*90;c.beginPath();c.ellipse(x,y,50,17,0,0,7);c.ellipse(x+34,y-9,36,17,0,0,7);c.ellipse(x-30,y-4,30,13,0,0,7);c.fill()}}
-  // far layer
-  const f1=.2,base=VH*.66-cy*.15;c.fillStyle=Z.far;
+  // far layer (by style)
+  const f1=.2,base=VH*.66-cy*.15,st=Z.style;c.fillStyle=Z.far;
+  if(st==="space")for(let i=Math.floor(cx*.06/420)-1;i<(cx*.06+VW)/420+1;i++){const x=i*420-cx*.06+hash(i,40)*200,y=60+hash(i,41)*120,r=18+hash(i,42)*34,col=["#c47a4a","#7fb8e0","#d9c27a","#a07ad9"][Math.floor(hash(i,43)*4)];
+    c.fillStyle=col;c.beginPath();c.arc(x,y,r,0,7);c.fill();if(hash(i,44)>.5){c.strokeStyle="rgba(255,255,255,.6)";c.lineWidth=3;c.beginPath();c.ellipse(x,y,r*1.7,r*.45,-.3,0,7);c.stroke()}}
+  if(st==="reef"){c.fillStyle="rgba(255,255,255,.35)";for(let i=0;i<26;i++){const x=(hash(i,45)*VW*1.3-cx*.15+S.t*8*hash(i,47))%(VW+40),y=VH-((S.t*(30+hash(i,46)*40)+hash(i,48)*VH)%VH);c.beginPath();c.arc((x+VW+40)%(VW+40),y,2+hash(i,49)*4,0,7);c.fill()}
+    c.fillStyle="rgba(255,255,255,.08)";for(let i=0;i<5;i++){const x=(i*260-cx*.05+S.t*6)%(VW+300)-150;c.beginPath();c.moveTo(x,0);c.lineTo(x+60,0);c.lineTo(x+200,VH);c.lineTo(x+120,VH);c.fill()}}
+  c.fillStyle=Z.far;
   for(let i=Math.floor(cx*f1/260)-1;i<(cx*f1+VW)/260+2;i++){const x=i*260-cx*f1,hh=90+hash(i,5)*110;
-    if(Z.name==="Neon City"){const w=90+hash(i,6)*80;c.fillRect(x,base-hh-40,w,hh+400);c.fillStyle="rgba(255,230,120,.75)";for(let wy=base-hh-30;wy<base;wy+=18)for(let wx=x+8;wx<x+w-10;wx+=16)if(hash(wx*.37+wy,7)>.55)c.fillRect(wx,wy,7,9);c.fillStyle=Z.far}
-    else if(Z.name==="Canyon Rush"){c.fillRect(x+20,base-hh,170,hh+400);c.fillStyle="rgba(0,0,0,.08)";c.fillRect(x+20,base-hh+30,170,8);c.fillStyle=Z.far}
-    else if(Z.cloud){c.beginPath();c.ellipse(x+130,base-20,140,50,0,0,7);c.fill();if(hash(i,8)>.5){c.fillStyle="#d7e4ff";c.fillRect(x+90,base-hh-40,26,hh);c.fillRect(x+150,base-hh-10,26,hh);
+    if(st==="city"){const w=90+hash(i,6)*80;c.fillRect(x,base-hh-40,w,hh+400);c.fillStyle="rgba(255,230,120,.75)";for(let wy=base-hh-30;wy<base;wy+=18)for(let wx=x+8;wx<x+w-10;wx+=16)if(hash(wx*.37+wy,7)>.55)c.fillRect(wx,wy,7,9);c.fillStyle=Z.far}
+    else if(st==="canyon"){c.fillRect(x+20,base-hh,170,hh+400);c.fillStyle="rgba(0,0,0,.08)";c.fillRect(x+20,base-hh+30,170,8);c.fillStyle=Z.far}
+    else if(st==="sky"){c.beginPath();c.ellipse(x+130,base-20,140,50,0,0,7);c.fill();if(hash(i,8)>.5){c.fillStyle="#d7e4ff";c.fillRect(x+90,base-hh-40,26,hh);c.fillRect(x+150,base-hh-10,26,hh);
       c.beginPath();c.moveTo(x+86,base-hh-40);c.lineTo(x+103,base-hh-70);c.lineTo(x+120,base-hh-40);c.fill();c.fillStyle=Z.far}}
+    else if(st==="candy"){c.beginPath();c.ellipse(x+130,base+40,150,hh*.8,0,Math.PI,0);c.fill();c.fillStyle="rgba(255,255,255,.55)";for(let k=0;k<4;k++){c.beginPath();c.arc(x+60+k*40,base+20-hh*.4+hash(i*7+k,9)*30,6,0,7);c.fill()}c.fillStyle=Z.far}
+    else if(st==="jungle"){for(let k=0;k<3;k++){c.beginPath();c.arc(x+60+k*70,base-hh*.5+hash(i*3+k,9)*40,60+hash(i*3+k,10)*30,0,7);c.fill()}c.fillRect(x,base-20,260,400);
+      if(hash(i,11)>.6){c.fillStyle="#7a7a62";c.beginPath();c.moveTo(x+80,base+10);c.lineTo(x+130,base-hh-20);c.lineTo(x+180,base+10);c.fill();for(let k=0;k<4;k++){c.fillStyle="rgba(0,0,0,.18)";c.fillRect(x+92+k*6,base-hh*.25*k-10,76-k*12,4)}c.fillStyle=Z.far}}
+    else if(st==="desert"){c.beginPath();c.moveTo(x-60,base+300);c.quadraticCurveTo(x+130,base-hh*1.1,x+320,base+300);c.fill();
+      if(hash(i,12)>.65){c.fillStyle=darken(Z.far,.25);c.beginPath();c.moveTo(x+90,base+20);c.lineTo(x+150,base-hh*.7);c.lineTo(x+210,base+20);c.fill();c.fillStyle=Z.far}}
+    else if(st==="reef"){c.fillStyle=Z.far;for(let k=0;k<3;k++){const bx=x+50+k*70,bh=hh*(.5+hash(i*5+k,13)*.6);c.fillRect(bx-8,base-bh,16,bh+300);c.beginPath();c.arc(bx,base-bh,18,0,7);c.fill();
+      c.beginPath();c.arc(bx-18,base-bh*.6,12,0,7);c.arc(bx+18,base-bh*.75,12,0,7);c.fill()}}
+    else if(st==="space"){c.fillRect(x+30,base-hh*.5,200,hh+400);c.fillStyle="rgba(127,212,255,.7)";for(let k=0;k<5;k++)c.fillRect(x+44+k*38,base-hh*.5+16,20,10);c.fillStyle=Z.far;
+      c.fillRect(x+125,base-hh*.5-60,4,60);c.beginPath();c.arc(x+127,base-hh*.5-62,6,0,7);c.fill()}
+    else if(st==="crystal"||st==="fortress"){if(st==="fortress"){c.fillRect(x+20,base-hh,220,hh+400);for(let k=0;k<6;k++)c.fillRect(x+20+k*40,base-hh-18,22,20);
+        c.fillStyle="rgba(255,200,80,.6)";c.fillRect(x+110,base-hh+40,16,24);c.fillStyle=Z.far}
+      else for(let k=0;k<3;k++){const bx=x+60+k*70,bh=hh*(.6+hash(i*5+k,14)*.7);c.beginPath();c.moveTo(bx-22,base+300);c.lineTo(bx-14,base-bh);c.lineTo(bx,base-bh-30);c.lineTo(bx+14,base-bh);c.lineTo(bx+22,base+300);c.fill()}}
     else{c.beginPath();c.moveTo(x-40,base+300);c.lineTo(x+130,base-hh);c.lineTo(x+300,base+300);c.fill();
       if(Z.ice||Z.lava||hash(i,9)>.5){c.fillStyle=Z.lava?"#ff7a2a":"#fff";c.beginPath();c.moveTo(x+130-30,base-hh+40);c.lineTo(x+130,base-hh);c.lineTo(x+130+30,base-hh+40);c.fill();c.fillStyle=Z.far}}}
-  // mid layer
+  // mid layer (by style)
   const f2=.5,b2=VH*.8-cy*.4;c.fillStyle=Z.mid;
   for(let i=Math.floor(cx*f2/150)-1;i<(cx*f2+VW)/150+2;i++){if(hash(i,10)<.35)continue;const x=i*150-cx*f2+hash(i,11)*60,hh=50+hash(i,12)*60;
-    if(Z.name==="Meadow Run"||Z.ice){c.fillStyle=Z.ice?"#5f8fb0":"#3f8f3c";c.beginPath();c.moveTo(x,b2-hh-40);c.lineTo(x+30,b2);c.lineTo(x-30,b2);c.fill();if(Z.ice){c.fillStyle="#fff";c.beginPath();c.moveTo(x,b2-hh-40);c.lineTo(x+12,b2-hh-10);c.lineTo(x-12,b2-hh-10);c.fill()}
+    if(st==="meadow"||st==="peaks"){c.fillStyle=Z.ice?darken("#5f8fb0",Z.hard?.4:0):darken("#3f8f3c",Z.hard?.4:0);c.beginPath();c.moveTo(x,b2-hh-40);c.lineTo(x+30,b2);c.lineTo(x-30,b2);c.fill();if(Z.ice){c.fillStyle="#fff";c.beginPath();c.moveTo(x,b2-hh-40);c.lineTo(x+12,b2-hh-10);c.lineTo(x-12,b2-hh-10);c.fill()}
       c.fillStyle="#6b4a2b";c.fillRect(x-4,b2,8,200)}
-    else if(Z.name==="Canyon Rush"){c.fillStyle="#3f8a4a";c.fillRect(x-6,b2-hh,12,hh+200);c.fillRect(x-22,b2-hh*.6,10,24);c.fillRect(x-22,b2-hh*.6+16,22,8);c.fillRect(x+12,b2-hh*.8,10,30)}
-    else if(Z.name==="Neon City"){c.fillStyle=hash(i,13)>.5?"#ff4fd8":"#00e5ff";c.globalAlpha=.8;c.fillRect(x,b2-hh-30,40,14);c.globalAlpha=1;c.fillStyle="#1a1530";c.fillRect(x+16,b2-hh-16,6,hh+300)}
-    else if(Z.lava){c.fillStyle="#2a120c";c.beginPath();c.moveTo(x-30,b2+200);c.lineTo(x-10,b2-hh);c.lineTo(x+16,b2-hh*.7);c.lineTo(x+34,b2+200);c.fill()}
+    else if(st==="canyon"||st==="desert"){c.fillStyle="#3f8a4a";c.fillRect(x-6,b2-hh,12,hh+200);c.fillRect(x-22,b2-hh*.6,10,24);c.fillRect(x-22,b2-hh*.6+16,22,8);c.fillRect(x+12,b2-hh*.8,10,30)}
+    else if(st==="city"){c.fillStyle=hash(i,13)>.5?"#ff4fd8":"#00e5ff";c.globalAlpha=.8;c.fillRect(x,b2-hh-30,40,14);c.globalAlpha=1;c.fillStyle="#1a1530";c.fillRect(x+16,b2-hh-16,6,hh+300)}
+    else if(st==="volcano"){c.fillStyle="#2a120c";c.beginPath();c.moveTo(x-30,b2+200);c.lineTo(x-10,b2-hh);c.lineTo(x+16,b2-hh*.7);c.lineTo(x+34,b2+200);c.fill()}
+    else if(st==="candy"){const col=["#ff4f8b","#7fd4ff","#ffd23f","#8f5bd6"][Math.floor(hash(i,15)*4)];c.fillStyle="#fff";c.fillRect(x-3,b2-hh,6,hh+200);c.fillStyle=col;c.beginPath();c.arc(x,b2-hh,20,0,7);c.fill();
+      c.strokeStyle="#fff";c.lineWidth=3;c.beginPath();for(let a=0;a<12;a+=.4)c.lineTo(x+Math.cos(a)*a*1.5,b2-hh+Math.sin(a)*a*1.5);c.stroke()}
+    else if(st==="jungle"){c.fillStyle="#6b4a2b";c.fillRect(x-5,b2-hh-30,10,hh+230);c.fillStyle=darken("#2f8f4a",Z.hard?.4:0);for(let k=0;k<5;k++){const a=-2.6+k*.55;c.beginPath();c.ellipse(x+Math.cos(a)*26,b2-hh-30+Math.sin(a)*12,28,8,a,0,7);c.fill()}}
+    else if(st==="reef"){c.strokeStyle=hash(i,16)>.5?"#3fbf6a":"#2a9d8f";c.lineWidth=6;c.lineCap="round";for(let k=0;k<2;k++){c.beginPath();c.moveTo(x+k*14,b2+40);for(let y=0;y<hh+40;y+=10)c.lineTo(x+k*14+Math.sin(S.t*2+y*.08+i)*8,b2+40-y);c.stroke()}}
+    else if(st==="space"){c.fillStyle="#6b7090";c.fillRect(x-3,b2-hh-20,6,hh+220);c.fillStyle=Math.floor(S.t*2+i)%2?"#ff4f4f":"#7a2a2a";c.beginPath();c.arc(x,b2-hh-24,6,0,7);c.fill()}
+    else if(st==="crystal"){const col=hash(i,17)>.5?"#7fffd4":"#d68cff";c.save();c.globalAlpha=.25+.15*Math.sin(S.t*2+i);c.fillStyle=col;c.beginPath();c.arc(x,b2-hh*.5,34,0,7);c.fill();c.restore();
+      c.fillStyle=col;c.beginPath();c.moveTo(x-10,b2+100);c.lineTo(x-6,b2-hh*.6);c.lineTo(x,b2-hh*.9);c.lineTo(x+6,b2-hh*.6);c.lineTo(x+10,b2+100);c.fill()}
+    else if(st==="fortress"){c.fillStyle="#2a0d0d";c.fillRect(x-10,b2-hh,20,hh+200);c.fillStyle="#ff6a2a";c.save();c.globalAlpha=.6+.3*Math.sin(S.t*8+i);c.beginPath();c.ellipse(x,b2-hh-8,6,10,0,0,7);c.fill();c.restore()}
     else{c.fillStyle="#fff";c.beginPath();c.ellipse(x,b2-hh*.3,50,18,0,0,7);c.fill()}}
-  if(Z.lava){const y=VH-40-cy*.0,gr2=c.createLinearGradient(0,VH*.7,0,VH);gr2.addColorStop(0,"rgba(255,80,20,0)");gr2.addColorStop(1,"rgba(255,120,30,.55)");c.fillStyle=gr2;c.fillRect(0,VH*.7,VW,VH*.3)}}
+  if(Z.lava||st==="fortress"){const gr2=c.createLinearGradient(0,VH*.7,0,VH);gr2.addColorStop(0,"rgba(255,80,20,0)");gr2.addColorStop(1,"rgba(255,120,30,.55)");c.fillStyle=gr2;c.fillRect(0,VH*.7,VW,VH*.3)}}
 function world(){const c=g,L=S.L,Z=S.Z,x0=S.camX-40,x1=S.camX+VW+40;
   // ground
   const i0=Math.max(0,Math.floor(x0/SEG)),i1=Math.min(L.gy.length-1,Math.ceil(x1/SEG)+1),bot=S.camY+VH+40;
@@ -370,9 +422,9 @@ function world(){const c=g,L=S.L,Z=S.Z,x0=S.camX-40,x1=S.camX+VW+40;
     c.fillStyle="rgba(0,0,0,.12)";for(let k=a;k<b;k++){if(hash(k,20)>.5){c.beginPath();c.arc(k*SEG+10,L.gy[k]+30+hash(k,21)*80,3+hash(k,22)*4,0,7);c.fill()}}
     c.strokeStyle=Z.top;c.lineWidth=12;c.lineJoin="round";c.beginPath();c.moveTo(a*SEG,L.gy[a]+5);for(let k=a+1;k<=b;k++)c.lineTo(k*SEG,L.gy[k]+5);c.stroke();
     if(Z.night){c.strokeStyle="rgba(255,255,255,.6)";c.lineWidth=2;c.beginPath();c.moveTo(a*SEG,L.gy[a]);for(let k=a+1;k<=b;k++)c.lineTo(k*SEG,L.gy[k]);c.stroke()}
-    if(Z.name==="Meadow Run")for(let k=a;k<b;k++)if(hash(k,23)>.8){c.fillStyle=hash(k,24)>.5?"#ff6fb5":"#fff36b";c.beginPath();c.arc(k*SEG+8,L.gy[k]-6,4,0,7);c.fill()}}
+    if(Z.style==="meadow"||Z.style==="candy")for(let k=a;k<b;k++)if(hash(k,23)>.8){c.fillStyle=Z.style==="candy"?["#fff","#7fd4ff","#ffd23f"][Math.floor(hash(k,25)*3)]:hash(k,24)>.5?"#ff6fb5":"#fff36b";c.beginPath();c.arc(k*SEG+8,L.gy[k]-6,4,0,7);c.fill()}}
   // pits glow in the volcano
-  if(Z.lava){c.fillStyle="#ff6a1f";for(let k=i0;k<=i1;k++)if(L.gy[k]==null)c.fillRect(k*SEG-1,500+6*Math.sin(S.t*3+k),SEG+2,400)}
+  if(Z.lava||Z.style==="fortress"){c.fillStyle="#ff6a1f";for(let k=i0;k<=i1;k++)if(L.gy[k]==null)c.fillRect(k*SEG-1,500+6*Math.sin(S.t*3+k),SEG+2,400)}
   // loops (back half)
   for(const lp of L.loops){if(lp.x+lp.r<x0||lp.x-lp.r>x1)continue;c.strokeStyle=Z.top;c.lineWidth=14;c.beginPath();c.arc(lp.x,lp.y-lp.r,lp.r,0,7);c.stroke();
     c.strokeStyle="rgba(0,0,0,.25)";c.lineWidth=3;c.beginPath();c.arc(lp.x,lp.y-lp.r,lp.r-8,0,7);c.stroke();c.fillStyle=Z.ground;c.fillRect(lp.x-8,lp.y-lp.r*2-6,16,10)}
@@ -418,7 +470,7 @@ function world(){const c=g,L=S.L,Z=S.Z,x0=S.camX-40,x1=S.camX+VW+40;
 function drawBoss(){const B=S.boss,Z=S.Z,c=g,R=58;if(B.hp<=0&&(B.dead||0)>.5)return;const cx=B.x,cy=B.y-R;
   c.save();c.translate(cx,cy);if(B.hp<=0){c.scale(1+B.dead,1-B.dead*1.5);c.globalAlpha=1-B.dead*2}
   const sq=B.st==="dizzy"?1+.05*Math.sin(S.t*10):B.vy<0?1.1:1;c.scale(1/sq,sq);if(B.hit>0&&Math.floor(S.t*20)%2)c.globalAlpha=.5;
-  const id=zi(S.n);c.fillStyle=Z.bc;c.strokeStyle="rgba(0,0,0,.45)";c.lineWidth=3;
+  const id=Z.bs||0;c.fillStyle=Z.bc;c.strokeStyle="rgba(0,0,0,.45)";c.lineWidth=3;
   if(id===2){c.beginPath();c.roundRect?c.roundRect(-R,-R,R*2,R*2,16):c.rect(-R,-R,R*2,R*2);c.fill();c.stroke();c.strokeStyle="#00e5ff";c.lineWidth=2;c.strokeRect(-R+10,-R+10,R*2-20,R*2-20)}
   else if(id===5){for(const [x,y,r] of [[-30,10,36],[30,10,36],[0,-14,44],[-46,26,24],[46,26,24]]){c.beginPath();c.arc(x,y,r,0,7);c.fill()}c.fillStyle="#ffe066";c.beginPath();c.moveTo(-6,40);c.lineTo(8,40);c.lineTo(-2,62);c.lineTo(12,62);c.lineTo(-10,90);c.lineTo(-2,66);c.lineTo(-14,66);c.fill()}
   else{c.beginPath();if(id===1){for(let k=0;k<9;k++){const a=k/9*6.28,r=R*(.9+.1*Math.sin(k*2.3));c.lineTo(Math.cos(a)*r,Math.sin(a)*r)}c.closePath()}else c.arc(0,0,R,0,7);c.fill();c.stroke();
@@ -472,13 +524,12 @@ function maker(first){const h=Object.assign({},DEF,K.save.hero||{});if(S)S.pause
    Acts 1-3 fix the gears, the code and the power core; after the boss, the hero restarts the engine and the world is saved.
    Problems are word problems in the world's own setting, matched to the player's grade and getting harder world by world;
    a wrong answer shows how to work it out and gives a fresh problem. (These missions replace the usual maths checkpoints.) */
-const WORLD=[
-  {thing:["flowers","bees","sunflowers","seeds"],intro:"The Meadow Number Engine waters every flower. Professor Muddle scrambled it, and the meadow is wilting!"},
-  {thing:["planks","rocks","cactus flowers","bridge bolts"],intro:"The Canyon Number Engine holds up all the rope bridges. Muddle scrambled it, and the bridges are wobbling!"},
-  {thing:["lights","robots","neon signs","batteries"],intro:"The Neon Number Engine lights up the whole city. Muddle scrambled it, and the lights are flickering out!"},
-  {thing:["snowballs","penguins","icicles","snowflakes"],intro:"The Frost Number Engine keeps the mountains safe from avalanches. Muddle scrambled it, and the snow is rumbling!"},
-  {thing:["lava rocks","fire crystals","steam vents","volcano gems"],intro:"The Volcano Number Engine keeps the lava calm. Muddle scrambled it, and the volcano is about to blow!"},
-  {thing:["clouds","sky keys","castle gears","star lanterns"],intro:"Professor Muddle's hideout! The Sky Number Engine holds all the other engines together. Fix it and stop Muddle for good!"}];
+const WORLD=ZONES; // each world's things (for word problems) and story intro live in ZONES
+/* story chapters: the first mission of a new chapter tells what Muddle did next; saving the last world of a chapter says where he went */
+const CHAPTER={0:"Professor Muddle has scrambled the Number Engines that keep the worlds running! Only a hero who is fast AND smart can fix them. ",
+  6:"Professor Muddle escaped to the Far Worlds with a bigger scrambler! ",12:"Muddle flew back to the first worlds and turned the lights off! ",24:"Muddle is hiding in his fortress. Time for the final showdown! "};
+const AFTER={5:" But Professor Muddle escaped to the Far Worlds!",11:" But Muddle is sneaking back to the first worlds in the dark!",23:" Muddle ran to his fortress. One world left!",
+  24:" Professor Muddle's scrambler is smashed for good. "};
 const PARTS=[["⚙️","Fix the gears"],["🔐","Crack the code"],["🔋","Charge the power core"],["🚀","Restart the engine!"]];
 function mathQ(age,w,rr){const ri=(a,b)=>a+Math.floor(rr()*(b-a+1)),pk=a=>a[Math.floor(rr()*a.length)],T=WORLD[w].thing,t=pk(T),u=Math.min(5,w),hard=u>=3;
   const Q=(text,eq,ans,how)=>({text,eq,ans,how});
@@ -522,7 +573,7 @@ function engineArt(c,w,parts,t){const x=c.getContext("2d"),W=c.width;x.setTransf
 function mission(n,done){const w=zi(n),part=isBoss(n)?3:(n-1)%4,P=PARTS[part],eng=(K.save.eng=K.save.eng||{}),have=eng[w]||0,need=3;let got=0,miss=0,q=null,entry="",lock=false;
   const rr=Math.random,me=S,age=Math.max(0,Math.min(5,K.age-1));
   if(!ms){ms=document.createElement("div");ms.className="ms";document.body.appendChild(ms)}
-  const story=(n===1?"Professor Muddle has scrambled the Number Engines that keep the six worlds running! Only a hero who is fast AND smart can fix them. ":"")+
+  const story=(part===0&&CHAPTER[w]?CHAPTER[w]:"")+
     (part===0?WORLD[w].intro+" ":"")+(part===3?"You beat "+ZONES[w].boss+"! Now restart the engine to save "+ZONES[w].name+"!":"Solve "+need+" problems to "+P[1].toLowerCase()+".");
   ms.innerHTML='<div class="ms-card"><div class="ms-side"><canvas id="msHero" width="360" height="360"></canvas><canvas id="msEng" width="360" height="360"></canvas><div class="ms-eng">'+ZONES[w].name+' Number Engine</div></div>'+
     '<div class="ms-main"><h2>'+P[0]+" Mission: "+P[1]+'</h2><p class="ms-story">'+story+'</p><div class="ms-dots" id="msDots"></div><div class="ms-q" id="msQ"></div>'+
@@ -532,7 +583,7 @@ function mission(n,done){const w=zi(n),part=isBoss(n)?3:(n-1)%4,P=PARTS[part],en
   const hc=$m("msHero"),ec=$m("msEng");let alive=true,t0=performance.now(),shown=have;
   (function anim(){if(!alive||ms.hidden)return;const t=(performance.now()-t0)/1000,x=hc.getContext("2d");x.setTransform(1,0,0,1,0,0);x.clearRect(0,0,360,360);x.setTransform(3.4,0,0,3.4,180,300);
     drawHero(x,HERO,{run:t*3,speed:0,t});engineArt(ec,w,shown,t);requestAnimationFrame(anim)})();
-  TS.say((n===1?"Professor Muddle has scrambled the Number Engines! ":"")+(part===0?WORLD[w].intro:"")+" "+P[1]+"!");
+  TS.say((part===0&&CHAPTER[w]?CHAPTER[w]:"")+(part===0?WORLD[w].intro:"")+" "+P[1]+"!");
   const dots=()=>{$m("msDots").innerHTML=Array.from({length:need},(_,i)=>'<i class="'+(i<got?"d":i===got?"c":"")+'"></i>').join("")};
   const next=()=>{q=mathQ(age,w,rr);q.t0=Date.now();entry="";lock=false;$m("msOut").textContent="";$m("msOut").className="";$m("msQ").innerHTML=q.text+'<span class="eq">'+q.eq+"</span>";dots();if(alive)TS.sayNext(q.text)};
   const submit=()=>{if(lock||entry==="")return;const o=$m("msOut");
@@ -541,10 +592,10 @@ function mission(n,done){const w=zi(n),part=isBoss(n)?3:(n-1)%4,P=PARTS[part],en
       if(got>=need){setTimeout(()=>finishMission(),700)}else setTimeout(()=>{TS.talk.hush();next()},900)}
     else{logM(false);miss++;o.className="bad";SND.hurt();const how=q.how;$m("msHelp").textContent="Not quite: the answer is "+q.ans+". "+how+" Try a new one!";TS.say("Not quite. The answer is "+q.ans+". "+how);lock=true;setTimeout(()=>{if(alive){next();$m("msHelp").textContent="Here's a new one. You can do it!"}},3800)}};
   const finishMission=()=>{eng[w]=Math.max(have,part+1);K.persist();shown=eng[w];const saved=part===3;
-    $m("msQ").innerHTML=saved?"🎉 <b>"+ZONES[w].name+" is saved!</b> The Number Engine is running again"+(w===5?" and Professor Muddle's scrambler is broken. "+HERO.name+" saved all six worlds!":"! Next stop: "+ZONES[w+1].name+"."):
+    $m("msQ").innerHTML=saved?"🎉 <b>"+ZONES[w].name+" is saved!</b> The Number Engine is running again"+(w===24?" and"+AFTER[24]+HERO.name+" saved all 25 worlds!":"!"+(AFTER[w]||"")+" Next stop: "+ZONES[w+1].name+"."):
       "⚡ <b>"+P[1]+": done!</b> The engine is "+(part+1)+"/4 fixed.";
     $m("msPad").hidden=true;$m("msOut").parentNode.hidden=true;$m("msHelp").textContent=miss?"":"Perfect mission: no mistakes!";
-    TS.say(saved?ZONES[w].name+" is saved!"+(w===5?" You saved all six worlds!":""):"Mission complete!");TS.music.fx("win");
+    TS.say(saved?ZONES[w].name+" is saved!"+(w===24?" You saved all 25 worlds!":(AFTER[w]||"")):"Mission complete!");TS.music.fx("win");
     const b=document.createElement("button");b.className="ms-btn";b.type="button";b.textContent=saved?"Hooray! ▶":"Keep going! ▶";$m("msQ").after(b);
     b.onclick=()=>{alive=false;ms.hidden=true;if(S===me)done(miss)}};
   $m("msPad").addEventListener("click",e=>{const b=e.target.closest("button");if(!b||lock)return;const d=b.dataset.d;
@@ -559,7 +610,7 @@ function hint(){if(!S||S.done)return;S.hearts=Math.min(5,S.hearts+1);S.shield=1;
 K=TS_KIT({id:"hero",name:"Hero Rush",levels:LEVELS,start,hint,
   howto:[["⚡","Make your own superhero, then race to the finish arch!"],["◀ ▶","Hold the arrows to run. Run fast to zoom round the loops!"],["⤒","Tap Jump to leap. Bop baddies by jumping on top of them. Spiky beetles: jump over!"],
     ["💥","Tap your power button for your superpower."],["🧮","Finish a level to unlock a mission: solve maths problems to fix the Number Engines and save the worlds from Professor Muddle!"],["👾","Every 4th level is a boss: watch its shadow and run out of the way, then jump on its head while it's dizzy!"]],
-  point:()=>document.getElementById("hrR"),label:n=>isBoss(n)?"👾 Boss":ZONES[zi(n)].name.split(" ")[0]+" "+((n-1)%4+1)});
+  point:()=>document.getElementById("hrR"),label:n=>isBoss(n)?"👾 Boss":ZONES[zi(n)].short+" "+((n-1)%4+1)});
 window.__game={get S(){return S},K,step,IN,build,maker,mission,mathQ,get hero(){return HERO},drawHero};
 requestAnimationFrame(frame);
 K.start();
